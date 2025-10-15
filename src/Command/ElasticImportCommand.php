@@ -81,9 +81,13 @@ class ElasticImportCommand extends Command
             $meta = explode(',', $this->params['extra-meta']);
             $meta = collection($meta)->unfold($featureList)->toArray();
         }
-        $from = DateTime::parse($args->getOption('from'))
+        /** @var string $fromOption */
+        $fromOption = $args->getOption('from');
+        $from = DateTime::parse($fromOption)
             ->modify('midnight');
-        $until = DateTime::parse($args->getOption('until'))
+        /** @var string $untilOption */
+        $untilOption = $args->getOption('until');
+        $until = DateTime::parse($untilOption)
             ->modify('23:59:59');
 
         $currentId = null;
@@ -173,10 +177,6 @@ class ElasticImportCommand extends Command
 
         $list = explode(',', $value);
 
-        if (empty($list)) {
-            return [];
-        }
-
         return array_map('intval', $list);
     }
 
@@ -251,10 +251,13 @@ class ElasticImportCommand extends Command
             ],
         ];
 
-        $index = sprintf($index, PhpDateTime::createFromFormat('Y-m-d H:i:s', $audit['created'])->format('-Y.m.d'));
-        $type = $map[$audit['model']] ?? Inflector::tableize($audit['model']);
+        $dateTime = PhpDateTime::createFromFormat('Y-m-d H:i:s', $audit['created']);
+        if ($dateTime !== false) {
+            $index = sprintf($index, $dateTime->format('-Y.m.d'));
+        }
+        $type = Inflector::tableize($audit['model']);
 
-        return new Document($audit['id'], $data, $type, $index);
+        return new Document($audit['id'], $data, $type);
     }
 
     /**
@@ -273,6 +276,6 @@ class ElasticImportCommand extends Command
         $this->log(sprintf('Indexing %d documents', count($documents)), 'info');
         /** @var \Cake\ElasticSearch\Datasource\Connection $connection */
         $connection = ConnectionManager::get(AuditLogsIndex::defaultConnectionName());
-        $connection->addDocuments($documents);
+        $connection->getDriver()->addDocuments($documents);
     }
 }

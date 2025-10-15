@@ -21,9 +21,9 @@ trait IndexConfigTrait
      */
     protected function configIndex(Index $repository, ServerRequest $request): void
     {
-        /** @var \Elastica\Connection $client */
-        $client = $repository->getConnection();
+        $connection = $repository->getConnection();
         $indexTemplate = $repository->getName();
+        $client = $connection->getDriver()->getConnection();
         $client->setConfig(['index' => sprintf($indexTemplate, '*')]);
 
         if ($request->getQuery('at')) {

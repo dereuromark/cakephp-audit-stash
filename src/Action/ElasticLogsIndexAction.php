@@ -60,7 +60,7 @@ class ElasticLogsIndexAction extends IndexAction
                 $fields = array_map(fn($f): string => 'changed.' . $f, array_map('trim', $fields));
                 $fields = array_map([$builder, 'exists'], $fields);
 
-                return $builder->and($fields);
+                return $builder->and(...$fields);
             });
         }
 
@@ -77,6 +77,7 @@ class ElasticLogsIndexAction extends IndexAction
         $subject = $this->_subject(['success' => true, 'query' => $query]);
         $this->_trigger('beforePaginate', $subject);
 
+        /** @phpstan-ignore-next-line */
         $items = $this->_controller()->paginate($subject->query);
         $subject->set(['entities' => $items]);
 
@@ -91,7 +92,13 @@ class ElasticLogsIndexAction extends IndexAction
      */
     protected function _table(): Index
     {
-        return $this->_controller()->AuditLogs = $this->getIndexRepository('AuditStash.AuditLogs');
+        $controller = $this->_controller();
+        /** @var \Cake\ElasticSearch\Index $index */
+        $index = $this->getIndexRepository('AuditStash.AuditLogs');
+        /** @phpstan-ignore-next-line */
+        $controller->AuditLogs = $index;
+
+        return $index;
     }
 
     /**

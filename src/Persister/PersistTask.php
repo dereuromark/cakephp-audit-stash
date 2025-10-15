@@ -36,7 +36,10 @@ class PersistTask
                 $event,
             $events,
         );
-        $this->persister()->logEvents($events);
+        $persister = $this->persister();
+        if ($persister !== null) {
+            $persister->logEvents($events);
+        }
     }
 
     /**

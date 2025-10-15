@@ -114,11 +114,12 @@ trait ExtractionTrait
         bool $unsetExtracted = true,
         bool $serialize = true,
     ): array {
+        $meta = $event->getMetaInfo();
         $extracted = [
-            'meta' => $event->getMetaInfo(),
+            'meta' => $meta,
         ];
 
-        if (!is_array($extracted['meta'])) {
+        if ($meta === []) {
             return $extracted;
         }
 
@@ -149,16 +150,15 @@ trait ExtractionTrait
             return $extracted;
         }
 
-        if (is_array($fields)) {
-            foreach ($fields as $name => $alias) {
-                if (!is_string($name)) {
-                    $name = $alias;
-                }
+        foreach ($fields as $name => $alias) {
+            if (!is_string($name)) {
+                $name = $alias;
+            }
 
-                $extracted[$alias] = Hash::get($extracted['meta'], $name);
-                if ($unsetExtracted) {
-                    $extracted['meta'] = Hash::remove($extracted['meta'], $name);
-                }
+            $extracted[$alias] = Hash::get($extracted['meta'], $name);
+            if ($unsetExtracted) {
+                /** @phpstan-ignore-next-line */
+                $extracted['meta'] = Hash::remove($extracted['meta'], $name);
             }
         }
 
@@ -180,6 +180,12 @@ trait ExtractionTrait
      */
     protected function serialize(mixed $value): ?string
     {
-        return $value === null ? null : json_encode($value);
+        if ($value === null) {
+            return null;
+        }
+
+        $encoded = json_encode($value);
+
+        return $encoded !== false ? $encoded : null;
     }
 }

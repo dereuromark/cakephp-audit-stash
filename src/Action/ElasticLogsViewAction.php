@@ -23,7 +23,13 @@ class ElasticLogsViewAction extends ViewAction
      */
     protected function _table(): Index
     {
-        return $this->_controller()->AuditLogs = $this->getIndexRepository('AuditStash.AuditLogs');
+        $controller = $this->_controller();
+        /** @var \Cake\ElasticSearch\Index $index */
+        $index = $this->getIndexRepository('AuditStash.AuditLogs');
+        /** @phpstan-ignore-next-line */
+        $controller->AuditLogs = $index;
+
+        return $index;
     }
 
     /**

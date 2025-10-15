@@ -99,26 +99,41 @@ class ElasticSearchPersister implements PersisterInterface
      */
     protected function transformToDocuments(array $auditLogs): array
     {
-        $index = $this->getIndex();
         $type = $this->getType();
         $documents = [];
         foreach ($auditLogs as $log) {
             $primary = $log->getId();
             $primary = is_array($primary) ? array_values($primary) : $primary;
             $eventType = $log->getEventType();
+
+            $parentSource = null;
+            if (method_exists($log, 'getParentSourceName')) {
+                $parentSource = $log->getParentSourceName();
+            }
+
+            $original = null;
+            if ($eventType !== 'delete' && method_exists($log, 'getOriginal')) {
+                $original = $log->getOriginal();
+            }
+
+            $changed = null;
+            if ($eventType !== 'delete' && method_exists($log, 'getChanged')) {
+                $changed = $log->getChanged();
+            }
+
             $data = [
                 '@timestamp' => $log->getTimestamp(),
                 'transaction' => $log->getTransactionId(),
                 'type' => $eventType,
                 'primary_key' => $primary,
                 'source' => $log->getSourceName(),
-                'parent_source' => $log->getParentSourceName(),
-                'original' => $eventType === 'delete' ? null : $log->getOriginal(),
-                'changed' => $eventType === 'delete' ? null : $log->getChanged(),
+                'parent_source' => $parentSource,
+                'original' => $original,
+                'changed' => $changed,
                 'meta' => $log->getMetaInfo(),
             ];
             $id = $this->useTransactionId ? $log->getTransactionId() : '';
-            $documents[] = new Document($id, $data, $type, $index);
+            $documents[] = new Document($id, $data, $type);
         }
 
         return $documents;

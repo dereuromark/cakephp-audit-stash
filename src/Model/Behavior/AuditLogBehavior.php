@@ -305,14 +305,21 @@ class AuditLogBehavior extends Behavior
             $index = $this->getConfig('index') ?: $this->_table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);
 
-            $persister = new $class(compact('index', 'type'));
+            /** @var \AuditStash\PersisterInterface $instance */
+            $instance = new $class(compact('index', 'type'));
+            $persister = $instance;
         }
 
-        if ($persister === null) {
-            return $this->persister;
+        if ($persister !== null) {
+            $this->persister = $persister;
+
+            return $persister;
         }
 
-        return $this->persister = $persister;
+        /** @var \AuditStash\PersisterInterface $existingPersister */
+        $existingPersister = $this->persister;
+
+        return $existingPersister;
     }
 
     /**
@@ -327,7 +334,10 @@ class AuditLogBehavior extends Behavior
         $result = [];
 
         foreach ($associated as $name) {
-            $result[] = $associations->get($name)->getProperty();
+            $association = $associations->get($name);
+            if ($association !== null) {
+                $result[] = $association->getProperty();
+            }
         }
 
         return $result;

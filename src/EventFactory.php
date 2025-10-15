@@ -25,27 +25,38 @@ class EventFactory
      */
     public function create(array $data): EventInterface
     {
-        $map = [
-            'create' => AuditCreateEvent::class,
-            'update' => AuditUpdateEvent::class,
-            'delete' => AuditDeleteEvent::class,
-        ];
+        $displayValue = $data['display_value'] ?? null;
 
-        if ($data['type'] !== 'delete') {
-            $event = new $map[$data['type']](
+        if ($data['type'] === 'delete') {
+            $parentSource = $data['parent_source'] ?? null;
+            $original = array_key_exists('original', $data) ? $data['original'] : [];
+            $event = new AuditDeleteEvent(
+                $data['transaction'],
+                $data['primary_key'],
+                $data['source'],
+                $parentSource,
+                $original,
+                $displayValue,
+            );
+        } elseif ($data['type'] === 'create') {
+            $event = new AuditCreateEvent(
                 $data['transaction'],
                 $data['primary_key'],
                 $data['source'],
                 array_key_exists('changed', $data) ? $data['changed'] : [],
                 array_key_exists('original', $data) ? $data['original'] : [],
-                new Entity()
+                new Entity(),
+                $displayValue,
             );
         } else {
-            $event = new $map[$data['type']](
+            $event = new AuditUpdateEvent(
                 $data['transaction'],
                 $data['primary_key'],
                 $data['source'],
-                null
+                array_key_exists('changed', $data) ? $data['changed'] : [],
+                array_key_exists('original', $data) ? $data['original'] : [],
+                new Entity(),
+                $displayValue,
             );
         }
 
