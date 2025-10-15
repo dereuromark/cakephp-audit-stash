@@ -6,7 +6,7 @@ namespace AuditStash\Action;
 use Cake\ElasticSearch\Datasource\IndexLocator;
 use Cake\ElasticSearch\Index;
 use Cake\Http\ServerRequest;
-use DateTime;
+use Cake\I18n\DateTime;
 
 trait IndexConfigTrait
 {

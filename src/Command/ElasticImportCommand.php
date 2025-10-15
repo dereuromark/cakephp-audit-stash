@@ -59,7 +59,7 @@ class ElasticImportCommand extends Command
     /**
      * @inheritDoc
      */
-    public function execute(Arguments $args, ConsoleIo $io)
+    public function execute(Arguments $args, ConsoleIo $io): int
     {
         $table = $this->fetchTable('Audits');
         $table->hasMany('AuditDeltas');
@@ -150,7 +150,7 @@ class ElasticImportCommand extends Command
 
         $this->persistBulk($rest->toList());
 
-        return true;
+        return static::CODE_SUCCESS;
     }
 
     /**

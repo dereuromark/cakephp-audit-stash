@@ -7,8 +7,8 @@ use AuditStash\Event\BaseEvent;
 use AuditStash\EventInterface;
 use Cake\Database\Type\DateTimeType;
 use Cake\Database\TypeFactory;
+use Cake\I18n\DateTime;
 use Cake\Utility\Hash;
-use DateTime;
 
 trait ExtractionTrait
 {

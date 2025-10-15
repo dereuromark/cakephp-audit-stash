@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace AuditStash;
 
 use Cake\Core\BasePlugin;
-use Cake\Core\PluginApplicationInterface;
 
 /**
  * Plugin class for AuditStash

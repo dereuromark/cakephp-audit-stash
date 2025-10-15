@@ -361,6 +361,9 @@ if ($success) {
 This will save all audit info for your objects, as well as audits for any associated data. Please note, `$result` must
 be an instance of an Object. Do not change the text "Model.afterCommit".
 
+## Demo
+https://sandbox.dereuromark.de/sandbox/audit-stash
+
 ## Testing
 
 By default, the test suite will not run elastic. If you are an elastic user and wish to test against a local instance
