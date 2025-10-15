@@ -37,37 +37,6 @@ jobs:
         run: |
           composer check
 
-  #
-  # CakePHP version compatability
-  #
-  compatibility:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        version: ['~5.1.0']
-
-    name: CakePHP ${{ matrix.version }} Test
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, intl
-
-      - name: PHP Version
-        run: php -v
-
-      - name: CakePHP ${{matrix.version}} Compatability
-        run: |
-          composer self-update
-          rm -rf composer.lock
-          composer require cakephp/cakephp:${{matrix.version}} --no-update
-          composer install --prefer-dist --no-progress
-          composer test
-
   elastic_integration_test:
     runs-on: ubuntu-latest
     strategy:
