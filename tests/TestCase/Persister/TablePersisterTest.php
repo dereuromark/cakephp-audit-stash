@@ -7,6 +7,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Persister\TablePersister;
 use AuditStash\Test\AuditLogsTable;
 use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
@@ -104,6 +105,7 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
+            'display_value' => null,
             'original' => null,
             'changed' => null,
             'created' => new DateTime($event->getTimestamp()),
@@ -143,7 +145,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -189,7 +192,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -231,7 +235,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -272,7 +277,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -314,7 +320,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -331,10 +338,10 @@ class TablePersisterTest extends TestCase
 
         $TablePersister->getTable()->getEventManager()->on(
             'Model.beforeSave',
-            function ($event, EntityInterface $entity) {
+            function (EventInterface $event, EntityInterface $entity) {
                 $entity->setError('field', ['error']);
 
-                return false;
+                $event->setResult(false);
             },
         );
 
@@ -361,8 +368,8 @@ class TablePersisterTest extends TestCase
         ]);
         $TablePersister->getTable()->getEventManager()->on(
             'Model.beforeSave',
-            function ($event, EntityInterface $entity) {
-                return false;
+            function (EventInterface $event, EntityInterface $entity) {
+                $event->setResult(false);
             },
         );
 
@@ -382,7 +389,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => '[1,2,3]',
@@ -415,7 +423,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -449,7 +458,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => [1, 2, 3],
@@ -485,7 +495,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
@@ -519,7 +530,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key_0' => 1,
@@ -555,7 +567,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => '"pk"',
@@ -591,7 +604,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => '[]',
+            'display_value' => null,
+            'original' => null,
             'changed' => '[]',
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => '[1,2,3]',
@@ -630,7 +644,8 @@ class TablePersisterTest extends TestCase
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
-            'original' => [],
+            'display_value' => null,
+            'original' => null,
             'changed' => [],
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,

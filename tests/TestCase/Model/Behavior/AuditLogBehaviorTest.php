@@ -12,6 +12,7 @@ use Cake\Event\Event;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SplObjectStorage;
 
 class AuditLogBehaviorTest extends TestCase
@@ -55,7 +56,7 @@ class AuditLogBehaviorTest extends TestCase
         ]));
         $result = $queue[$entity];
         $this->assertEquals($result->getOriginal(), $result->getChanged());
-        unset($data['something_extra']);
+        unset($data['something_extra'], $data['id']);
         $this->assertEquals($data, $result->getChanged());
         $this->assertEquals(13, $result->getId());
         $this->assertEquals('articles', $result->getSourceName());
@@ -110,7 +111,7 @@ class AuditLogBehaviorTest extends TestCase
         ]));
         $result = $queue[$entity];
         $this->assertEquals($result->getOriginal(), $result->getChanged());
-        unset($data['something_extra'], $data['author_id']);
+        unset($data['something_extra'], $data['author_id'], $data['id']);
         $this->assertEquals($data, $result->getChanged());
     }
 
@@ -161,16 +162,14 @@ class AuditLogBehaviorTest extends TestCase
             'associated' => [],
         ]));
         $result = $queue[$entity];
-        unset($data['something_extra'], $data['author_id']);
+        unset($data['something_extra'], $data['author_id'], $data['id']);
         $this->assertEquals($data, $result->getChanged());
         $this->assertEquals(13, $result->getId());
         $this->assertEquals('articles', $result->getSourceName());
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
     }
 
-    /**
-     * @dataProvider dataProviderForSaveType
-     */
+    #[DataProvider('dataProviderForSaveType')]
     public function testImplementedEvents(?string $saveType): void
     {
         Configure::write('AuditStash.saveType', $saveType);
@@ -187,9 +186,9 @@ class AuditLogBehaviorTest extends TestCase
     public static function dataProviderForSaveType(): array
     {
         return [
-            ['afterSave'],
-            ['afterCommit'],
-            [null],
+            'afterSave' => ['afterSave'],
+            'afterCommit' => ['afterCommit'],
+            'null' => [null],
         ];
     }
 

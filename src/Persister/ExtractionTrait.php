@@ -119,10 +119,6 @@ trait ExtractionTrait
             'meta' => $meta,
         ];
 
-        if ($meta === []) {
-            return $extracted;
-        }
-
         if (
             !$fields ||
             empty($extracted['meta'])

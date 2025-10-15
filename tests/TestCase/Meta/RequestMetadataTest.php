@@ -24,8 +24,8 @@ class RequestMetadataTest extends TestCase
         $listener = new RequestMetadata($request, 'jose');
         $this->getEventManager()->on($listener);
 
-        $request->expects($this->once())->method('clientIp')->will($this->returnValue('12345'));
-        $request->expects($this->once())->method('getRequestTarget')->will($this->returnValue('/things?a=b'));
+        $request->expects($this->once())->method('clientIp')->willReturn('12345');
+        $request->expects($this->once())->method('getRequestTarget')->willReturn('/things?a=b');
         $logs[] = new AuditDeleteEvent('1234', 1, 'articles');
         $this->dispatchEvent('AuditStash.beforeLog', ['logs' => $logs]);
 
