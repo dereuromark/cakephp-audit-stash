@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/dereuromark/cakephp-audit-stash/actions/workflows/ci.yml/badge.svg)](https://github.com/dereuromark/cakephp-audit-stash/actions/workflows/ci.yml)
 [![Coverage Status](https://img.shields.io/codecov/c/github/dereuromark/cakephp-audit-stash/master.svg?style=flat-square)](https://codecov.io/github/dereuromark/cakephp-audit-stash)
-[![Total Downloads](https://img.shields.io/packagist/dt/dereuromark/cakephp-audit-stash.svg?style=flat-square)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892BF.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.txt)
 
 This plugin implements an "audit trail" for any of your Table classes in your application, that is,

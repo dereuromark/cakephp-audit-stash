@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         operating-system: [ ubuntu-20.04 ]
-        php-versions: ['8.1', '8.4']
+        php-versions: ['8.2', '8.4']
 
     name: PHP ${{ matrix.php-versions }} Test
     steps:
@@ -54,7 +54,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, intl
 
       - name: PHP Version
@@ -96,7 +96,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, intl
 
       - name: PHP Version
