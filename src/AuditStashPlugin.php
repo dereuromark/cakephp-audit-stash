@@ -14,9 +14,9 @@ class AuditStashPlugin extends BasePlugin
     /**
      * Plugin name.
      *
-     * @var string
+     * @var string|null
      */
-    protected string $name = 'AuditStash';
+    protected ?string $name = 'AuditStash';
 
     /**
      * Do bootstrapping or not
