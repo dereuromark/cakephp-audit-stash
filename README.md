@@ -1,8 +1,8 @@
 # AuditStash Plugin For CakePHP
 
-[![Build Status](https://github.com/lorenzo/audit-stash/actions/workflows/ci.yml/badge.svg)](https://github.com/lorenzo/audit-stash/actions/workflows/ci.yml)
-[![Coverage Status](https://img.shields.io/codecov/c/github/lorenzo/audit-stash/master.svg?style=flat-square)](https://codecov.io/github/lorenzo/audit-stash)
-[![Total Downloads](https://img.shields.io/packagist/dt/lorenzo/audit-stash.svg?style=flat-square)](https://packagist.org/packages/lorenzo/audit-stash)
+[![Build Status](https://github.com/dereuromark/cakephp-audit-stash/actions/workflows/ci.yml/badge.svg)](https://github.com/dereuromark/cakephp-audit-stash/actions/workflows/ci.yml)
+[![Coverage Status](https://img.shields.io/codecov/c/github/dereuromark/cakephp-audit-stash/master.svg?style=flat-square)](https://codecov.io/github/dereuromark/cakephp-audit-stash)
+[![Total Downloads](https://img.shields.io/packagist/dt/dereuromark/cakephp-audit-stash.svg?style=flat-square)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.txt)
 
 This plugin implements an "audit trail" for any of your Table classes in your application, that is,
@@ -21,7 +21,7 @@ You can install this plugin into your CakePHP application using [composer](https
 following lines in the root of your application.
 
 ```
-composer require lorenzo/audit-stash
+composer require dereuromark/cakephp-audit-stash
 bin/cake plugin load AuditStash
 ```
 

@@ -1,5 +1,5 @@
 {
-    "name": "lorenzo/audit-stash",
+    "name": "dereuromark/cakephp-audit-stash",
     "description": "Flexible and rock solid audit log tracking plugin for cakephp",
     "type": "cakephp-plugin",
     "license": "MIT",
@@ -36,8 +36,8 @@
             "@cs-check",
             "@test"
         ],
-        "cs-check": "phpcs --colors --parallel=16 -p src/ tests/",
-        "cs-fix": "phpcbf --colors --parallel=16 -p src/ tests/",
+        "cs-check": "phpcs --colors --parallel=16 -p",
+        "cs-fix": "phpcbf --colors --parallel=16 -p",
         "phpstan": "tools/phpstan analyse",
         "stan": [
             "@phpstan"
