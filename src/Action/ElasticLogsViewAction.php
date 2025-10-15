@@ -19,7 +19,7 @@ class ElasticLogsViewAction extends ViewAction
     /**
      * Returns the Repository object to use.
      *
-     * @return \Cake\ElasticSearch\Index;
+     * @return \Cake\ElasticSearch\Index
      */
     protected function _table(): Index
     {
@@ -29,12 +29,12 @@ class ElasticLogsViewAction extends ViewAction
     /**
      * Find a audit log by id.
      *
-     * @param string $id Record id
+     * @param string|int|null $id Record id
      * @param \Crud\Event\Subject $subject Event subject
      * @return \AuditStash\Model\Document\AuditLog
      * @throws \Exception
      */
-    protected function _findRecord(string $id, Subject $subject): AuditLog
+    protected function _findRecord(string|int|null $id, Subject $subject): AuditLog
     {
         $repository = $this->_table();
         $this->configIndex($repository, $this->_request());
@@ -43,7 +43,9 @@ class ElasticLogsViewAction extends ViewAction
             $repository->setName($this->_request()->getQuery('type'));
         }
 
-        $query = $repository->find($this->findMethod());
+        /** @var string $method */
+        $method = $this->findMethod();
+        $query = $repository->find($method);
         $query->where(['_id' => $id]);
         $subject->set([
             'repository' => $repository,
@@ -52,7 +54,7 @@ class ElasticLogsViewAction extends ViewAction
         $this->_trigger('beforeFind', $subject);
         $entity = $query->first();
         if (!$entity) {
-            return $this->_notFound($id, $subject);
+            $this->_notFound($id, $subject);
         }
         $subject->set(['entity' => $entity, 'success' => true]);
         $this->_trigger('afterFind', $subject);

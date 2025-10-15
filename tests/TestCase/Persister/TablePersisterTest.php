@@ -335,7 +335,7 @@ class TablePersisterTest extends TestCase
                 $entity->setError('field', ['error']);
 
                 return false;
-            }
+            },
         );
 
         $TablePersister->logEvents([$event]);
@@ -363,7 +363,7 @@ class TablePersisterTest extends TestCase
             'Model.beforeSave',
             function ($event, EntityInterface $entity) {
                 return false;
-            }
+            },
         );
 
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], [], new Entity());

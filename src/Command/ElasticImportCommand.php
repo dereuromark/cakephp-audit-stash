@@ -214,12 +214,12 @@ class ElasticImportCommand extends Command
         unset($audit['_matchingData']);
 
         $audit['original'] = collection($changes)
-            ->map(fn ($c) => $c['old_value'])
+            ->map(fn($c) => $c['old_value'])
             ->map([$this, 'habtmFormatter'])
             ->map([$this, 'allBallsRemover'])
             ->toArray();
         $audit['changed'] = collection($changes)
-            ->map(fn ($c) => $c['new_value'])
+            ->map(fn($c) => $c['new_value'])
             ->map([$this, 'habtmFormatter'])
             ->map([$this, 'allBallsRemover'])
             ->toArray();

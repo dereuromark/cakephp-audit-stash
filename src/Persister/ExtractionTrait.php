@@ -27,6 +27,7 @@ trait ExtractionTrait
             'type' => $event->getEventType(),
             'source' => $event->getSourceName(),
             'parent_source' => null,
+            'display_value' => $event->getDisplayValue(),
             'original' => null,
             'changed' => null,
             'created' => new DateTime($event->getTimestamp()),
@@ -41,8 +42,12 @@ trait ExtractionTrait
         }
 
         if ($event instanceof BaseEvent) {
-            $fields['original'] = $serialize ? $this->serialize($event->getOriginal()) : $event->getOriginal();
-            $fields['changed'] = $serialize ? $this->serialize($event->getChanged()) : $event->getChanged();
+            // For create events, original should be null
+            $fields['original'] = $fields['type'] === 'create' ? null :
+                ($serialize ? $this->serialize($event->getOriginal()) : $event->getOriginal());
+            // For delete events, changed should be null
+            $fields['changed'] = $fields['type'] === 'delete' ? null :
+                ($serialize ? $this->serialize($event->getChanged()) : $event->getChanged());
         }
 
         return $fields;
@@ -107,7 +112,7 @@ trait ExtractionTrait
         EventInterface $event,
         bool|array $fields,
         bool $unsetExtracted = true,
-        bool $serialize = true
+        bool $serialize = true,
     ): array {
         $extracted = [
             'meta' => $event->getMetaInfo(),

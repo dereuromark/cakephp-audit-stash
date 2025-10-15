@@ -31,7 +31,7 @@ trait IndexConfigTrait
                 'index' => sprintf(
                     $indexTemplate,
                     (new DateTime($request->getQuery('at')))
-                        ->format('-Y.m.d')
+                        ->format('-Y.m.d'),
                 ),
             ]);
         }

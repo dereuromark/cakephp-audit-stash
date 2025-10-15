@@ -10,7 +10,7 @@
     },
     "require-dev": {
         "cakephp/cakephp": "^5.0.0",
-        "phpunit/phpunit": "^10.1.0",
+        "phpunit/phpunit": "^12.4.0",
         "cakephp/cakephp-codesniffer": "^5.0",
         "cakephp/migrations": "^4.0.0",
         "cakephp/elastic-search": "^4.0.0",

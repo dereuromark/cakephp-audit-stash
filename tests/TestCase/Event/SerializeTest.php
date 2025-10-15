@@ -65,7 +65,7 @@ class SerializeTest extends TestCase
             'articles',
             ['title' => 'foo'],
             null,
-            new Entity()
+            new Entity(),
         );
         $event->setMetaInfo(['extra' => 'info']);
         $serialized = json_encode($event);
@@ -87,7 +87,7 @@ class SerializeTest extends TestCase
             'articles',
             ['title' => 'foo'],
             ['title' => 'bar'],
-            new Entity()
+            new Entity(),
         );
         $event->setMetaInfo(['extra' => 'info']);
         $serialized = json_encode($event);

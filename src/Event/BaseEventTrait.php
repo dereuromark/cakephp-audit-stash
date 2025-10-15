@@ -60,6 +60,13 @@ trait BaseEventTrait
     protected ?EntityInterface $entity = null;
 
     /**
+     * The display field value for human-friendly identification.
+     *
+     * @var string|null
+     */
+    protected ?string $displayValue = null;
+
+    /**
      * Returns the global transaction id in which this event is contained.
      *
      * @return string
@@ -151,5 +158,15 @@ trait BaseEventTrait
     public function getEntity(): ?EntityInterface
     {
         return $this->entity;
+    }
+
+    /**
+     * Returns the display field value.
+     *
+     * @return string|null
+     */
+    public function getDisplayValue(): ?string
+    {
+        return $this->displayValue;
     }
 }

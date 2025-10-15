@@ -40,6 +40,7 @@ abstract class BaseEvent implements EventInterface
      * @param array|null $changed The array of changes that got detected for the entity
      * @param array|null $original The original values the entity had before it got changed
      * @param \Cake\Datasource\EntityInterface|null $entity The entity being changed
+     * @param string|null $displayValue Human friendly text for the record
      */
     public function __construct(
         string $transactionId,
@@ -47,7 +48,8 @@ abstract class BaseEvent implements EventInterface
         string $source,
         ?array $changed,
         ?array $original,
-        ?EntityInterface $entity
+        ?EntityInterface $entity,
+        ?string $displayValue = null,
     ) {
         $this->transactionId = $transactionId;
         $this->id = $id;
@@ -56,6 +58,7 @@ abstract class BaseEvent implements EventInterface
         $this->original = $original;
         $this->timestamp = (new DateTime())->format(DateTime::ATOM);
         $this->entity = $entity;
+        $this->displayValue = $displayValue;
     }
 
     /**

@@ -139,6 +139,8 @@ class TablePersister implements PersisterInterface
             $this->setTable($this->getConfig('table'));
         }
 
+        assert($this->_table !== null);
+
         return $this->_table;
     }
 
@@ -156,7 +158,7 @@ class TablePersister implements PersisterInterface
 
         if (!($table instanceof Table)) {
             throw new InvalidArgumentException(
-                'The `$table` argument must be either a table alias, or an instance of `\Cake\ORM\Table`.'
+                'The `$table` argument must be either a table alias, or an instance of `\Cake\ORM\Table`.',
             );
         }
 
@@ -189,7 +191,7 @@ class TablePersister implements PersisterInterface
                 $log,
                 $extractMetaFields,
                 $unsetExtractedMetaFields,
-                $serializeFields
+                $serializeFields,
             );
 
             $persisterEntity = $persisterTable->newEntity($fields);

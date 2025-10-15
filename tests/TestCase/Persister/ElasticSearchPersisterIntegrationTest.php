@@ -59,7 +59,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
 
         $this->assertEquals(
             new DateTime($events[0]->getTimestamp()),
-            new DateTime($articles[0]->get('@timestamp'))
+            new DateTime($articles[0]->get('@timestamp')),
         );
 
         $expected = [
@@ -119,7 +119,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
 
         $this->assertEquals(
             new DateTime($events[0]->getTimestamp()),
-            new DateTime($articles[0]->get('@timestamp'))
+            new DateTime($articles[0]->get('@timestamp')),
         );
         $expected = [
             'transaction' => '1234',
@@ -159,7 +159,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
 
         $this->assertEquals(
             new DateTime($events[0]->getTimestamp()),
-            new DateTime($articles[0]->get('@timestamp'))
+            new DateTime($articles[0]->get('@timestamp')),
         );
 
         $expected = [
@@ -217,7 +217,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         $audit = $audits->first();
         $this->assertEquals(
             new DateTime($events[0]->getTimestamp()),
-            new DateTime($audit->get('@timestamp'))
+            new DateTime($audit->get('@timestamp')),
         );
     }
 
@@ -253,7 +253,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
 
         $this->assertEquals(
             new DateTime($events[0]->getTimestamp()),
-            new DateTime($articles[0]->get('@timestamp'))
+            new DateTime($articles[0]->get('@timestamp')),
         );
 
         $expected = [

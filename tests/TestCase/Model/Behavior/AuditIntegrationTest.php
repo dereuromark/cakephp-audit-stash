@@ -77,7 +77,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertEquals('articles', $event->getSourceName());
                 $this->assertEquals(
                     $event->getOriginal(),
-                    array_intersect_assoc($event->getOriginal(), $event->getChanged())
+                    array_intersect_assoc($event->getOriginal(), $event->getChanged()),
                 );
                 $this->assertNotEmpty($event->getTransactionId());
 

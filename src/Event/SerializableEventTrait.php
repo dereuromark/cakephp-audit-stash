@@ -16,7 +16,7 @@ trait SerializableEventTrait
     public function serialize(): string
     {
         return serialize(
-            $this->__serialize()
+            $this->__serialize(),
         );
     }
 
@@ -29,7 +29,7 @@ trait SerializableEventTrait
     public function unserialize(string $data): void
     {
         $this->__unserialize(
-            unserialize($data)
+            unserialize($data),
         );
     }
 

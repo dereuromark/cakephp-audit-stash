@@ -87,7 +87,7 @@ applied via its `setConfig()` method:
 $this->addBehavior('AuditStash.AuditLog');
 $this->behaviors()->get('AuditLog')->persister()->setConfig([
     'extractMetaFields' => [
-        'user.id' => 'user_id'
+        'user.id' => 'user_id',
     ]
 ]);
 ```
@@ -120,7 +120,7 @@ class ArticlesTable extends Table
     {
         ...
         $this->addBehavior('AuditStash.AuditLog', [
-            'blacklist' => ['created', 'modified', 'another_field_name']
+            'blacklist' => ['created', 'modified', 'another_field_name'],
         ]);
     }
 }
@@ -133,7 +133,7 @@ public function initialize(array $config = []): void
 {
     ...
     $this->addBehavior('AuditStash.AuditLog', [
-        'whitelist' => ['title', 'description', 'author_id']
+        'whitelist' => ['title', 'description', 'author_id'],
     ]);
 }
 ```
@@ -145,7 +145,7 @@ public function initialize(array $config = []): void
 {
     ...
     $this->addBehavior('AuditStash.AuditLog', [
-        'sensitive' => ['body']
+        'sensitive' => ['body'],
     ]);
 }
 ```
@@ -169,7 +169,7 @@ class AppController extends Controller
         $eventManager->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $this->getRequest()->getAttribute('identity')?->getIdentifier()
+                user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
             )
         );
     }
@@ -194,7 +194,7 @@ class AppController extends Controller
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $this->getRequest()->getAttribute('identity')?->getIdentifier()
+                user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
             )
         );
     }
@@ -216,7 +216,7 @@ use Cake\Event\EventManager;
 EventManager::instance()->on(new ApplicationMetadata('my_blog_app', [
     'server' => $theServerID,
     'extra' => $somExtraInformation,
-    'moon_phase' => $currentMoonPhase
+    'moon_phase' => $currentMoonPhase,
 ]));
 
 ```
@@ -268,7 +268,7 @@ lines:
 
 ```php
 'AuditStash' => [
-    'persister' => 'App\Namespace\For\Your\Persister'
+    'persister' => 'App\Namespace\For\Your\Persister',
 ]
 ```
 
@@ -300,8 +300,6 @@ required. First create the file `src/Model/Audit/AuditTrail.php` with the follow
 
 ```php
 <?php
-declare(strict_types=1);
-
 namespace App\Model\Audit;
 
 use Cake\Utility\Text;
@@ -322,7 +320,7 @@ class AuditTrail
     {
         return [
             '_auditQueue' => $this->_auditQueue,
-            '_auditTransaction' => $this->_auditTransaction
+            '_auditTransaction' => $this->_auditTransaction,
         ];
     }
 }
@@ -332,8 +330,8 @@ Anywhere you wish to use `Connection::transactional()`, you will need to first i
 
 ```php
 use App\Model\Audit\AuditTrail;
+use ArrayObject
 use Cake\Event\Event;
-use \ArrayObject
 ```
 
 Your transaction should then look similar to this example of a BookmarksController:
@@ -355,7 +353,7 @@ if ($success) {
     $this->Bookmarks->->behaviors()->get('AuditLog')->afterCommit(
         $event,
         $result,
-        new ArrayObject($auditTrail->toSaveOptions())
+        new ArrayObject($auditTrail->toSaveOptions()),
     );
 }
 ```

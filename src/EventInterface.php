@@ -60,4 +60,12 @@ interface EventInterface extends JsonSerializable, Serializable
      * @return void
      */
     public function setMetaInfo(array $meta): void;
+
+    /**
+     * Returns the display field value.
+     * The display field is set via the Model.setDisplayField($fieldName) property
+     *
+     * @return string|null
+     */
+    public function getDisplayValue(): ?string;
 }

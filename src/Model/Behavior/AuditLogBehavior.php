@@ -33,7 +33,7 @@ class AuditLogBehavior extends Behavior
     protected array $_defaultConfig = [
         'index' => null,
         'type' => null,
-        'blacklist' => ['created', 'modified'],
+        'blacklist' => ['created', 'modified', 'id'],
         'whitelist' => [],
         'sensitive' => [],
     ];
@@ -79,7 +79,7 @@ class AuditLogBehavior extends Behavior
     public function injectTracking(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditTransaction'])) {
             $options['_auditTransaction'] = Text::uuid();
@@ -123,10 +123,17 @@ class AuditLogBehavior extends Behavior
         string $transactionId,
         EntityInterface $entity,
         array $changed,
-        array $original
+        array $original,
     ): BaseEvent {
         $primary = $entity->extract((array)$this->_table->getPrimaryKey());
         $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
+
+        // Get display field value for human-friendly identification
+        $displayField = $this->_table->getDisplayField();
+        $displayValue = null;
+        if (is_string($displayField) && $entity->has($displayField)) {
+            $displayValue = (string)$entity->get($displayField);
+        }
 
         return new $auditEvent(
             $transactionId,
@@ -134,7 +141,8 @@ class AuditLogBehavior extends Behavior
             $this->_table->getTable(),
             $changed,
             $original,
-            $entity
+            $entity,
+            $displayValue,
         );
     }
 
@@ -150,7 +158,7 @@ class AuditLogBehavior extends Behavior
     public function afterSave(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;
@@ -161,7 +169,7 @@ class AuditLogBehavior extends Behavior
             $config['whitelist'] = $this->_table->getSchema()->columns();
             $config['whitelist'] = array_merge(
                 $config['whitelist'],
-                $this->getAssociationProperties(array_keys($options['associated']))
+                $this->getAssociationProperties(array_keys($options['associated'])),
             );
         }
 
@@ -211,14 +219,14 @@ class AuditLogBehavior extends Behavior
     public function afterCommit(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;
         }
 
         $events = collection($options['_auditQueue'])
-            ->map(fn ($entity, $pos, $it): mixed => $it->getInfo())
+            ->map(fn($entity, $pos, $it): mixed => $it->getInfo())
             ->toList();
 
         if (empty($events)) {
@@ -240,7 +248,7 @@ class AuditLogBehavior extends Behavior
     public function afterDelete(
         Event $event,
         EntityInterface $entity,
-        ArrayObject $options
+        ArrayObject $options,
     ): void {
         if (!isset($options['_auditQueue'])) {
             return;
@@ -248,7 +256,35 @@ class AuditLogBehavior extends Behavior
         $transaction = $options['_auditTransaction'];
         $parent = isset($options['_sourceTable']) ? $options['_sourceTable']->getTable() : null;
         $primary = $entity->extract((array)$this->_table->getPrimaryKey());
-        $auditEvent = new AuditDeleteEvent($transaction, $primary, $this->_table->getTable(), $parent);
+
+        // Get display field value for human-friendly identification
+        $displayField = $this->_table->getDisplayField();
+        $displayValue = null;
+        if (is_string($displayField) && $entity->has($displayField)) {
+            $displayValue = (string)$entity->get($displayField);
+        }
+
+        // Capture original values before deletion
+        $config = $this->_config;
+        $original = $entity->getOriginalValues();
+
+        // Filter out blacklisted fields from original
+        foreach ($original as $originalKey => $originalValue) {
+            if (in_array($originalKey, $config['blacklist'], true)) {
+                unset($original[$originalKey]);
+            }
+        }
+
+        $this->redactArray($original);
+
+        $auditEvent = new AuditDeleteEvent(
+            $transaction,
+            $primary,
+            $this->_table->getTable(),
+            $parent,
+            $original,
+            $displayValue,
+        );
         $options['_auditQueue']->attach($entity, $auditEvent);
         if (Configure::read('AuditStash.saveType') === 'afterSave') {
             $this->afterCommit(new Event(''), $entity, $options);
