@@ -21,7 +21,7 @@ class CreateAuditLogs extends BaseMigration
                 'signed' => false,
             ])
             ->addPrimaryKey(['id'])
-            ->addColumn('transaction', 'uuid', [
+            ->addColumn('transaction', 'binaryuuid', [
                 'default' => null,
                 'limit' => null,
                 'null' => false,

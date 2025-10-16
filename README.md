@@ -77,6 +77,9 @@ bin/cake migrations migrate -p AuditStash
 bin/cake bake model AuditLogs
 ```
 
+**Performance Note:** The migration uses `binaryuuid` for the transaction field, which stores UUIDs as BINARY(16) instead of CHAR(36).
+This provides ~56% space savings and better index performance.
+
 #### Table Persister Configuration
 
 The table persister supports various configuration options, please refer to

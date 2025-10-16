@@ -16,7 +16,7 @@ class AuditLogsTable extends Table
 
         $this->setSchema([
             'id' => 'integer',
-            'transaction' => 'string',
+            'transaction' => 'binaryuuid',
             'type' => 'string',
             'primary_key' => 'integer',
             'source' => 'string',
