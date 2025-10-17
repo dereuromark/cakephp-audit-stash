@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Meta;
 
-use AuditStash\EventInterface;
+use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
 use Cake\Http\ServerRequest as Request;
 
@@ -54,7 +54,7 @@ class RequestMetadata implements EventListenerInterface
     /**
      * Enriches all the passed audit logs to add the request info metadata.
      *
-     * @param \AuditStash\EventInterface $event The AuditStash.beforeLog event
+     * @param \Cake\Event\EventInterface $event The AuditStash.beforeLog event
      * @param array<\AuditStash\Event\BaseEvent> $logs The audit log event objects
      * @return void
      */
