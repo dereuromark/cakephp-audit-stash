@@ -156,51 +156,139 @@ public function initialize(array $config = []): void
 ### Storing The Logged In User
 
 It is often useful to store the identifier of the user that is triggering the changes in a certain table. For this purpose, `AuditStash`
-provides the `RequestMetadata` listener class, that is capable of storing the current URL, IP and logged in user. You need to add this
-listener to your application in the `AppController::beforeFilter()` method:
+provides the `RequestMetadata` listener class, that is capable of storing the current URL, IP and logged in user.
+
+The `user` parameter accepts a string, integer, or null value. You can pass:
+- **User ID** (integer) - Most common for lookups
+- **Username** (string) - Useful for human-readable logs
+- **Email** (string) - Alternative identifier for audit trails
+
+You need to add this listener to your application in the `AppController::beforeFilter()` method.
+
+#### Using CakePHP Authentication
+
+If you're using the official [CakePHP Authentication plugin](https://book.cakephp.org/authentication/2/en/index.html):
 
 ```php
 use AuditStash\Meta\RequestMetadata;
-...
+use Cake\Event\EventManager;
 
 class AppController extends Controller
 {
     public function beforeFilter(EventInterface $event)
     {
-        ...
-        $eventManager = $this->fetchTable()->getEventManager();
-        $eventManager->on(
+        parent::beforeFilter($event);
+
+        EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
                 user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
-            )
+            ),
         );
     }
 }
 ```
 
-The above code assumes that you will trigger the table operations from the controller, using the default Table class for the controller.
-If you plan to use other Table classes for saving or deleting inside the same controller, it is advised that you attach the listener
-globally:
+You can also pass other user fields instead of the identifier:
 
+```php
+// Store username instead of ID
+user: $this->getRequest()->getAttribute('identity')?->get('username'),
+
+// Store email instead of ID
+user: $this->getRequest()->getAttribute('identity')?->get('email'),
+```
+
+#### Using TinyAuth
+
+If you're using the [TinyAuth plugin](https://github.com/dereuromark/cakephp-tinyauth):
 
 ```php
 use AuditStash\Meta\RequestMetadata;
 use Cake\Event\EventManager;
-...
 
 class AppController extends Controller
 {
     public function beforeFilter(EventInterface $event)
     {
-        ...
+        parent::beforeFilter($event);
+
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
-            )
+                user: $this->AuthUser->user('email'),
+            ),
         );
     }
+}
+```
+
+You can pass any field from the user session:
+
+```php
+// Store user ID
+user: $this->AuthUser->id(),
+
+// Store username
+user: $this->AuthUser->user('username'),
+
+// Store email
+user: $this->AuthUser->user('email'),
+```
+
+#### Attaching Globally vs Per-Table
+
+The above examples use `EventManager::instance()->on()` which attaches the listener **globally**. This is recommended if you plan to use
+multiple Table classes for saving or deleting inside the same controller.
+
+If you only need to track changes for the controller's default Table class, you can attach it to that specific table's event manager:
+
+```php
+public function beforeFilter(EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    $eventManager = $this->fetchTable()->getEventManager();
+    $eventManager->on(
+        new RequestMetadata(
+            request: $this->getRequest(),
+            user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+        ),
+    );
+}
+```
+
+#### Storing Additional User Information
+
+If you need to store more user information beyond a single identifier (e.g., both user ID and email, or user name), you can create a
+custom metadata listener using the `AuditStash.beforeLog` event:
+
+```php
+use Cake\Event\EventInterface;
+use Cake\Event\EventManager;
+
+public function beforeFilter(EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    // First, add the basic RequestMetadata with user ID
+    EventManager::instance()->on(
+        new RequestMetadata(
+            request: $this->getRequest(),
+            user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+        ),
+    );
+
+    // Then add additional user info via custom metadata
+    $identity = $this->getRequest()->getAttribute('identity');
+    EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs) use ($identity): void {
+        foreach ($logs as $log) {
+            $log->setMetaInfo($log->getMetaInfo() + [
+                'user_email' => $identity?->get('email'),
+                'user_name' => $identity?->get('name'),
+            ]);
+        }
+    });
 }
 ```
 
