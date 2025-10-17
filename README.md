@@ -322,6 +322,193 @@ EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $e
 });
 ```
 
+### Capturing Reasons/Comments For Changes
+
+You can capture user-provided reasons or comments for changes using the metadata system. This is useful for compliance, audit trails, or understanding why changes were made.
+
+#### Approach 1: Per-Request Reason (via Request Attribute)
+
+Store the reason in the request and extract it in a listener:
+
+```php
+// In your Controller action (before saving)
+public function edit($id)
+{
+    $article = $this->Articles->get($id);
+
+    if ($this->request->is(['patch', 'post', 'put'])) {
+        // Store reason from form input
+        $reason = $this->request->getData('audit_reason') ?? 'No reason provided';
+        $this->request = $this->request->withAttribute('audit_reason', $reason);
+
+        $article = $this->Articles->patchEntity($article, $this->request->getData());
+        if ($this->Articles->save($article)) {
+            $this->Flash->success('Article saved.');
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    $this->set(compact('article'));
+}
+```
+
+Then in your `AppController::beforeFilter()`:
+
+```php
+use Cake\Event\EventInterface;
+use Cake\Event\EventManager;
+
+public function beforeFilter(EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    // Capture reason from request attribute
+    EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs): void {
+        $reason = $this->getRequest()->getAttribute('audit_reason');
+        if ($reason !== null) {
+            foreach ($logs as $log) {
+                $log->setMetaInfo($log->getMetaInfo() + [
+                    'reason' => $reason,
+                ]);
+            }
+        }
+    });
+}
+```
+
+Add the reason field to your forms:
+
+```php
+// In your template (e.g., templates/Articles/edit.php)
+<?= $this->Form->control('audit_reason', [
+    'label' => 'Reason for change',
+    'type' => 'textarea',
+    'rows' => 3,
+]) ?>
+```
+
+#### Approach 2: Per-Save Reason (via Save Options)
+
+Pass the reason directly through save options and extract it in a listener:
+
+```php
+// In your Controller
+public function edit($id)
+{
+    $article = $this->Articles->get($id);
+
+    if ($this->request->is(['patch', 'post', 'put'])) {
+        $article = $this->Articles->patchEntity($article, $this->request->getData());
+
+        $reason = $this->request->getData('audit_reason') ?? 'No reason provided';
+
+        if ($this->Articles->save($article, ['_auditReason' => $reason])) {
+            $this->Flash->success('Article saved.');
+            return $this->redirect(['action' => 'index']);
+        }
+    }
+
+    $this->set(compact('article'));
+}
+```
+
+Then in your Table's `initialize()` method or `AppController::beforeFilter()`:
+
+```php
+use Cake\Event\EventInterface;
+
+// In ArticlesTable::initialize() or globally in AppController
+$this->getEventManager()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs): void {
+    // Access the reason from the table's event data if available
+    $reason = $event->getSubject()->getEventManager()->getEventData('_auditReason') ?? null;
+
+    foreach ($logs as $log) {
+        $meta = $log->getMetaInfo();
+
+        // Check if reason was passed in the meta already
+        if (!isset($meta['reason']) && $reason !== null) {
+            $log->setMetaInfo($meta + ['reason' => $reason]);
+        }
+    }
+});
+```
+
+A simpler approach using entity virtual properties:
+
+```php
+// In your Entity class (e.g., src/Model/Entity/Article.php)
+protected array $_virtual = ['audit_reason'];
+
+// In your Controller
+$article->audit_reason = $this->request->getData('audit_reason');
+$this->Articles->save($article);
+
+// In your listener (AppController or Table)
+EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs): void {
+    foreach ($logs as $log) {
+        $entity = $log->getChanged(); // or use reflection to get entity if needed
+        // Extract reason from entity if it was set
+        if (isset($entity['audit_reason'])) {
+            $log->setMetaInfo($log->getMetaInfo() + [
+                'reason' => $entity['audit_reason'],
+            ]);
+        }
+    }
+});
+```
+
+#### Approach 3: CLI/Background Job Reasons
+
+For CLI commands or background jobs where there's no request context:
+
+```php
+// In your Shell/Command
+use Cake\Event\EventManager;
+
+public function execute()
+{
+    // Set a reason for this batch operation
+    $reason = 'Automated cleanup job - removing old records';
+
+    EventManager::instance()->on('AuditStash.beforeLog', function ($event, array $logs) use ($reason): void {
+        foreach ($logs as $log) {
+            $log->setMetaInfo($log->getMetaInfo() + [
+                'reason' => $reason,
+                'source' => 'cli',
+            ]);
+        }
+    });
+
+    // Perform your operations
+    $this->Articles->deleteAll(['created <' => new DateTime('-1 year')]);
+}
+```
+
+#### Storing Reason in Database (Table Persister)
+
+If using the `TablePersister`, you can extract the reason to a dedicated database column:
+
+```php
+// In your configuration (e.g., config/app_local.php or bootstrap.php)
+$this->addBehavior('AuditStash.AuditLog');
+$this->behaviors()->get('AuditLog')->persister()->setConfig([
+    'extractMetaFields' => [
+        'reason' => 'reason', // Extract 'reason' from meta to 'reason' column
+        'user' => 'user_id',
+    ],
+]);
+```
+
+Then add a `reason` column to your `audit_logs` table:
+
+```php
+// In a migration
+$table->addColumn('reason', 'text', [
+    'default' => null,
+    'null' => true,
+]);
+```
+
 ### Implementing Your Own Persister Strategies
 
 There are valid reasons for wanting to use a different persist engine for your audit logs. Luckily, this plugin allows you to implement
@@ -332,6 +519,9 @@ use AuditStash\PersisterInterface;
 
 class MyPersister implements PersisterInterface
 {
+    /**
+     * @param array<\AuditStash\EventInterface> $auditLogs
+     */
     public function logEvents(array $auditLogs): void
     {
         foreach ($auditLogs as $log) {
