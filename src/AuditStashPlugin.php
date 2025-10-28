@@ -74,7 +74,8 @@ class AuditStashPlugin extends BasePlugin
                     ->setPatterns(['id' => '[0-9]+']);
                 $routes->connect('/timeline/{source}/{primaryKey}', ['controller' => 'AuditLogs', 'action' => 'timeline'])
                     ->setPass(['source', 'primaryKey']);
-                $routes->connect('/export', ['controller' => 'AuditLogs', 'action' => 'export']);
+                $routes->connect('/export', ['controller' => 'AuditLogs', 'action' => 'export'])
+                    ->setExtensions(['csv', 'json']);
 
                 $routes->fallbacks();
             });

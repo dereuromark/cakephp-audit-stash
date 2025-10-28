@@ -17,6 +17,11 @@ define('LOGS', TMP . 'logs' . DS);
 
 define('CONFIG', PLUGIN_ROOT . DS . 'config' . DS);
 
+define('CAKE_CORE_INCLUDE_PATH', PLUGIN_ROOT . '/vendor/cakephp/cakephp');
+define('CORE_PATH', CAKE_CORE_INCLUDE_PATH . DS);
+require CORE_PATH . 'config/bootstrap.php';
+require CAKE . 'functions.php';
+
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;

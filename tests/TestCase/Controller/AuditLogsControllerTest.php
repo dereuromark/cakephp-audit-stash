@@ -276,7 +276,7 @@ class AuditLogsControllerTest extends TestCase
             'plugin' => 'AuditStash',
             'controller' => 'AuditLogs',
             'action' => 'export',
-            '?' => ['format' => 'csv'],
+            '_ext' => 'csv',
         ]);
 
         $this->assertResponseOk();
@@ -313,7 +313,7 @@ class AuditLogsControllerTest extends TestCase
             'plugin' => 'AuditStash',
             'controller' => 'AuditLogs',
             'action' => 'export',
-            '?' => ['format' => 'json'],
+            '_ext' => 'json',
         ]);
 
         $this->assertResponseOk();
@@ -360,8 +360,8 @@ class AuditLogsControllerTest extends TestCase
             'plugin' => 'AuditStash',
             'controller' => 'AuditLogs',
             'action' => 'export',
+            '_ext' => 'json',
             '?' => [
-                'format' => 'json',
                 'source' => 'articles',
             ],
         ]);

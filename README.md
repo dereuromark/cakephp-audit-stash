@@ -666,7 +666,7 @@ Default routes are available at:
 - **Browse logs**: `/admin/audit-logs`
 - **View single log**: `/admin/audit-logs/view/{id}`
 - **Record timeline**: `/admin/audit-logs/timeline/{table}/{recordId}`
-- **Export**: `/admin/audit-logs/export?format=csv` (or `format=json`)
+- **Export**: `/admin/audit-logs/export.csv` or `/admin/audit-logs/export.json`
 
 The routes are secured by being in the Admin prefix, which typically requires authentication in your application.
 
@@ -826,9 +826,6 @@ bin/cake audit_stash cleanup
 # Dry run to see what would be deleted
 bin/cake audit_stash cleanup --dry-run
 
-# Override retention period (keep only 30 days)
-bin/cake audit_stash cleanup --retention 30
-
 # Clean up logs for specific table only
 bin/cake audit_stash cleanup --table users
 
@@ -845,7 +842,8 @@ Add to your crontab to run cleanup automatically:
 0 2 * * * cd /path/to/app && bin/cake audit_stash cleanup --force
 ```
 
-**Note**: The cleanup command only works with `TablePersister`. For Elasticsearch, use [Index Lifecycle Management (ILM)](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html) policies instead.
+**Note**: The cleanup command only works with `TablePersister`.
+For Elasticsearch, use [Index Lifecycle Management (ILM)](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html) policies instead.
 
 ## Demo
 https://sandbox.dereuromark.de/sandbox/audit-stash

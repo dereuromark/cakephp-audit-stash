@@ -45,7 +45,7 @@ class CleanupCommand extends Command
     /**
      * @inheritDoc
      */
-    public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
+    protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         return parent::buildOptionParser($parser)
             ->setDescription('Cleanup old audit logs based on retention policies')
@@ -55,7 +55,7 @@ class CleanupCommand extends Command
                 'default' => null,
             ])
             ->addOption('table', [
-                'short' => 'T',
+                'short' => 't',
                 'help' => 'Only cleanup logs for a specific table/source',
                 'default' => null,
             ])
@@ -190,9 +190,9 @@ class CleanupCommand extends Command
     protected function getRetentionPeriod(Arguments $args, ?string $table): int
     {
         // Command line override
-        /** @var int|null $argRetention */
+        /** @var bool|string|null $argRetention */
         $argRetention = $args->getOption('retention');
-        if ($argRetention !== null) {
+        if ($argRetention !== null && $argRetention !== false) {
             return (int)$argRetention;
         }
 

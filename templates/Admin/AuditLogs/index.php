@@ -84,16 +84,16 @@ $this->loadHelper('AuditStash.Audit');
     <!-- Export buttons -->
     <div class="mb-3">
         <?php
-        $exportUrl = ['action' => 'export', '?' => $this->request->getQueryParams()];
+        $queryParams = $this->request->getQueryParams();
         ?>
         <?= $this->Html->link(
             __('Export CSV'),
-            $exportUrl + ['?' => ['format' => 'csv']],
+            ['action' => 'export', '_ext' => 'csv', '?' => $queryParams],
             ['class' => 'btn btn-sm btn-outline-primary']
         ) ?>
         <?= $this->Html->link(
             __('Export JSON'),
-            $exportUrl + ['?' => ['format' => 'json']],
+            ['action' => 'export', '_ext' => 'json', '?' => $queryParams],
             ['class' => 'btn btn-sm btn-outline-primary']
         ) ?>
     </div>

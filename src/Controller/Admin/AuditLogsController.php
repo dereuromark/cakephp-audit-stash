@@ -140,7 +140,7 @@ class AuditLogsController extends AppController
      */
     public function export(): Response
     {
-        $format = $this->request->getQuery('format', 'csv');
+        $format = $this->request->getParam('_ext') ?: 'csv';
         $query = $this->AuditLogs->find();
 
         // Apply same filters as index
@@ -186,6 +186,9 @@ class AuditLogsController extends AppController
             ->withDownload($filename);
 
         $output = fopen('php://temp', 'r+');
+        if ($output === false) {
+            throw new \RuntimeException('Failed to open temporary stream');
+        }
 
         // Headers
         fputcsv($output, [
@@ -223,6 +226,10 @@ class AuditLogsController extends AppController
         $csv = stream_get_contents($output);
         fclose($output);
 
+        if ($csv === false) {
+            throw new \RuntimeException('Failed to read CSV content');
+        }
+
         return $response->withStringBody($csv);
     }
 
@@ -253,9 +260,14 @@ class AuditLogsController extends AppController
             ];
         }
 
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        if ($json === false) {
+            throw new \RuntimeException('Failed to encode JSON');
+        }
+
         return $this->response
             ->withType('json')
             ->withDownload($filename)
-            ->withStringBody(json_encode($data, JSON_PRETTY_PRINT));
+            ->withStringBody($json);
     }
 }

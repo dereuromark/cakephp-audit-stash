@@ -25,7 +25,7 @@ class ElasticImportCommand extends Command
     /**
      * @inheritDoc
      */
-    public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
+    protected function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
         return parent::buildOptionParser($parser)
             ->setDescription('Imports audit logs from the legacy audit logs tables into elastic search')
