@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace AuditStash;
 
 use AuditStash\Command\CleanupCommand;
+use AuditStash\Monitor\AuditMonitor;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
+use Cake\Core\PluginApplicationInterface;
+use Cake\Event\EventManager;
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
@@ -27,7 +30,7 @@ class AuditStashPlugin extends BasePlugin
      *
      * @var bool
      */
-    protected bool $bootstrapEnabled = false;
+    protected bool $bootstrapEnabled = true;
 
     /**
      * Load routes or not
@@ -42,6 +45,20 @@ class AuditStashPlugin extends BasePlugin
      * @var bool
      */
     protected bool $middlewareEnabled = false;
+
+    /**
+     * Bootstrap the plugin.
+     *
+     * Registers the AuditMonitor event listener if monitoring is enabled.
+     *
+     * @return void
+     */
+    public function bootstrap(PluginApplicationInterface $app): void
+    {
+        parent::bootstrap($app);
+
+        EventManager::instance()->on(new AuditMonitor());
+    }
 
     /**
      * Add routes for the plugin.

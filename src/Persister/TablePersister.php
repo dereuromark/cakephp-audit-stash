@@ -6,6 +6,7 @@ namespace AuditStash\Persister;
 
 use AuditStash\PersisterInterface;
 use Cake\Core\InstanceConfigTrait;
+use Cake\Event\EventDispatcherTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use InvalidArgumentException;
@@ -15,6 +16,7 @@ use InvalidArgumentException;
  */
 class TablePersister implements PersisterInterface
 {
+    use EventDispatcherTrait;
     use ExtractionTrait;
     use InstanceConfigTrait;
     use LocatorAwareTrait;
@@ -200,10 +202,9 @@ class TablePersister implements PersisterInterface
 
             $persisterEntity = $persisterTable->newEntity($fields);
 
-            if (
-                !$persisterTable->save($persisterEntity) &&
-                $logErrors
-            ) {
+            if ($persisterTable->save($persisterEntity)) {
+                $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
+            } elseif ($logErrors) {
                 $this->log($this->toErrorLog($persisterEntity));
             }
         }
