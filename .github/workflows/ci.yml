@@ -35,7 +35,13 @@ jobs:
 
       - name: Test Suite
         run: |
-          composer check
+          composer test
+
+      - name: Upload coverage reports to Codecov
+        if: success()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   elastic_integration_test:
     runs-on: ubuntu-latest
