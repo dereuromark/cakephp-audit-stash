@@ -8,7 +8,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Event\BaseEvent;
-use AuditStash\Persister\ElasticSearchPersister;
+use AuditStash\Persister\TablePersister;
 use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
@@ -301,7 +301,7 @@ class AuditLogBehavior extends Behavior
     public function persister(?PersisterInterface $persister = null): PersisterInterface
     {
         if ($persister === null && $this->persister === null) {
-            $class = Configure::read('AuditStash.persister') ?: ElasticSearchPersister::class;
+            $class = Configure::read('AuditStash.persister') ?: TablePersister::class;
             $index = $this->getConfig('index') ?: $this->_table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);
 

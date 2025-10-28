@@ -9,9 +9,13 @@ define('ROOT', dirname(__DIR__));
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
+define('PLUGIN_ROOT', dirname(__DIR__));
+define('APP_ROOT', PLUGIN_ROOT . DS . 'tests' . DS . 'test_app');
 define('APP', __DIR__);
 define('TMP', sys_get_temp_dir() . DS);
 define('LOGS', TMP . 'logs' . DS);
+
+define('CONFIG', PLUGIN_ROOT . DS . 'config' . DS);
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -21,14 +25,25 @@ use Cake\ElasticSearch\IndexRegistry;
 use Cake\ElasticSearch\TestSuite\Fixture\MappingGenerator;
 use Cake\Routing\Router;
 use Cake\TestSuite\Fixture\SchemaLoader;
+use TestApp\Controller\AppController;
 use function Cake\Core\env;
 
 Configure::write('debug', true);
+
+Configure::write('App', [
+    'namespace' => 'TestApp',
+    'encoding' => 'utf-8',
+    'paths' => [
+        'templates' => [APP_ROOT . DS . 'templates' . DS],
+    ],
+]);
 
 Cache::setConfig('_cake_core_', [
     'className' => 'File',
     'path' => sys_get_temp_dir(),
 ]);
+
+class_alias(AppController::class, 'App\Controller\AppController');
 
 /**
  * To run with elastic search tests locally:
