@@ -3,11 +3,13 @@ name: Pull Request
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
+      fail-fast: false
       matrix:
         operating-system: [ ubuntu-24.04 ]
         php-versions: ['8.2', '8.5']
@@ -15,13 +17,14 @@ jobs:
     name: PHP ${{ matrix.php-versions }} Test
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: mbstring, intl, xdebug
+          extensions: mbstring, intl
+          coverage: pcov
 
       - name: PHP Version
         run: php -v
@@ -35,10 +38,14 @@ jobs:
 
       - name: Test Suite
         run: |
-          composer test
+          if [[ ${{ matrix.php-version }} == '8.2' ]]; then
+            vendor/bin/phpunit --coverage-clover=coverage.xml
+          else
+            vendor/bin/phpunit
+          fi
 
       - name: Upload coverage reports to Codecov
-        if: success()
+        if: success() && matrix.php-version == '8.2'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
