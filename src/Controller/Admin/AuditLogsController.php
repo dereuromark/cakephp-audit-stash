@@ -81,10 +81,7 @@ class AuditLogsController extends AppController
         $auditLogs = $this->paginate($query);
 
         // Get distinct sources for filter dropdown
-        $sources = $this->AuditLogs->find('list', [
-            'keyField' => 'source',
-            'valueField' => 'source',
-        ])
+        $sources = $this->AuditLogs->find('list', keyField: 'source', valueField: 'source')
             ->select(['source'])
             ->distinct(['source'])
             ->orderBy(['source' => 'ASC'])
@@ -209,7 +206,7 @@ class AuditLogsController extends AppController
             'Changed',
             'Meta',
             'Created',
-        ]);
+        ], escape: '\\');
 
         // Data
         foreach ($auditLogs as $log) {
@@ -225,7 +222,7 @@ class AuditLogsController extends AppController
                 $log->changed,
                 $log->meta,
                 $log->created,
-            ]);
+            ], escape: '\\');
         }
 
         rewind($output);

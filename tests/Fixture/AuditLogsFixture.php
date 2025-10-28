@@ -18,7 +18,7 @@ class AuditLogsFixture extends TestFixture
      */
     public array $fields = [
         'id' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => false, 'default' => null, 'autoIncrement' => true],
-        'transaction' => ['type' => 'binaryuuid', 'length' => null, 'null' => false, 'default' => null],
+        'transaction' => ['type' => 'string', 'length' => 36, 'null' => false, 'default' => null],
         'type' => ['type' => 'string', 'length' => 7, 'null' => false, 'default' => null],
         'primary_key' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => true, 'default' => null],
         'display_value' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
@@ -33,14 +33,17 @@ class AuditLogsFixture extends TestFixture
             'primary' => ['type' => 'primary', 'columns' => ['id']],
         ],
         '_indexes' => [
-            'transaction' => ['type' => 'index', 'columns' => ['transaction']],
-            'type' => ['type' => 'index', 'columns' => ['type']],
-            'primary_key' => ['type' => 'index', 'columns' => ['primary_key']],
-            'display_value' => ['type' => 'index', 'columns' => ['display_value']],
-            'source' => ['type' => 'index', 'columns' => ['source']],
-            'parent_source' => ['type' => 'index', 'columns' => ['parent_source']],
-            'username' => ['type' => 'index', 'columns' => ['username']],
-            'created' => ['type' => 'index', 'columns' => ['created']],
+            'idx_transaction' => ['type' => 'index', 'columns' => ['transaction']],
+            'idx_type' => ['type' => 'index', 'columns' => ['type']],
+            'idx_primary_key' => ['type' => 'index', 'columns' => ['primary_key']],
+            'idx_display_value' => ['type' => 'index', 'columns' => ['display_value']],
+            'idx_source' => ['type' => 'index', 'columns' => ['source']],
+            'idx_parent_source' => ['type' => 'index', 'columns' => ['parent_source']],
+            'idx_username' => ['type' => 'index', 'columns' => ['username']],
+            'idx_created' => ['type' => 'index', 'columns' => ['created']],
+        ],
+        '_options' => [
+            'quoteIdentifiers' => true,
         ],
     ];
 

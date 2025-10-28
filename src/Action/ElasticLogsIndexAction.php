@@ -114,6 +114,9 @@ class ElasticLogsIndexAction extends IndexAction
      */
     protected function addTimeConstraints(ServerRequest $request, Query $query): void
     {
+        $from = null;
+        $until = null;
+
         if ($request->getQuery('from')) {
             $from = new DateTime($request->getQuery('from'));
             $until = new DateTime();
@@ -123,7 +126,7 @@ class ElasticLogsIndexAction extends IndexAction
             $until = new DateTime($request->getQuery('until'));
         }
 
-        if ($from && $until) {
+        if ($from !== null && $until !== null) {
             $query->where(fn (QueryExpression $builder): QueryExpression => $builder
                 ->between(
                     '@timestamp',
@@ -134,7 +137,7 @@ class ElasticLogsIndexAction extends IndexAction
             return;
         }
 
-        if ($until) {
+        if ($until !== null) {
             $query->where(['@timestamp <=' => $until->format('Y-m-d H:i:s')]);
         }
     }

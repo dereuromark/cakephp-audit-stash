@@ -26,6 +26,12 @@ class AuditLogBehaviorTest extends TestCase
         parent::setUp();
         $this->table = new Table(['table' => 'articles']);
         $this->table->setPrimaryKey('id');
+        $this->table->setSchema([
+            'id' => ['type' => 'integer'],
+            'title' => ['type' => 'string'],
+            'body' => ['type' => 'text'],
+            'author_id' => ['type' => 'integer'],
+        ]);
         $this->behavior = new AuditLogBehavior($this->table, [
             'whitelist' => ['id', 'title', 'body', 'author_id'],
         ]);

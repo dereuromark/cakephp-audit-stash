@@ -23,11 +23,11 @@ class AuditIntegrationTest extends TestCase
      * @var array
      */
     public array $fixtures = [
-        'core.Articles',
-        'core.Comments',
-        'core.Authors',
-        'core.Tags',
-        'core.ArticlesTags',
+        'plugin.AuditStash.Articles',
+        'plugin.AuditStash.Comments',
+        'plugin.AuditStash.Authors',
+        'plugin.AuditStash.Tags',
+        'plugin.AuditStash.ArticlesTags',
     ];
 
     private ?Table $table;
@@ -404,7 +404,7 @@ class AuditIntegrationTest extends TestCase
         $this->table->Comments->setCascadeCallbacks(true);
 
         $this->table->Tags->setDependent(true);
-        $this->table->Tags->getCascadeCallbacks(true);
+        $this->table->Tags->setCascadeCallbacks(true);
 
         $this->persister
             ->expects($this->once())
@@ -420,8 +420,8 @@ class AuditIntegrationTest extends TestCase
 
                 $this->assertEquals('comments', $events[0]->getSourceName());
                 $this->assertEquals('comments', $events[1]->getSourceName());
-                $this->assertEquals('comments', $events[2]->getSourceName());
-                $this->assertEquals('comments', $events[3]->getSourceName());
+                $this->assertEquals('articles_tags', $events[2]->getSourceName());
+                $this->assertEquals('articles_tags', $events[3]->getSourceName());
                 $this->assertEquals('articles', $events[4]->getSourceName());
             });
 

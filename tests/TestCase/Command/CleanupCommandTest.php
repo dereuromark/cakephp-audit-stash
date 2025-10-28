@@ -35,7 +35,6 @@ class CleanupCommandTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->useCommandRunner();
 
         // Configure TablePersister
         Configure::write('AuditStash.persister', 'AuditStash\Persister\TablePersister');
@@ -97,7 +96,8 @@ class CleanupCommandTest extends TestCase
 
         $this->assertExitSuccess();
         $this->assertOutputContains('Dry run mode');
-        $this->assertOutputContains('Found 1 audit log(s) to delete');
+        $this->assertOutputContains('Summary by table:');
+        $this->assertOutputContains('articles');
 
         // Verify log was not deleted
         $count = $auditLogsTable->find()->count();

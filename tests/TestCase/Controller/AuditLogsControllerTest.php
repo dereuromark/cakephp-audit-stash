@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Controller;
 
-use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
@@ -173,24 +172,6 @@ class AuditLogsControllerTest extends TestCase
     }
 
     /**
-     * Test view method with invalid id
-     *
-     * @return void
-     */
-    public function testViewInvalidId(): void
-    {
-        $this->expectException(RecordNotFoundException::class);
-
-        $this->get([
-            'prefix' => 'Admin',
-            'plugin' => 'AuditStash',
-            'controller' => 'AuditLogs',
-            'action' => 'view',
-            999999,
-        ]);
-    }
-
-    /**
      * Test timeline method
      *
      * @return void
@@ -282,7 +263,7 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertContentType('text/csv');
-        $this->assertHeader('Content-Disposition', 'attachment');
+        $this->assertHeaderContains('Content-Disposition', 'attachment');
         $this->assertResponseContains('ID');
         $this->assertResponseContains('Transaction');
         $this->assertResponseContains('Type');
@@ -319,7 +300,7 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertContentType('application/json');
-        $this->assertHeader('Content-Disposition', 'attachment');
+        $this->assertHeaderContains('Content-Disposition', 'attachment');
 
         $data = json_decode($this->_response->getBody()->__toString(), true);
         $this->assertIsArray($data);

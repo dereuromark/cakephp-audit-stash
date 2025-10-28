@@ -28,12 +28,11 @@ class AuditHelper extends Helper
             return '<p class="text-muted">No changes</p>';
         }
 
-        $html = '<table class="table table-sm table-bordered audit-diff">';
-        $html .= '<thead><tr><th style="width: 20%;">Field</th><th style="width: 40%;">Before</th><th style="width: 40%;">After</th></tr></thead>';
-        $html .= '<tbody>';
-
         $allKeys = array_unique(array_merge(array_keys($original ?: []), array_keys($changed ?: [])));
         sort($allKeys);
+
+        $rows = '';
+        $hasChanges = false;
 
         foreach ($allKeys as $key) {
             $oldValue = $original[$key] ?? null;
@@ -44,14 +43,21 @@ class AuditHelper extends Helper
                 continue;
             }
 
-            $html .= '<tr>';
-            $html .= '<td><strong>' . h($key) . '</strong></td>';
-            $html .= '<td class="bg-danger bg-opacity-10">' . $this->formatValue($oldValue) . '</td>';
-            $html .= '<td class="bg-success bg-opacity-10">' . $this->formatValue($newValue) . '</td>';
-            $html .= '</tr>';
+            $hasChanges = true;
+            $rows .= '<tr>';
+            $rows .= '<td><strong>' . h($key) . '</strong></td>';
+            $rows .= '<td class="bg-danger bg-opacity-10">' . $this->formatValue($oldValue) . '</td>';
+            $rows .= '<td class="bg-success bg-opacity-10">' . $this->formatValue($newValue) . '</td>';
+            $rows .= '</tr>';
         }
 
-        $html .= '</tbody></table>';
+        if (!$hasChanges) {
+            return '<p class="text-muted">No changes</p>';
+        }
+
+        $html = '<table class="table table-sm table-bordered audit-diff">';
+        $html .= '<thead><tr><th style="width: 20%;">Field</th><th style="width: 40%;">Before</th><th style="width: 40%;">After</th></tr></thead>';
+        $html .= '<tbody>' . $rows . '</tbody></table>';
 
         return $html;
     }
@@ -73,12 +79,11 @@ class AuditHelper extends Helper
             return '<p class="text-muted">No changes</p>';
         }
 
-        $html = '<div class="audit-diff-inline">';
-        $html .= '<table class="table table-sm table-bordered">';
-        $html .= '<tbody>';
-
         $allKeys = array_unique(array_merge(array_keys($original ?: []), array_keys($changed ?: [])));
         sort($allKeys);
+
+        $rows = '';
+        $hasChanges = false;
 
         foreach ($allKeys as $key) {
             $oldValue = $original[$key] ?? null;
@@ -89,26 +94,33 @@ class AuditHelper extends Helper
                 continue;
             }
 
-            $html .= '<tr><td colspan="2" class="bg-light"><strong>' . h($key) . '</strong></td></tr>';
+            $hasChanges = true;
+            $rows .= '<tr><td colspan="2" class="bg-light"><strong>' . h($key) . '</strong></td></tr>';
 
-            // Show removed value
-            if ($oldValue !== null) {
-                $html .= '<tr>';
-                $html .= '<td class="text-end text-danger" style="width: 30px; border-right: 3px solid #dc3545;">−</td>';
-                $html .= '<td class="bg-danger bg-opacity-10">' . $this->formatValue($oldValue) . '</td>';
-                $html .= '</tr>';
+            // Show removed value (including when it's null)
+            if (array_key_exists($key, $original)) {
+                $rows .= '<tr>';
+                $rows .= '<td class="text-end text-danger" style="width: 30px; border-right: 3px solid #dc3545;">−</td>';
+                $rows .= '<td class="bg-danger bg-opacity-10">' . $this->formatValue($oldValue) . '</td>';
+                $rows .= '</tr>';
             }
 
-            // Show added value
-            if ($newValue !== null) {
-                $html .= '<tr>';
-                $html .= '<td class="text-end text-success" style="width: 30px; border-right: 3px solid #198754;">+</td>';
-                $html .= '<td class="bg-success bg-opacity-10">' . $this->formatValue($newValue) . '</td>';
-                $html .= '</tr>';
+            // Show added value (including when it's null)
+            if (array_key_exists($key, $changed)) {
+                $rows .= '<tr>';
+                $rows .= '<td class="text-end text-success" style="width: 30px; border-right: 3px solid #198754;">+</td>';
+                $rows .= '<td class="bg-success bg-opacity-10">' . $this->formatValue($newValue) . '</td>';
+                $rows .= '</tr>';
             }
         }
 
-        $html .= '</tbody></table>';
+        if (!$hasChanges) {
+            return '<p class="text-muted">No changes</p>';
+        }
+
+        $html = '<div class="audit-diff-inline">';
+        $html .= '<table class="table table-sm table-bordered">';
+        $html .= '<tbody>' . $rows . '</tbody></table>';
         $html .= '</div>';
 
         return $html;
