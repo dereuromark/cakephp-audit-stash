@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Action;
@@ -16,8 +17,8 @@ trait IndexConfigTrait
      *
      * @param \Cake\ElasticSearch\Index $repository
      * @param \Cake\Http\ServerRequest $request
+     *
      * @return void
-     * @throws \Exception
      */
     protected function configIndex(Index $repository, ServerRequest $request): void
     {
@@ -41,6 +42,7 @@ trait IndexConfigTrait
      * Get index repository
      *
      * @param string $alias
+     *
      * @return \Cake\ElasticSearch\Index
      */
     protected function getIndexRepository(string $alias): Index

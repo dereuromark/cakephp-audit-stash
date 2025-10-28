@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Model\Table;
@@ -22,7 +23,6 @@ use Cake\Validation\Validator;
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog> saveManyOrFail(iterable $entities, array $options = [])
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog> deleteManyOrFail(iterable $entities, array $options = [])
- *
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
  */
 class AuditLogsTable extends Table
@@ -31,6 +31,7 @@ class AuditLogsTable extends Table
      * Initialize method
      *
      * @param array<string, mixed> $config The configuration for the Table.
+     *
      * @return void
      */
     public function initialize(array $config): void
@@ -54,6 +55,7 @@ class AuditLogsTable extends Table
      * Default validation rules.
      *
      * @param \Cake\Validation\Validator $validator Validator instance.
+     *
      * @return \Cake\Validation\Validator
      */
     public function validationDefault(Validator $validator): Validator

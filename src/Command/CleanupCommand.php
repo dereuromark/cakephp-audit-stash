@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Command;
@@ -150,6 +151,7 @@ class CleanupCommand extends Command
      *
      * @param \Cake\Console\ConsoleIo $io Console IO
      * @param \Cake\ORM\Query\SelectQuery $query Query
+     *
      * @return void
      */
     protected function displaySummary(ConsoleIo $io, SelectQuery $query): void
@@ -163,7 +165,7 @@ class CleanupCommand extends Command
             ->orderBy(['source'])
             ->toArray();
 
-        if (empty($summary)) {
+        if (!$summary) {
             return;
         }
 
@@ -185,12 +187,13 @@ class CleanupCommand extends Command
      *
      * @param \Cake\Console\Arguments $args Arguments
      * @param string|null $table Table name
+     *
      * @return int Retention period in days
      */
     protected function getRetentionPeriod(Arguments $args, ?string $table): int
     {
         // Command line override
-        /** @var bool|string|null $argRetention */
+        /** @var string|bool|null $argRetention */
         $argRetention = $args->getOption('retention');
         if ($argRetention !== null && $argRetention !== false) {
             return (int)$argRetention;

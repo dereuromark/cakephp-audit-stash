@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Persister;
@@ -17,8 +18,8 @@ trait ExtractionTrait
      *
      * @param \AuditStash\EventInterface $event The event object from which to extract the fields.
      * @param bool $serialize Whether to serialize fields that are expected to hold array data.
+     *
      * @return array
-     * @throws \Exception
      */
     protected function extractBasicFields(EventInterface $event, bool $serialize = true): array
     {
@@ -58,6 +59,7 @@ trait ExtractionTrait
      *
      * @param \AuditStash\EventInterface $event The event object from which to extract the primary key.
      * @param string $strategy The strategy to use for extracting the primary key.
+     *
      * @return array
      */
     protected function extractPrimaryKeyFields(EventInterface $event, string $strategy = 'automatic'): array
@@ -73,8 +75,8 @@ trait ExtractionTrait
                     $id = $this->serialize($id);
                 }
                 $primaryKeyFields['primary_key'] = $id;
-                break;
 
+                break;
             case 'properties':
                 $id = (array)$event->getId();
                 if (count($id) === 1) {
@@ -84,15 +86,16 @@ trait ExtractionTrait
                         $primaryKeyFields['primary_key_' . $key] = $value;
                     }
                 }
-                break;
 
+                break;
             case 'raw':
                 $primaryKeyFields['primary_key'] = $event->getId();
-                break;
 
+                break;
             case 'serialized':
                 $id = $event->getId();
                 $primaryKeyFields['primary_key'] = $this->serialize($id);
+
                 break;
         }
 
@@ -106,6 +109,7 @@ trait ExtractionTrait
      * @param array|bool $fields Which/whether meta data fields should be extracted.
      * @param bool $unsetExtracted Whether the fields extracted from the meta data should be unset.
      * @param bool $serialize Whether to serialize fields that are expected to hold array data.
+     *
      * @return array
      */
     protected function extractMetaFields(
@@ -172,6 +176,7 @@ trait ExtractionTrait
      * into a string), but returned as is, ie `null` is being returned.
      *
      * @param mixed $value The value to convert to JSON.
+     *
      * @return string|null
      */
     protected function serialize(mixed $value): ?string

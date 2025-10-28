@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Command;
@@ -69,6 +70,7 @@ class ElasticImportCommand extends Command
 
         $featureList = function ($element) {
             [$k, $v] = explode(':', $element);
+
             yield $k => $v;
         };
 
@@ -158,11 +160,12 @@ class ElasticImportCommand extends Command
      *
      * @param mixed $value The value to convert
      * @param string $key The field name where the data was stored
+     *
      * @return mixed
      */
     protected function habtmFormatter(mixed $value, string $key): mixed
     {
-        if (empty($key) || !ctype_upper($key[0])) {
+        if (!$key || !ctype_upper($key[0])) {
             return $value;
         }
 
@@ -184,6 +187,7 @@ class ElasticImportCommand extends Command
      * Converts a bad mysql 0000-00-00 date to nul.
      *
      * @param mixed $value The value to convert
+     *
      * @return mixed
      */
     protected function allBallsRemover(mixed $value): mixed
@@ -200,6 +204,7 @@ class ElasticImportCommand extends Command
      * original and changed keys set.
      *
      * @param array $audits The list of audit logs to compile into a single one
+     *
      * @return array
      */
     protected function changesExtractor(array $audits): array
@@ -214,12 +219,12 @@ class ElasticImportCommand extends Command
         unset($audit['_matchingData']);
 
         $audit['original'] = collection($changes)
-            ->map(fn($c) => $c['old_value'])
+            ->map(fn ($c) => $c['old_value'])
             ->map([$this, 'habtmFormatter'])
             ->map([$this, 'allBallsRemover'])
             ->toArray();
         $audit['changed'] = collection($changes)
-            ->map(fn($c) => $c['new_value'])
+            ->map(fn ($c) => $c['new_value'])
             ->map([$this, 'habtmFormatter'])
             ->map([$this, 'allBallsRemover'])
             ->toArray();
@@ -233,6 +238,7 @@ class ElasticImportCommand extends Command
      * @param array $audit The audit log information
      * @param string $index The name of the index where the event should be stored
      * @param array $meta The meta information to append to the meta array
+     *
      * @return \Elastica\Document
      */
     protected function eventFormatter(array $audit, string $index, array $meta = []): Document
@@ -264,11 +270,12 @@ class ElasticImportCommand extends Command
      * Persists the array of passed documents into elastic search.
      *
      * @param array $documents List of Elastica\Document objects to be persisted
+     *
      * @return void
      */
     protected function persistBulk(array $documents): void
     {
-        if (empty($documents)) {
+        if (!$documents) {
             $this->log('No more documents to index', 'info');
 
             return;

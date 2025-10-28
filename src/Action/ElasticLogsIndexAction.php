@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Action;
@@ -26,8 +27,9 @@ class ElasticLogsIndexAction extends IndexAction
     /**
      * Renders the index action by searching all documents matching the URL conditions.
      *
-     * @return \Cake\Http\Response|null
      * @throws \Exception
+     *
+     * @return \Cake\Http\Response|null
      */
     protected function _handle(): ?Response
     {
@@ -57,7 +59,7 @@ class ElasticLogsIndexAction extends IndexAction
         if ($request->getQuery('changed_fields')) {
             $query->where(function (QueryBuilder $builder) use ($request): BoolQuery {
                 $fields = explode(',', $request->getQuery('changed_fields'));
-                $fields = array_map(fn($f): string => 'changed.' . $f, array_map('trim', $fields));
+                $fields = array_map(fn ($f): string => 'changed.' . $f, array_map('trim', $fields));
                 $fields = array_map([$builder, 'exists'], $fields);
 
                 return $builder->and(...$fields);
@@ -65,7 +67,7 @@ class ElasticLogsIndexAction extends IndexAction
         }
 
         if ($request->getQuery('query')) {
-            $query->where(fn(QueryBuilder $builder): BoolQuery => $builder
+            $query->where(fn (QueryBuilder $builder): BoolQuery => $builder
                 ->and(new QueryString($request->getQuery('query'))));
         }
 
@@ -107,8 +109,8 @@ class ElasticLogsIndexAction extends IndexAction
      *
      * @param \Cake\Http\ServerRequest $request The request where query string params can be found
      * @param \Cake\ElasticSearch\Query $query The Query to add filters to
+     *
      * @return void
-     * @throws \Exception
      */
     protected function addTimeConstraints(ServerRequest $request, Query $query): void
     {
@@ -121,8 +123,8 @@ class ElasticLogsIndexAction extends IndexAction
             $until = new DateTime($request->getQuery('until'));
         }
 
-        if (!empty($from) && !empty($until)) {
-            $query->where(fn(QueryExpression $builder): QueryExpression => $builder
+        if ($from && $until) {
+            $query->where(fn (QueryExpression $builder): QueryExpression => $builder
                 ->between(
                     '@timestamp',
                     $from->format('Y-m-d H:i:s'),
@@ -132,7 +134,7 @@ class ElasticLogsIndexAction extends IndexAction
             return;
         }
 
-        if (!empty($until)) {
+        if ($until) {
             $query->where(['@timestamp <=' => $until->format('Y-m-d H:i:s')]);
         }
     }

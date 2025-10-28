@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Meta;
@@ -21,7 +22,7 @@ class ApplicationMetadataTest extends TestCase
     {
         $listener = new ApplicationMetadata('my_app', ['extra' => 'thing']);
         $this->getEventManager()->on($listener);
-        $logs[] = new AuditDeleteEvent('1234', 1, 'articles');
+        $logs = [new AuditDeleteEvent('1234', 1, 'articles')];
         $this->dispatchEvent('AuditStash.beforeLog', ['logs' => $logs]);
 
         $expected = [

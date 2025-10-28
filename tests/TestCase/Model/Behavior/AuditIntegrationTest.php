@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Model\Behavior;
@@ -30,6 +31,7 @@ class AuditIntegrationTest extends TestCase
     ];
 
     private ?Table $table;
+
     private mixed $persister;
 
     /**

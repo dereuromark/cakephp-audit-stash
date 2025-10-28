@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash;
@@ -59,6 +60,7 @@ class AuditStashPlugin extends BasePlugin
      * - /admin/audit-logs/export
      *
      * @param \Cake\Routing\RouteBuilder $routes The route builder to update.
+     *
      * @return void
      */
     public function routes(RouteBuilder $routes): void
@@ -86,6 +88,7 @@ class AuditStashPlugin extends BasePlugin
      * Register console commands for the plugin.
      *
      * @param \Cake\Console\CommandCollection $commands The command collection to update.
+     *
      * @return \Cake\Console\CommandCollection
      */
     public function console(CommandCollection $commands): CommandCollection

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Persister;
@@ -16,6 +17,7 @@ trait LogTrait
      *
      * @param \Cake\Datasource\EntityInterface $entity The entity to convert.
      * @param int $depth The depth up to which to export the entity data.
+     *
      * @return string
      */
     protected function toErrorLog(EntityInterface $entity, int $depth = 4): string

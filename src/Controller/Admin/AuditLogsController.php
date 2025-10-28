@@ -1,10 +1,12 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
 use Cake\Http\Response;
+use RuntimeException;
 
 /**
  * AuditLogs Controller
@@ -97,8 +99,8 @@ class AuditLogsController extends AppController
      * View method - Display details of a single audit log entry
      *
      * @param string|null $id Audit Log id.
+     *
      * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
      */
     public function view(?string $id = null)
     {
@@ -112,6 +114,7 @@ class AuditLogsController extends AppController
      *
      * @param string|null $source Table/source name
      * @param string|null $primaryKey Primary key value
+     *
      * @return \Cake\Http\Response|null|void Renders view
      */
     public function timeline(?string $source = null, ?string $primaryKey = null)
@@ -175,6 +178,9 @@ class AuditLogsController extends AppController
      * Export audit logs as CSV
      *
      * @param array $auditLogs Audit logs
+     *
+     * @throws \RuntimeException
+     *
      * @return \Cake\Http\Response
      */
     protected function exportCsv(array $auditLogs): Response
@@ -187,7 +193,7 @@ class AuditLogsController extends AppController
 
         $output = fopen('php://temp', 'r+');
         if ($output === false) {
-            throw new \RuntimeException('Failed to open temporary stream');
+            throw new RuntimeException('Failed to open temporary stream');
         }
 
         // Headers
@@ -227,7 +233,7 @@ class AuditLogsController extends AppController
         fclose($output);
 
         if ($csv === false) {
-            throw new \RuntimeException('Failed to read CSV content');
+            throw new RuntimeException('Failed to read CSV content');
         }
 
         return $response->withStringBody($csv);
@@ -237,6 +243,9 @@ class AuditLogsController extends AppController
      * Export audit logs as JSON
      *
      * @param array $auditLogs Audit logs
+     *
+     * @throws \RuntimeException
+     *
      * @return \Cake\Http\Response
      */
     protected function exportJson(array $auditLogs): Response
@@ -262,7 +271,7 @@ class AuditLogsController extends AppController
 
         $json = json_encode($data, JSON_PRETTY_PRINT);
         if ($json === false) {
-            throw new \RuntimeException('Failed to encode JSON');
+            throw new RuntimeException('Failed to encode JSON');
         }
 
         return $this->response

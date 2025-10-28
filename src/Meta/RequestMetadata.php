@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Meta;
@@ -56,6 +57,7 @@ class RequestMetadata implements EventListenerInterface
      *
      * @param \Cake\Event\EventInterface $event The AuditStash.beforeLog event
      * @param array<\AuditStash\Event\BaseEvent> $logs The audit log event objects
+     *
      * @return void
      */
     public function beforeLog(EventInterface $event, array $logs): void

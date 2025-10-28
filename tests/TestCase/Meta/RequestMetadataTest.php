@@ -1,7 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
-namespace AuditStash\Test\TestCase\Persister;
+namespace AuditStash\Test\TestCase\Meta;
 
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Meta\RequestMetadata;
@@ -26,7 +27,7 @@ class RequestMetadataTest extends TestCase
 
         $request->expects($this->once())->method('clientIp')->willReturn('12345');
         $request->expects($this->once())->method('getRequestTarget')->willReturn('/things?a=b');
-        $logs[] = new AuditDeleteEvent('1234', 1, 'articles');
+        $logs = [new AuditDeleteEvent('1234', 1, 'articles')];
         $this->dispatchEvent('AuditStash.beforeLog', ['logs' => $logs]);
 
         $expected = [

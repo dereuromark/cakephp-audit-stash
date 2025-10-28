@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Persister;
@@ -32,14 +33,14 @@ class ElasticSearchPersister implements PersisterInterface
     /**
      * Elasticsearch index to store documents
      *
-     * @var string
+     * @var mixed|string
      */
     protected mixed $index;
 
     /**
      * Elasticsearch mapping type of documents
      *
-     * @var string
+     * @var mixed|string
      */
     protected mixed $type;
 
@@ -52,7 +53,7 @@ class ElasticSearchPersister implements PersisterInterface
      * - type: The Elasticsearch mapping type of documents
      *
      * @param array $options
-     * @return void
+     *
      * @throws \AuditStash\Exception
      */
     public function __construct(array $options = [])
@@ -80,6 +81,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Persists all the audit log event objects that are provided.
      *
      * @param array<\AuditStash\EventInterface> $auditLogs An array of EventInterface objects
+     *
      * @return void
      */
     public function logEvents(array $auditLogs): void
@@ -95,6 +97,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Transforms the EventInterface objects to Elastica Documents.
      *
      * @param array<\AuditStash\EventInterface> $auditLogs An array of EventInterface objects.
+     *
      * @return array
      */
     protected function transformToDocuments(array $auditLogs): array
@@ -145,6 +148,7 @@ class ElasticSearchPersister implements PersisterInterface
      * only comprised of a single event log per commit.
      *
      * @param bool $use Whether to copy the transactionId as the document id
+     *
      * @return void
      */
     public function reuseTransactionId(bool $use = true): void
@@ -156,6 +160,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Sets the client connection to elastic search.
      *
      * @param \Cake\ElasticSearch\Datasource\Connection $connection The connection to elastic search
+     *
      * @return $this
      */
     public function setConnection(Connection $connection)
@@ -189,6 +194,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Sets the Elasticsearch index used to store events
      *
      * @param string $index Name of the Elasticsearch index
+     *
      * @return $this
      */
     public function setIndex(string $index)
@@ -212,6 +218,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Sets the Elasticsearch mapping type of stored events
      *
      * @param string $type Name of the Elasticsearch mapping type
+     *
      * @return $this
      */
     public function setType(string $type)

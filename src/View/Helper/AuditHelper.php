@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\View\Helper;
@@ -15,6 +16,7 @@ class AuditHelper extends Helper
      *
      * @param string|null $originalJson JSON string of original values
      * @param string|null $changedJson JSON string of changed values
+     *
      * @return string HTML output
      */
     public function diff(?string $originalJson, ?string $changedJson): string
@@ -22,7 +24,7 @@ class AuditHelper extends Helper
         $original = $originalJson ? json_decode($originalJson, true) : [];
         $changed = $changedJson ? json_decode($changedJson, true) : [];
 
-        if (empty($original) && empty($changed)) {
+        if (!$original && !$changed) {
             return '<p class="text-muted">No changes</p>';
         }
 
@@ -59,6 +61,7 @@ class AuditHelper extends Helper
      *
      * @param string|null $originalJson JSON string of original values
      * @param string|null $changedJson JSON string of changed values
+     *
      * @return string HTML output
      */
     public function diffInline(?string $originalJson, ?string $changedJson): string
@@ -66,7 +69,7 @@ class AuditHelper extends Helper
         $original = $originalJson ? json_decode($originalJson, true) : [];
         $changed = $changedJson ? json_decode($changedJson, true) : [];
 
-        if (empty($original) && empty($changed)) {
+        if (!$original && !$changed) {
             return '<p class="text-muted">No changes</p>';
         }
 
@@ -115,6 +118,7 @@ class AuditHelper extends Helper
      * Format a value for display
      *
      * @param mixed $value Value to format
+     *
      * @return string Formatted value
      */
     public function formatValue(mixed $value): string
@@ -142,6 +146,7 @@ class AuditHelper extends Helper
      * Display event type badge
      *
      * @param string $type Event type (create, update, delete)
+     *
      * @return string HTML badge
      */
     public function eventTypeBadge(string $type): string
@@ -160,6 +165,7 @@ class AuditHelper extends Helper
      *
      * @param string $transaction Transaction ID
      * @param bool $full Whether to show full transaction ID
+     *
      * @return string Formatted transaction ID
      */
     public function transactionId(string $transaction, bool $full = false): string
@@ -175,13 +181,14 @@ class AuditHelper extends Helper
      * Display a summary of changes
      *
      * @param string|null $changedJson JSON string of changed values
+     *
      * @return string Summary text
      */
     public function changeSummary(?string $changedJson): string
     {
         $changed = $changedJson ? json_decode($changedJson, true) : [];
 
-        if (empty($changed)) {
+        if (!$changed) {
             return 'No changes';
         }
 
