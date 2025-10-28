@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash;
@@ -20,8 +21,8 @@ class EventFactory
      * converts it into an AuditStash\EventInterface object.
      *
      * @param array $data The array data from elastic search
+     *
      * @return \AuditStash\EventInterface
-     * @throws \ReflectionException
      */
     public function create(array $data): EventInterface
     {

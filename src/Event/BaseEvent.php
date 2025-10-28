@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Event;
@@ -6,7 +7,6 @@ namespace AuditStash\Event;
 use AuditStash\EventInterface;
 use Cake\Datasource\EntityInterface;
 use DateTime;
-use ReturnTypeWillChange;
 
 /**
  * Represents a change in the repository where the list of changes can be
@@ -93,7 +93,7 @@ abstract class BaseEvent implements EventInterface
      *
      * @return mixed
      */
-    #[ReturnTypeWillChange]
+    #[\ReturnTypeWillChange]
     public function jsonSerialize(): mixed
     {
         return $this->basicSerialize() + [

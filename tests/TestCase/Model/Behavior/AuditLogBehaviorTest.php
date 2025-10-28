@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Model\Behavior;
@@ -12,12 +13,12 @@ use Cake\Event\Event;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
-use PHPUnit\Framework\Attributes\DataProvider;
 use SplObjectStorage;
 
 class AuditLogBehaviorTest extends TestCase
 {
     private ?Table $table;
+
     private ?AuditLogBehavior $behavior;
 
     public function setUp(): void
@@ -25,6 +26,12 @@ class AuditLogBehaviorTest extends TestCase
         parent::setUp();
         $this->table = new Table(['table' => 'articles']);
         $this->table->setPrimaryKey('id');
+        $this->table->setSchema([
+            'id' => ['type' => 'integer'],
+            'title' => ['type' => 'string'],
+            'body' => ['type' => 'text'],
+            'author_id' => ['type' => 'integer'],
+        ]);
         $this->behavior = new AuditLogBehavior($this->table, [
             'whitelist' => ['id', 'title', 'body', 'author_id'],
         ]);
@@ -36,6 +43,9 @@ class AuditLogBehaviorTest extends TestCase
         Configure::write('AuditStash.saveType', null);
     }
 
+    /**
+     * @return void
+     */
     public function testOnSaveCreateWithWhitelist()
     {
         $data = [
@@ -63,6 +73,9 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
     }
 
+    /**
+     * @return void
+     */
     public function testOnSaveUpdateWithWhitelist()
     {
         $data = [
@@ -90,6 +103,9 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertInstanceOf(AuditUpdateEvent::class, $result);
     }
 
+    /**
+     * @return void
+     */
     public function testSaveCreateWithBlacklist()
     {
         $this->behavior->setConfig('blacklist', ['author_id']);
@@ -115,6 +131,9 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertEquals($data, $result->getChanged());
     }
 
+    /**
+     * @return void
+     */
     public function testSaveUpdateWithBlacklist()
     {
         $this->behavior->setConfig('blacklist', ['author_id']);
@@ -138,6 +157,9 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertFalse(isset($queue[$entity]));
     }
 
+    /**
+     * @return void
+     */
     public function testSaveWithFieldsFromSchema()
     {
         $this->table->setSchema([
@@ -169,7 +191,7 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
     }
 
-    #[DataProvider('dataProviderForSaveType')]
+    #[\PHPUnit\Framework\Attributes\DataProvider('dataProviderForSaveType')]
     public function testImplementedEvents(?string $saveType): void
     {
         Configure::write('AuditStash.saveType', $saveType);

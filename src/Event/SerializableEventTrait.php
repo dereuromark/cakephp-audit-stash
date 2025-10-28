@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Event;
@@ -24,6 +25,7 @@ trait SerializableEventTrait
      * Takes the string representation of this object so it can be reconstructed.
      *
      * @param string $data serialized string
+     *
      * @return void
      */
     public function unserialize(string $data): void
@@ -47,6 +49,7 @@ trait SerializableEventTrait
      * Takes the string representation of this object so it can be reconstructed.
      *
      * @param array $data serialized string
+     *
      * @return void
      */
     public function __unserialize(array $data): void

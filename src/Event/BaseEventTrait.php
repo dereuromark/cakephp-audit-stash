@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Event;
@@ -114,6 +115,7 @@ trait BaseEventTrait
      * Sets the name of the repository that triggered this event.
      *
      * @param string $source The repository name
+     *
      * @return void
      */
     public function setParentSourceName(string $source): void
@@ -145,6 +147,7 @@ trait BaseEventTrait
      * Sets the meta information that can describe this event.
      *
      * @param array $meta The meta information to attach to the event
+     *
      * @return void
      */
     public function setMetaInfo(array $meta): void

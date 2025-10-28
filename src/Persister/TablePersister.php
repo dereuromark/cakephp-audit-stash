@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Persister;
@@ -148,6 +149,9 @@ class TablePersister implements PersisterInterface
      * Sets the table to use for persisting logs.
      *
      * @param \Cake\ORM\Table|string|null $table Either a string denoting a table alias, or a table object.
+     *
+     * @throws \InvalidArgumentException
+     *
      * @return $this
      */
     public function setTable(string|Table|null $table)
@@ -171,8 +175,8 @@ class TablePersister implements PersisterInterface
      * Persists each of the passed EventInterface objects.
      *
      * @param array<\AuditStash\EventInterface> $auditLogs List of EventInterface objects to persist
+     *
      * @return void
-     * @throws \Exception
      */
     public function logEvents(array $auditLogs): void
     {

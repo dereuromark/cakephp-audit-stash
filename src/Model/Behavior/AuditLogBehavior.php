@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Model\Behavior;
@@ -8,7 +9,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Event\BaseEvent;
-use AuditStash\Persister\ElasticSearchPersister;
+use AuditStash\Persister\TablePersister;
 use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
@@ -74,6 +75,7 @@ class AuditLogBehavior extends Behavior
      * @param \Cake\Event\Event $event The Model event that is enclosed inside a transaction
      * @param \Cake\Datasource\EntityInterface $entity The entity that is to be saved
      * @param \ArrayObject $options The options to be passed to the save or delete operation
+     *
      * @return void
      */
     public function injectTracking(
@@ -94,6 +96,7 @@ class AuditLogBehavior extends Behavior
      * Redacts sensitive fields from the array
      *
      * @param array<string, mixed> $fields Field
+     *
      * @return void
      */
     private function redactArray(array &$fields): void
@@ -117,6 +120,7 @@ class AuditLogBehavior extends Behavior
      * @param \Cake\Datasource\EntityInterface $entity Entity
      * @param array<string, mixed> $changed Changed fields
      * @param array<string, mixed> $original Original fields
+     *
      * @return \AuditStash\Event\BaseEvent
      */
     protected function createEvent(
@@ -153,6 +157,7 @@ class AuditLogBehavior extends Behavior
      * @param \Cake\Event\Event $event The Model event that is enclosed inside a transaction
      * @param \Cake\Datasource\EntityInterface $entity The entity that is to be saved
      * @param \ArrayObject $options Options array containing the `_auditQueue` key
+     *
      * @return void
      */
     public function afterSave(
@@ -214,6 +219,7 @@ class AuditLogBehavior extends Behavior
      * @param \Cake\Event\Event $event The Model event that is enclosed inside a transaction
      * @param \Cake\Datasource\EntityInterface $entity The entity that is to be saved or deleted
      * @param \ArrayObject $options Options array containing the `_auditQueue` key
+     *
      * @return void
      */
     public function afterCommit(
@@ -226,10 +232,10 @@ class AuditLogBehavior extends Behavior
         }
 
         $events = collection($options['_auditQueue'])
-            ->map(fn($entity, $pos, $it): mixed => $it->getInfo())
+            ->map(fn ($entity, $pos, $it): mixed => $it->getInfo())
             ->toList();
 
-        if (empty($events)) {
+        if (!$events) {
             return;
         }
 
@@ -243,6 +249,7 @@ class AuditLogBehavior extends Behavior
      * @param \Cake\Event\Event $event The Model event that is enclosed inside a transaction
      * @param \Cake\Datasource\EntityInterface $entity The entity that is to be saved or deleted
      * @param \ArrayObject $options Options array containing the `_auditQueue` key
+     *
      * @return void
      */
     public function afterDelete(
@@ -296,12 +303,13 @@ class AuditLogBehavior extends Behavior
      * If called with no arguments, it will return the currently configured persister.
      *
      * @param \AuditStash\PersisterInterface|null $persister The persister object to use
+     *
      * @return \AuditStash\PersisterInterface The configured persister
      */
     public function persister(?PersisterInterface $persister = null): PersisterInterface
     {
         if ($persister === null && $this->persister === null) {
-            $class = Configure::read('AuditStash.persister') ?: ElasticSearchPersister::class;
+            $class = Configure::read('AuditStash.persister') ?: TablePersister::class;
             $index = $this->getConfig('index') ?: $this->_table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);
 
@@ -326,6 +334,7 @@ class AuditLogBehavior extends Behavior
      * Helper method used to get the property names of associations for a table.
      *
      * @param array $associated Whitelist of associations to look for
+     *
      * @return array List of property names
      */
     protected function getAssociationProperties(array $associated): array

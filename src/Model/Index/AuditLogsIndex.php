@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Model\Index;
@@ -27,6 +28,7 @@ class AuditLogsIndex extends Index
      * Returns a query setup for getting the 'type' aggregation.
      *
      * @param \Cake\ElasticSearch\Query $query The Query Object
+     *
      * @return \Cake\ElasticSearch\Query
      */
     public function findTypes(Query $query): Query

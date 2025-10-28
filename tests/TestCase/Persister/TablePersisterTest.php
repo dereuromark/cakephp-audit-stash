@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Persister;
@@ -51,6 +52,9 @@ class TablePersisterTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @return void
+     */
     public function testConfigDefaults()
     {
         $expected = [
@@ -64,11 +68,17 @@ class TablePersisterTest extends TestCase
         $this->assertEquals($expected, $this->TablePersister->getConfig());
     }
 
+    /**
+     * @return void
+     */
     public function testGetTableDefault()
     {
         $this->assertInstanceOf(AuditLogsTable::class, $this->TablePersister->getTable());
     }
 
+    /**
+     * @return void
+     */
     public function testSetTableAsAlias()
     {
         $this->assertInstanceOf(AuditLogsTable::class, $this->TablePersister->getTable());
@@ -77,6 +87,9 @@ class TablePersisterTest extends TestCase
         $this->assertEquals('Custom', $this->TablePersister->getTable()->getAlias());
     }
 
+    /**
+     * @return void
+     */
     public function testSetTableAsObject()
     {
         $customTable = $this->getTableLocator()->get('Custom');
@@ -85,6 +98,9 @@ class TablePersisterTest extends TestCase
         $this->assertSame($customTable, $this->TablePersister->getTable());
     }
 
+    /**
+     * @return void
+     */
     public function testSetInvalidTable()
     {
         $this->expectException(InvalidArgumentException::class);
@@ -93,7 +109,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testSerializeNull()
     {
@@ -127,7 +143,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testExtractMetaFields()
     {
@@ -174,7 +190,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testExtractAllMetaFields()
     {
@@ -221,7 +237,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testExtractMetaFieldsDoNotUnset()
     {
@@ -263,7 +279,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testExtractAllMetaFieldsDoNotUnset()
     {
@@ -303,7 +319,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testErrorLogging()
     {
@@ -349,7 +365,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testDisableErrorLogging()
     {
@@ -378,7 +394,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testCompoundPrimaryKeyExtractDefault()
     {
@@ -412,7 +428,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testPrimaryKeyExtractRaw()
     {
@@ -447,7 +463,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testCompoundPrimaryKeyExtractRaw()
     {
@@ -484,7 +500,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testPrimaryKeyExtractProperties()
     {
@@ -519,7 +535,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testCompoundPrimaryKeyExtractProperties()
     {
@@ -556,7 +572,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testPrimaryKeyExtractSerialized()
     {
@@ -593,7 +609,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testCompoundPrimaryKeyExtractSerialized()
     {
@@ -630,7 +646,7 @@ class TablePersisterTest extends TestCase
     }
 
     /**
-     * @throws \Exception
+     * @return void
      */
     public function testDoNotSerializeFields()
     {
@@ -673,6 +689,15 @@ class TablePersisterTest extends TestCase
         $this->TablePersister->logEvents([$event]);
     }
 
+    /**
+     * Get a mock for a model.
+     *
+     * @param string $alias The model alias
+     * @param array $methods The methods to mock
+     * @param array $options Additional options
+     *
+     * @return \Cake\ORM\Table|\PHPUnit\Framework\MockObject\MockObject
+     */
     public function getMockForModel($alias, array $methods = [], array $options = []): Table|MockObject
     {
         return parent::getMockForModel($alias, $methods, $options + [

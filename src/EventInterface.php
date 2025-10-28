@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash;
@@ -57,6 +58,7 @@ interface EventInterface extends JsonSerializable, Serializable
      * Sets the meta information that can describe this event.
      *
      * @param array $meta The meta information to attach to the event
+     *
      * @return void
      */
     public function setMetaInfo(array $meta): void;

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Action;
@@ -37,8 +38,8 @@ class ElasticLogsViewAction extends ViewAction
      *
      * @param string|int|null $id Record id
      * @param \Crud\Event\Subject $subject Event subject
+     *
      * @return \AuditStash\Model\Document\AuditLog
-     * @throws \Exception
      */
     protected function _findRecord(string|int|null $id, Subject $subject): AuditLog
     {

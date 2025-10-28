@@ -9,9 +9,18 @@ define('ROOT', dirname(__DIR__));
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
+define('PLUGIN_ROOT', dirname(__DIR__));
+define('APP_ROOT', PLUGIN_ROOT . DS . 'tests' . DS . 'test_app');
 define('APP', __DIR__);
 define('TMP', sys_get_temp_dir() . DS);
 define('LOGS', TMP . 'logs' . DS);
+
+define('CONFIG', PLUGIN_ROOT . DS . 'config' . DS);
+
+define('CAKE_CORE_INCLUDE_PATH', PLUGIN_ROOT . '/vendor/cakephp/cakephp');
+define('CORE_PATH', CAKE_CORE_INCLUDE_PATH . DS);
+require CORE_PATH . 'config/bootstrap.php';
+require CAKE . 'functions.php';
 
 use Cake\Cache\Cache;
 use Cake\Core\Configure;
@@ -21,14 +30,25 @@ use Cake\ElasticSearch\IndexRegistry;
 use Cake\ElasticSearch\TestSuite\Fixture\MappingGenerator;
 use Cake\Routing\Router;
 use Cake\TestSuite\Fixture\SchemaLoader;
+use TestApp\Controller\AppController;
 use function Cake\Core\env;
 
 Configure::write('debug', true);
 
-Cache::setConfig('_cake_core_', [
+Configure::write('App', [
+    'namespace' => 'TestApp',
+    'encoding' => 'utf-8',
+    'paths' => [
+        'templates' => [APP_ROOT . DS . 'templates' . DS],
+    ],
+]);
+
+Cache::setConfig('_cake_translations_', [
     'className' => 'File',
     'path' => sys_get_temp_dir(),
 ]);
+
+class_alias(AppController::class, 'App\Controller\AppController');
 
 /**
  * To run with elastic search tests locally:
@@ -51,7 +71,10 @@ if (!getenv('db_dsn')) {
     putenv('db_dsn=sqlite:///:memory:');
 }
 
-ConnectionManager::setConfig('test', ['url' => getenv('db_dsn')]);
+ConnectionManager::setConfig('test', [
+    'url' => getenv('db_dsn'),
+    'quoteIdentifiers' => true,
+]);
 if (env('FIXTURE_SCHEMA_METADATA')) {
     $loader = new SchemaLoader();
     $loader->loadInternalFile(env('FIXTURE_SCHEMA_METADATA'));

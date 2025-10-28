@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Persister;
@@ -24,14 +25,14 @@ class PersistTask
      * or that actually are instances of EventInterface.
      *
      * @param array $events The events to persist
+     *
      * @return void
-     * @throws \ReflectionException
      */
     public function persist(array $events): void
     {
         $factory = new EventFactory();
         $events = array_map(
-            fn(EventInterface|array $event): EventInterface => is_array($event) ?
+            fn (EventInterface|array $event): EventInterface => is_array($event) ?
                 $factory->create($event) :
                 $event,
             $events,
@@ -47,6 +48,7 @@ class PersistTask
      * If called if no arguments, it will return the ElasitSearchPersister.
      *
      * @param \AuditStash\PersisterInterface|null $persister The persister object to use
+     *
      * @return \AuditStash\PersisterInterface|null The configured persister
      */
     public function persister(?PersisterInterface $persister = null): ?PersisterInterface

@@ -8,12 +8,13 @@
 This plugin implements an "audit trail" for any of your Table classes in your application, that is,
 the ability of recording any creation, modification or delete of the entities of any particular table.
 
-By default, this plugin stores the audit logs into [Elasticsearch](https://www.elastic.co/products/elasticsearch),
-as we have found that it is a fantastic storage engine for append-only streams of data and provides really
-powerful features for finding changes in the historic data.
+By default, this plugin stores the audit logs in a regular database table using the CakePHP ORM, which provides
+excellent performance and simplicity for most use cases. The plugin also includes a built-in UI for browsing and
+searching your audit logs.
 
-Even though we suggest storing the logs in Elasticsearch, this plugin is generic enough so you can implement your
-own persisting strategies, if so you wish.
+For high-volume applications, you can optionally use [Elasticsearch](https://www.elastic.co/products/elasticsearch)
+as a storage engine, which provides powerful features for searching large datasets. The plugin is generic enough
+that you can implement your own persisting strategies if needed.
 
 ## Installation
 
@@ -25,39 +26,26 @@ composer require dereuromark/cakephp-audit-stash
 bin/cake plugin load AuditStash
 ```
 
-For using the default storage engine (ElasticSearch) you need to install the official `elastic-search` plugin, by executing
-the following lines:
-
-```
-composer require cakephp/elastic-search
-bin/cake plugin load Cake/ElasticSearch
-```
-
 ## Configuration
 
-### Elastic Search
+### Database Table Storage (Default)
 
-You now need to add the datasource configuration to your `config/app.php` file:
+The plugin uses a regular database table to store audit logs by default. Run the migrations to create the `audit_logs` table:
 
-```php
-'Datasources' => [
-    'auditlog_elastic' => [
-        'className' => 'Cake\ElasticSearch\Datasource\Connection',
-        'driver' => 'Cake\ElasticSearch\Datasource\Connection',
-        'host' => '127.0.0.1', // server where elasticsearch is running
-        'port' => 9200
-    ],
-    ...
-]
+```bash
+bin/cake migrations migrate -p AuditStash
 ```
 
-### Tables / Regular Databases
+Optionally, bake the corresponding table class if you need to customize it:
 
-If you want to use a regular database, respectively an engine that can be used via the CakePHP ORM API, then you can use
-the table persister that ships with this plugin.
+```bash
+bin/cake bake model AuditLogs
+```
 
-To do so you need to configure the `AuditStash.persister` option accordingly. In your `config/app_local.php` file add the
-following configuration:
+**Performance Note:** The migration uses `binaryuuid` for the transaction field, which stores UUIDs as BINARY(16) instead of CHAR(36).
+This provides ~56% space savings and better index performance.
+
+The table persister is configured by default, but you can explicitly set it in your `config/app_local.php` or `config/app.php`:
 
 ```php
 'AuditStash' => [
@@ -65,20 +53,8 @@ following configuration:
 ],
 ```
 
-The plugin will then by default try to store the logs in a table named `audit_logs`, via a table class with the alias
-`AuditLogs`, which you could create/overwrite in your application if you need.
-
-You can find a migration in the `config/migration` folder of this plugin which you can apply to your database, this will
-add a table named `audit_logs` with all the default columns - alternatively create the table manually. After that you
-can bake the corresponding table class.
-
-```
-bin/cake migrations migrate -p AuditStash
-bin/cake bake model AuditLogs
-```
-
-**Performance Note:** The migration uses `binaryuuid` for the transaction field, which stores UUIDs as BINARY(16) instead of CHAR(36).
-This provides ~56% space savings and better index performance.
+The plugin will store logs in a table named `audit_logs`, via a table class with the alias `AuditLogs`, which you can
+create/overwrite in your application if needed.
 
 #### Table Persister Configuration
 
@@ -94,6 +70,42 @@ $this->behaviors()->get('AuditLog')->persister()->setConfig([
     ]
 ]);
 ```
+
+### Elasticsearch Storage (Alternative)
+
+For high-volume applications or advanced search capabilities, you can use Elasticsearch instead of the database table.
+
+First, install the official `elastic-search` plugin:
+
+```bash
+composer require cakephp/elastic-search
+bin/cake plugin load Cake/ElasticSearch
+```
+
+Then add the datasource configuration to your `config/app.php` file:
+
+```php
+'Datasources' => [
+    'auditlog_elastic' => [
+        'className' => 'Cake\ElasticSearch\Datasource\Connection',
+        'driver' => 'Cake\ElasticSearch\Datasource\Connection',
+        'host' => '127.0.0.1', // server where elasticsearch is running
+        'port' => 9200
+    ],
+    ...
+]
+```
+
+And configure AuditStash to use the Elasticsearch persister:
+
+```php
+'AuditStash' => [
+    'persister' => \AuditStash\Persister\ElasticSearchPersister::class,
+],
+```
+
+**Note:** The Audit Log Viewer UI and cleanup command only work with `TablePersister`.
+For Elasticsearch, you should use Kibana for visualization and [Index Lifecycle Management (ILM)](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html) for retention policies.
 
 ## Using AuditStash
 
@@ -641,6 +653,197 @@ if ($success) {
 
 This will save all audit info for your objects, as well as audits for any associated data. Please note, `$result` must
 be an instance of an Object. Do not change the text "Model.afterCommit".
+
+## Audit Log Viewer/UI Backend
+
+The plugin provides a built-in web interface to browse and search audit logs when using the `TablePersister`.
+
+### Routes (Admin Prefix by Default)
+
+The audit log viewer routes are **automatically enabled in the Admin prefix** when you load the plugin. No additional configuration needed!
+
+Default routes are available at:
+- **Browse logs**: `/admin/audit-logs`
+- **View single log**: `/admin/audit-logs/view/{id}`
+- **Record timeline**: `/admin/audit-logs/timeline/{table}/{recordId}`
+- **Export**: `/admin/audit-logs/export.csv` or `/admin/audit-logs/export.json`
+
+The routes are secured by being in the Admin prefix, which typically requires authentication in your application.
+
+#### Using Without Admin Prefix
+
+If you don't use an Admin prefix or want the routes at a different path, disable the default routes and add your own:
+
+```php
+// In config/bootstrap.php or Application.php
+$this->addPlugin('AuditStash', ['routes' => false]);
+```
+
+Then add your custom routes in `config/routes.php`:
+
+```php
+use Cake\Routing\RouteBuilder;
+
+// Public routes (make sure to add authentication!)
+$routes->plugin('AuditStash', ['path' => '/audit-logs'], function (RouteBuilder $routes) {
+    $routes->connect('/', ['controller' => 'AuditLogs', 'action' => 'index']);
+    $routes->connect('/view/{id}', ['controller' => 'AuditLogs', 'action' => 'view'])
+        ->setPass(['id']);
+    $routes->connect('/timeline/{source}/{primaryKey}', ['controller' => 'AuditLogs', 'action' => 'timeline'])
+        ->setPass(['source', 'primaryKey']);
+    $routes->connect('/export', ['controller' => 'AuditLogs', 'action' => 'export']);
+});
+```
+
+#### Loading the Helper
+
+The AuditHelper is automatically available in your views. If needed, you can explicitly load it:
+
+```php
+// In your AppView.php
+$this->loadHelper('AuditStash.Audit');
+
+// Or in a controller
+public function beforeRender(\Cake\Event\EventInterface $event)
+{
+    $this->viewBuilder()->addHelper('AuditStash.Audit');
+}
+```
+
+### Features
+
+The audit log viewer provides:
+
+- **Browse & Search**: Filter audit logs by table, user, event type, transaction ID, date range, and primary key
+- **Detailed View**: View full details of any audit log entry with before/after comparison
+- **Timeline View**: See the complete history of changes for a specific record in chronological order
+- **Diff Display**: Human-readable before/after comparison with two display modes:
+  - **Inline diff** (default): Compact, git-style unified diff with + and - indicators
+  - **Side-by-side diff**: Traditional two-column comparison showing before and after values
+  - Toggle between views with a single click in the detail view
+- **Export**: Export filtered results to CSV or JSON format
+- **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
+
+### Additional Security
+
+The audit log viewer is in the Admin prefix by default, which provides a layer of security. However, you should ensure your Admin prefix is properly secured with authentication/authorization. Here are some additional approaches:
+
+#### Option 1: Use Authorization Plugin
+
+```php
+// In your Admin\Controller\AppController or src/Controller/AppController.php
+use Authorization\Controller\Component\AuthorizationComponent;
+
+public function initialize(): void
+{
+    parent::initialize();
+    $this->loadComponent('Authorization.Authorization');
+}
+
+public function beforeFilter(\Cake\Event\EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    // Require specific permission for audit logs
+    if ($this->request->getParam('plugin') === 'AuditStash') {
+        $this->Authorization->authorize('viewAuditLogs');
+    }
+}
+```
+
+#### Option 2: Role-Based Access Control
+
+```php
+// In your Admin\Controller\AppController
+public function beforeFilter(\Cake\Event\EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    // Restrict audit logs to super admins only
+    if ($this->request->getParam('plugin') === 'AuditStash') {
+        $user = $this->Authentication->getIdentity();
+        if (!$user || $user->role !== 'super_admin') {
+            throw new \Cake\Http\Exception\ForbiddenException('Access denied');
+        }
+    }
+}
+```
+
+#### Option 3: Create Custom AppController for Plugin
+
+Create `src/Controller/Admin/AuditLogsController.php` in your app to override the plugin controller:
+
+```php
+<?php
+namespace App\Controller\Admin;
+
+use AuditStash\Controller\AuditLogsController as BaseAuditLogsController;
+
+class AuditLogsController extends BaseAuditLogsController
+{
+    public function beforeFilter(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeFilter($event);
+
+        // Add your custom authorization logic here
+        if (!$this->Auth->user('can_view_audit_logs')) {
+            throw new \Cake\Http\Exception\ForbiddenException('Insufficient permissions');
+        }
+    }
+}
+```
+
+## Log Retention & Cleanup
+
+Automatically delete old audit logs based on configurable retention policies using the cleanup command.
+
+### Configuration
+
+Configure retention policies in your `config/app.php` or `config/app_local.php`:
+
+```php
+'AuditStash' => [
+    'persister' => \AuditStash\Persister\TablePersister::class,
+    'retention' => [
+        'default' => 90, // Keep logs for 90 days by default
+        'tables' => [
+            'users' => 365,      // Keep user logs for 1 year
+            'orders' => 2555,    // Keep order logs for 7 years
+            'sessions' => 30,    // Keep session logs for 30 days
+        ],
+    ],
+],
+```
+
+### Running Cleanup
+
+The cleanup command provides several options:
+
+```bash
+# Clean up logs older than configured retention period
+bin/cake audit_stash cleanup
+
+# Dry run to see what would be deleted
+bin/cake audit_stash cleanup --dry-run
+
+# Clean up logs for specific table only
+bin/cake audit_stash cleanup --table users
+
+# Skip confirmation prompt
+bin/cake audit_stash cleanup --force
+```
+
+### Automated Cleanup via Cron
+
+Add to your crontab to run cleanup automatically:
+
+```bash
+# Run cleanup daily at 2am
+0 2 * * * cd /path/to/app && bin/cake audit_stash cleanup --force
+```
+
+**Note**: The cleanup command only works with `TablePersister`.
+For Elasticsearch, use [Index Lifecycle Management (ILM)](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html) policies instead.
 
 ## Demo
 https://sandbox.dereuromark.de/sandbox/audit-stash

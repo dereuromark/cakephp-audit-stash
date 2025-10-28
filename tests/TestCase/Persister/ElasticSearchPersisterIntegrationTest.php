@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Persister;
@@ -33,8 +34,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * Tests that create events are correctly stored.
      *
      * @return void
-     * @throws \AuditStash\Exception
-     * @throws \Exception
      */
     public function testLogSingleCreateEvent()
     {
@@ -50,7 +49,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'published' => 'Y',
         ];
 
-        $events[] = new AuditCreateEvent('1234', 50, 'articles', $data, $data, new Entity());
+        $events = [new AuditCreateEvent('1234', 50, 'articles', $data, $data, new Entity())];
         $persister->logEvents($events);
         $client->getIndex('article')->refresh();
 
@@ -90,8 +89,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * Tests that update events are correctly stored.
      *
      * @return void
-     * @throws \AuditStash\Exception
-     * @throws \Exception
      */
     public function testLogSingleUpdateEvent()
     {
@@ -109,7 +106,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'published' => 'Y',
         ];
 
-        $events[] = new AuditUpdateEvent('1234', 50, 'articles', $changed, $original, new Entity());
+        $events = [new AuditUpdateEvent('1234', 50, 'articles', $changed, $original, new Entity())];
         $events[0]->setParentSourceName('authors');
         $persister->logEvents($events);
         $client->getIndex('article')->refresh();
@@ -139,8 +136,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * Tests that delete events are correctly stored.
      *
      * @return void
-     * @throws \AuditStash\Exception
-     * @throws \Exception
      */
     public function testLogSingleDeleteEvent()
     {
@@ -150,7 +145,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         $client = ConnectionManager::get('test_elastic');
         $persister = new ElasticSearchPersister(['connection' => $client, 'index' => 'article', 'type' => 'article']);
 
-        $events[] = new AuditDeleteEvent('1234', 50, 'articles', 'authors');
+        $events = [new AuditDeleteEvent('1234', 50, 'articles', 'authors')];
         $persister->logEvents($events);
         $client->getIndex('article')->refresh();
 
@@ -181,7 +176,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * althought your source name.
      *
      * @return void
-     * @throws \Exception
      */
     public function testLogMultipleEvents()
     {
@@ -195,6 +189,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'id' => 3,
             'tag' => 'cakephp',
         ];
+        $events = [];
         $events[] = new AuditCreateEvent('1234', 4, 'tags', $data, $data, new Entity());
 
         $original = [
@@ -225,8 +220,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * Tests that Time objects are correctly serialized.
      *
      * @return void
-     * @throws \AuditStash\Exception
-     * @throws \Exception
      */
     public function testPersistingTimeObjects()
     {
@@ -244,7 +237,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'published_date' => new DateTime('2015-04-13 20:20:21'),
         ];
 
-        $events[] = new AuditUpdateEvent('1234', 50, 'articles', $changed, $original, new Entity());
+        $events = [new AuditUpdateEvent('1234', 50, 'articles', $changed, $original, new Entity())];
         $persister->logEvents($events);
         $client->getIndex('article')->refresh();
 
@@ -280,7 +273,6 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
      * Tests that metadata is correctly stored.
      *
      * @return void
-     * @throws \AuditStash\Exception
      */
     public function testLogEventWithMetadata()
     {
@@ -290,7 +282,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         $client = ConnectionManager::get('test_elastic');
         $persister = new ElasticSearchPersister(['connection' => $client, 'index' => 'article', 'type' => 'article']);
 
-        $events[] = new AuditDeleteEvent('1234', 50, 'articles', 'authors');
+        $events = [new AuditDeleteEvent('1234', 50, 'articles', 'authors')];
         $events[0]->setMetaInfo(['a' => 'b', 'c' => 'd']);
         $persister->logEvents($events);
         $client->getIndex('article')->refresh();
