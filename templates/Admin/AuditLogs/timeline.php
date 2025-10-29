@@ -43,6 +43,8 @@ $this->loadHelper('AuditStash.Audit');
                                     <div class="marker marker-success"></div>
                                 <?php } elseif ($auditLog->type === 'update') { ?>
                                     <div class="marker marker-primary"></div>
+                                <?php } elseif ($auditLog->type === 'revert') { ?>
+                                    <div class="marker marker-warning"></div>
                                 <?php } else { ?>
                                     <div class="marker marker-danger"></div>
                                 <?php } ?>
@@ -61,6 +63,12 @@ $this->loadHelper('AuditStash.Audit');
                                                 Record created
                                             <?php } elseif ($auditLog->type === 'update') { ?>
                                                 <?= $this->Audit->changeSummary($auditLog->changed) ?>
+                                            <?php } elseif ($auditLog->type === 'revert') { ?>
+                                                <?php
+                                                $meta = json_decode($auditLog->meta, true);
+                                                $revertType = $meta['revert_type'] ?? 'unknown';
+                                                ?>
+                                                Record reverted (<?= h($revertType) ?>)
                                             <?php } else { ?>
                                                 Record deleted
                                             <?php } ?>
@@ -72,6 +80,11 @@ $this->loadHelper('AuditStash.Audit');
                                             ['action' => 'view', $auditLog->id],
                                             ['class' => 'btn btn-sm btn-outline-primary']
                                         ) ?>
+                                        <?php if ($auditLog->type === 'delete') { ?>
+                                            <?= $this->Audit->restoreButton($auditLog->source, $auditLog->primary_key) ?>
+                                        <?php } elseif ($auditLog->type !== 'revert') { ?>
+                                            <?= $this->Audit->revertButton($auditLog->id) ?>
+                                        <?php } ?>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -121,6 +134,24 @@ $this->loadHelper('AuditStash.Audit');
                                         <div class="alert alert-danger mb-0">
                                             <strong>Record was deleted</strong>
                                         </div>
+                                    <?php } elseif ($auditLog->type === 'revert') { ?>
+                                        <div class="alert alert-warning mb-2">
+                                            <?php
+                                            $meta = json_decode($auditLog->meta, true);
+                                            $revertType = $meta['revert_type'] ?? 'unknown';
+                                            $revertToId = $meta['revert_to_audit_id'] ?? null;
+                                            ?>
+                                            <strong>Record was reverted (<?= h($revertType) ?>)</strong>
+                                            <?php if ($revertToId) { ?>
+                                                to state from audit log #<?= h($revertToId) ?>
+                                            <?php } ?>
+                                        </div>
+                                        <details>
+                                            <summary class="cursor-pointer text-primary">Show changes</summary>
+                                            <div class="mt-2">
+                                                <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
+                                            </div>
+                                        </details>
                                     <?php } ?>
                                 </div>
                             </div>
@@ -168,6 +199,11 @@ $this->loadHelper('AuditStash.Audit');
 .marker-danger {
     background-color: #dc3545;
     color: #dc3545;
+}
+
+.marker-warning {
+    background-color: #ffc107;
+    color: #ffc107;
 }
 
 .timeline-line {

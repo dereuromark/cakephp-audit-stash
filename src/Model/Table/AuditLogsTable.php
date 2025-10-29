@@ -75,7 +75,7 @@ class AuditLogsTable extends Table
             ->maxLength('type', 7)
             ->requirePresence('type', 'create')
             ->notEmptyString('type')
-            ->inList('type', ['create', 'update', 'delete']);
+            ->inList('type', ['create', 'update', 'delete', 'revert']);
 
         $validator
             ->nonNegativeInteger('primary_key')

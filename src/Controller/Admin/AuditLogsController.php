@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
+use AuditStash\Service\RevertService;
+use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Response;
 use RuntimeException;
 
@@ -131,6 +133,138 @@ class AuditLogsController extends AppController
             ->toArray();
 
         $this->set(compact('auditLogs', 'source', 'primaryKey'));
+    }
+
+    /**
+     * Preview revert changes
+     *
+     * @param string|null $id Audit log ID
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return \Cake\Http\Response|null|void Renders view
+     */
+    public function revertPreview(?string $id = null)
+    {
+        $auditLog = $this->AuditLogs->get($id);
+
+        if ($auditLog->primary_key === null) {
+            throw new \InvalidArgumentException('Audit log has no primary key');
+        }
+
+        // Load services
+        $reconstructor = new StateReconstructorService();
+
+        // Get target state from audit
+        $targetState = $reconstructor->reconstructState(
+            $auditLog->source,
+            $auditLog->primary_key,
+            $auditLog->id,
+        );
+
+        // Get current state
+        $table = $this->fetchTable($auditLog->source);
+        $entity = $table->get($auditLog->primary_key);
+        $currentState = $entity->toArray();
+
+        // Calculate diff
+        $diff = $reconstructor->calculateDiff($currentState, $targetState);
+
+        $this->set(compact('auditLog', 'currentState', 'targetState', 'diff'));
+    }
+
+    /**
+     * Execute revert
+     *
+     * @param string|null $id Audit log ID
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return \Cake\Http\Response
+     */
+    public function revert(?string $id = null): Response
+    {
+        $this->request->allowMethod(['post']);
+
+        $auditLog = $this->AuditLogs->get($id);
+
+        if ($auditLog->primary_key === null) {
+            throw new \InvalidArgumentException('Audit log has no primary key');
+        }
+
+        $fields = $this->request->getData('fields');
+
+        $revertService = new RevertService();
+
+        if (!$fields) {
+            // Full revert
+            $entity = $revertService->revertFull(
+                $auditLog->source,
+                $auditLog->primary_key,
+                $auditLog->id,
+            );
+        } else {
+            // Partial revert
+            $entity = $revertService->revertPartial(
+                $auditLog->source,
+                $auditLog->primary_key,
+                $auditLog->id,
+                $fields,
+            );
+        }
+
+        if ($entity) {
+            $this->Flash->success(__('Record reverted successfully.'));
+        } else {
+            $this->Flash->error(__('Failed to revert record.'));
+        }
+
+        $redirect = $this->redirect(['action' => 'view', $id]);
+        assert($redirect instanceof Response);
+
+        return $redirect;
+    }
+
+    /**
+     * Restore deleted record
+     *
+     * @param string|null $source Table name
+     * @param string|null $primaryKey Primary key value
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return \Cake\Http\Response|null|void Renders view or redirects
+     */
+    public function restore(?string $source = null, ?string $primaryKey = null)
+    {
+        if ($this->request->is('post')) {
+            if ($source === null || $primaryKey === null) {
+                throw new \InvalidArgumentException('Source and primary key are required');
+            }
+
+            $revertService = new RevertService();
+            $entity = $revertService->restoreDeleted($source, $primaryKey);
+
+            if ($entity) {
+                $this->Flash->success(__('Record restored successfully.'));
+
+                return $this->redirect(['action' => 'timeline', $source, $primaryKey]);
+            }
+
+            $this->Flash->error(__('Failed to restore record.'));
+        }
+
+        // Find DELETE audit entry for preview
+        $deleteLog = $this->AuditLogs->find()
+            ->where([
+                'source' => $source,
+                'primary_key' => $primaryKey,
+                'type' => 'delete',
+            ])
+            ->orderBy(['created' => 'DESC'])
+            ->first();
+
+        $this->set(compact('source', 'primaryKey', 'deleteLog'));
     }
 
     /**

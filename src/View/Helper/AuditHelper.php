@@ -8,9 +8,18 @@ use Cake\View\Helper;
 
 /**
  * Audit helper for displaying audit log changes in a human-readable format
+ *
+ * @property \Cake\View\Helper\HtmlHelper $Html
  */
 class AuditHelper extends Helper
 {
+    /**
+     * Helpers to load
+     *
+     * @var array
+     */
+    protected array $helpers = ['Html'];
+
     /**
      * Display a diff comparison of original vs changed values (side-by-side)
      *
@@ -157,7 +166,7 @@ class AuditHelper extends Helper
     /**
      * Display event type badge
      *
-     * @param string $type Event type (create, update, delete)
+     * @param string $type Event type (create, update, delete, revert)
      *
      * @return string HTML badge
      */
@@ -167,6 +176,7 @@ class AuditHelper extends Helper
             'create' => '<span class="badge bg-success">Create</span>',
             'update' => '<span class="badge bg-primary">Update</span>',
             'delete' => '<span class="badge bg-danger">Delete</span>',
+            'revert' => '<span class="badge bg-warning">Revert</span>',
         ];
 
         return $badges[$type] ?? '<span class="badge bg-secondary">' . h($type) . '</span>';
@@ -212,5 +222,44 @@ class AuditHelper extends Helper
         }
 
         return $count . ' field(s): ' . implode(', ', array_map('h', array_slice($fields, 0, 3))) . ', ...';
+    }
+
+    /**
+     * Render revert button
+     *
+     * @param int $auditLogId Audit log ID
+     * @param array $options HTML options
+     *
+     * @return string HTML button
+     */
+    public function revertButton(int $auditLogId, array $options = []): string
+    {
+        $options += ['class' => 'btn btn-sm btn-warning'];
+
+        return $this->Html->link(
+            __('Revert'),
+            ['action' => 'revertPreview', $auditLogId],
+            $options,
+        );
+    }
+
+    /**
+     * Render restore button for deleted records
+     *
+     * @param string $source Table name
+     * @param string|int $primaryKey Primary key
+     * @param array $options HTML options
+     *
+     * @return string HTML button
+     */
+    public function restoreButton(string $source, int|string $primaryKey, array $options = []): string
+    {
+        $options += ['class' => 'btn btn-sm btn-success'];
+
+        return $this->Html->link(
+            __('Restore'),
+            ['action' => 'restore', $source, $primaryKey],
+            $options,
+        );
     }
 }

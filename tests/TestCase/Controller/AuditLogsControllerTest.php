@@ -24,6 +24,7 @@ class AuditLogsControllerTest extends TestCase
      */
     protected array $fixtures = [
         'plugin.AuditStash.AuditLogs',
+        'plugin.AuditStash.Articles',
     ];
 
     /**
@@ -372,5 +373,459 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertContentType('text/csv');
+    }
+
+    /**
+     * Test revertPreview method
+     *
+     * @return void
+     */
+    public function testRevertPreview(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $articlesTable = $this->getTableLocator()->get('Articles');
+
+        // Create article
+        $article = $articlesTable->newEntity([
+            'id' => 1,
+            'title' => 'Current Title',
+            'body' => 'Current Body',
+            'author_id' => 1,
+        ]);
+        $articlesTable->save($article);
+
+        // Create audit log
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => '1',
+            'original' => json_encode(['title' => 'Old Title']),
+            'changed' => json_encode(['title' => 'Old Title']),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'revertPreview',
+            $log->id,
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Revert Preview');
+    }
+
+    /**
+     * Test restore method GET request
+     *
+     * @return void
+     */
+    public function testRestoreGet(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create delete audit log
+        $deleteLog = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-delete',
+            'type' => 'delete',
+            'source' => 'Articles',
+            'primary_key' => '99',
+            'original' => json_encode([
+                'id' => 99,
+                'title' => 'Deleted Article',
+                'body' => 'This was deleted',
+            ]),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($deleteLog);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'restore',
+            'Articles',
+            '99',
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Restore Deleted Record');
+        $this->assertResponseContains('Deleted Article');
+    }
+
+    /**
+     * Test revert POST request (full revert)
+     *
+     * @return void
+     */
+    public function testRevertPostFull(): void
+    {
+        $this->enableRetainFlashMessages();
+
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $articlesTable = $this->getTableLocator()->get('Articles');
+
+        // Create article
+        $article = $articlesTable->newEntity([
+            'id' => 10,
+            'title' => 'Current Title',
+            'body' => 'Current Body',
+            'author_id' => 1,
+        ]);
+        $articlesTable->save($article);
+
+        // Create audit log
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => '10',
+            'original' => json_encode([]),
+            'changed' => json_encode(['title' => 'Original Title', 'body' => 'Original Body']),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->post([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'revert',
+            $log->id,
+        ]);
+
+        $this->assertResponseCode(302);
+        $this->assertRedirect(['action' => 'view', $log->id]);
+        $this->assertFlashMessage('Record reverted successfully.');
+
+        // Verify article was reverted
+        $article = $articlesTable->get(10);
+        $this->assertEquals('Original Title', $article->title);
+    }
+
+    /**
+     * Test revert POST request (partial revert)
+     *
+     * @return void
+     */
+    public function testRevertPostPartial(): void
+    {
+        $this->enableRetainFlashMessages();
+
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $articlesTable = $this->getTableLocator()->get('Articles');
+
+        // Create article
+        $article = $articlesTable->newEntity([
+            'id' => 11,
+            'title' => 'Current Title',
+            'body' => 'Current Body',
+            'author_id' => 1,
+        ]);
+        $articlesTable->save($article);
+
+        // Create audit log
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => '11',
+            'original' => json_encode([]),
+            'changed' => json_encode(['title' => 'Original Title', 'body' => 'Original Body']),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->post(
+            [
+                'prefix' => 'Admin',
+                'plugin' => 'AuditStash',
+                'controller' => 'AuditLogs',
+                'action' => 'revert',
+                $log->id,
+            ],
+            ['fields' => ['title']],
+        );
+
+        $this->assertResponseCode(302);
+        $this->assertFlashMessage('Record reverted successfully.');
+
+        // Verify only title was reverted
+        $article = $articlesTable->get(11);
+        $this->assertEquals('Original Title', $article->title);
+        $this->assertEquals('Current Body', $article->body);
+    }
+
+    /**
+     * Test view method displays revert event correctly (smoke test)
+     *
+     * @return void
+     */
+    public function testViewRevertEvent(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create a revert audit log
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-revert',
+            'type' => 'revert',
+            'source' => 'Articles',
+            'primary_key' => '1',
+            'original' => json_encode(['title' => 'Current Title']),
+            'changed' => json_encode(['title' => 'Reverted Title']),
+            'meta' => json_encode([
+                'revert_to_audit_id' => 123,
+                'revert_type' => 'partial',
+            ]),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'view',
+            $log->id,
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Audit Log Details');
+    }
+
+    /**
+     * Test timeline with revert events renders correctly (smoke test)
+     *
+     * @return void
+     */
+    public function testTimelineWithRevertEvents(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create various log types for the same record
+        $logs = [
+            [
+                'transaction' => 'test-transaction-1',
+                'type' => 'create',
+                'source' => 'Articles',
+                'primary_key' => '5',
+                'changed' => json_encode(['title' => 'Original']),
+                'created' => new DateTime('-3 days'),
+            ],
+            [
+                'transaction' => 'test-transaction-2',
+                'type' => 'update',
+                'source' => 'Articles',
+                'primary_key' => '5',
+                'original' => json_encode(['title' => 'Original']),
+                'changed' => json_encode(['title' => 'Updated']),
+                'created' => new DateTime('-2 days'),
+            ],
+            [
+                'transaction' => 'test-transaction-3',
+                'type' => 'revert',
+                'source' => 'Articles',
+                'primary_key' => '5',
+                'original' => json_encode(['title' => 'Updated']),
+                'changed' => json_encode(['title' => 'Original']),
+                'meta' => json_encode([
+                    'revert_to_audit_id' => 1,
+                    'revert_type' => 'full',
+                ]),
+                'created' => new DateTime('-1 day'),
+            ],
+            [
+                'transaction' => 'test-transaction-4',
+                'type' => 'delete',
+                'source' => 'Articles',
+                'primary_key' => '5',
+                'original' => json_encode(['title' => 'Original']),
+                'changed' => json_encode([]),
+                'created' => new DateTime(),
+            ],
+        ];
+
+        foreach ($logs as $logData) {
+            $log = $auditLogsTable->newEntity($logData);
+            $auditLogsTable->save($log);
+        }
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'timeline',
+            'Articles',
+            '5',
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Audit Timeline');
+        $this->assertResponseContains('marker-success'); // create
+        $this->assertResponseContains('marker-primary'); // update
+        $this->assertResponseContains('marker-warning'); // revert
+        $this->assertResponseContains('marker-danger'); // delete
+        $this->assertResponseContains('Record reverted'); // revert description
+    }
+
+    /**
+     * Test revert preview with no changes renders correctly (smoke test)
+     *
+     * @return void
+     */
+    public function testRevertPreviewNoChanges(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $articlesTable = $this->getTableLocator()->get('Articles');
+
+        // Create article matching audit state
+        $article = $articlesTable->newEntity([
+            'id' => 20,
+            'title' => 'Same Title',
+            'body' => 'Same Body',
+            'author_id' => 1,
+        ]);
+        $articlesTable->save($article);
+
+        // Create audit log with same state
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => '20',
+            'original' => json_encode([]),
+            'changed' => json_encode(['title' => 'Same Title', 'body' => 'Same Body']),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'revertPreview',
+            $log->id,
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Revert Preview');
+        $this->assertResponseContains('No differences found');
+    }
+
+    /**
+     * Test revert preview with changes renders correctly (smoke test)
+     *
+     * @return void
+     */
+    public function testRevertPreviewWithChanges(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $articlesTable = $this->getTableLocator()->get('Articles');
+
+        // Create article with different state
+        $article = $articlesTable->newEntity([
+            'id' => 21,
+            'title' => 'Current Title',
+            'body' => 'Current Body',
+            'author_id' => 1,
+        ]);
+        $articlesTable->save($article);
+
+        // Create audit log with different state
+        $log = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => '21',
+            'original' => json_encode([]),
+            'changed' => json_encode(['title' => 'Old Title', 'body' => 'Old Body']),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($log);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'revertPreview',
+            $log->id,
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Revert Preview');
+        $this->assertResponseContains('Fields to Revert');
+        $this->assertResponseContains('title');
+        $this->assertResponseContains('body');
+        $this->assertResponseContains('Current Title');
+        $this->assertResponseContains('Old Title');
+    }
+
+    /**
+     * Test restore with no delete log renders correctly (smoke test)
+     *
+     * @return void
+     */
+    public function testRestoreNoDeleteLog(): void
+    {
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'restore',
+            'Articles',
+            '999',
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('Restore Deleted Record');
+        $this->assertResponseContains('No deletion record found');
+    }
+
+    /**
+     * Test restore POST request
+     *
+     * @return void
+     */
+    public function testRestorePost(): void
+    {
+        $this->enableRetainFlashMessages();
+
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create delete audit log
+        $deleteLog = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-delete',
+            'type' => 'delete',
+            'source' => 'Articles',
+            'primary_key' => '98',
+            'original' => json_encode([
+                'title' => 'Restored Article',
+                'body' => 'This was restored',
+                'author_id' => 1,
+            ]),
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->save($deleteLog);
+
+        $this->post([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'restore',
+            'Articles',
+            '98',
+        ]);
+
+        $this->assertResponseCode(302);
+        $this->assertRedirect(['action' => 'timeline', 'Articles', '98']);
+        $this->assertFlashMessage('Record restored successfully.');
+
+        // Verify article was restored
+        $articlesTable = $this->getTableLocator()->get('Articles');
+        $article = $articlesTable->get(98);
+        $this->assertEquals('Restored Article', $article->title);
     }
 }

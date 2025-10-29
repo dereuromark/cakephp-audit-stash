@@ -305,4 +305,18 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('value', $result);
         $this->assertStringContainsString('bg-danger', $result); // background for removed
     }
+
+    /**
+     * Test eventTypeBadge method with revert type
+     *
+     * @return void
+     */
+    public function testEventTypeBadgeRevert(): void
+    {
+        $result = $this->Audit->eventTypeBadge('revert');
+
+        $this->assertStringContainsString('badge', $result);
+        $this->assertStringContainsString('bg-warning', $result);
+        $this->assertStringContainsString('Revert', $result);
+    }
 }
