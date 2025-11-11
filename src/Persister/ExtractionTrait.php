@@ -35,7 +35,7 @@ trait ExtractionTrait
             'created' => new DateTime($event->getTimestamp()),
         ];
 
-        $dateTimeTypeClass = version_compare(Configure::version(), '5.3.0', '>=')
+        $dateTimeTypeClass = version_compare(Configure::version(), '5.3', '>=')
             ? TypeFactory::getMapped('datetime')
             : TypeFactory::getMap('datetime');
         if ($dateTimeTypeClass !== DateTimeType::class) {
