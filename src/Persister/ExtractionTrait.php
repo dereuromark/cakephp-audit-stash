@@ -6,6 +6,7 @@ namespace AuditStash\Persister;
 
 use AuditStash\Event\BaseEvent;
 use AuditStash\EventInterface;
+use Cake\Core\Configure;
 use Cake\Database\Type\DateTimeType;
 use Cake\Database\TypeFactory;
 use Cake\I18n\DateTime;
@@ -34,7 +35,10 @@ trait ExtractionTrait
             'created' => new DateTime($event->getTimestamp()),
         ];
 
-        if (TypeFactory::getMap('datetime') !== DateTimeType::class) {
+        $dateTimeTypeClass = version_compare(Configure::version(), '5.3.0', '>=')
+            ? TypeFactory::getMapped('datetime')
+            : TypeFactory::getMap('datetime');
+        if ($dateTimeTypeClass !== DateTimeType::class) {
             $fields['created'] = (new DateTime($event->getTimestamp()))->format('Y-m-d H:i:s');
         }
 
