@@ -477,7 +477,7 @@ part of the process fails. There are two ways to accomplish this. The easiest is
 ```
 
 That's it if you use afterSave. You should read up on the difference between the two as there are drawbacks:
-https://book.cakephp.org/4/en/orm/table-objects.html#aftersave
+https://book.cakephp.org/5/en/orm/table-objects.html#aftersave
 
 If you are using the default afterCommit, in order to create audit logs during a transaction, some additional setup is
 required. First create the file `src/Model/Audit/AuditTrail.php` with the following:
