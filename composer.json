@@ -37,9 +37,9 @@
             "@cs-check",
             "@test"
         ],
-        "cs-check": "phpcs --colors --parallel=16 -p",
-        "cs-fix": "phpcbf --colors --parallel=16 -p",
-        "phpstan": "tools/phpstan analyse",
+        "cs-check": "phpcs --colors --parallel=16",
+        "cs-fix": "phpcbf --colors --parallel=16",
+        "phpstan": "tools/phpstan analyze",
         "stan": [
             "@phpstan"
         ],
