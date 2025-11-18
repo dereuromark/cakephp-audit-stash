@@ -112,6 +112,10 @@ See [Configuration Documentation](docs/configuration.md) for storage options.
 
 https://sandbox.dereuromark.de/sandbox/audit-stash
 
+## Related Plugins
+
+If you need to moderate or approve changes **before** they happen (rather than auditing them after), check out the [Bouncer plugin](https://github.com/dereuromark/cakephp-bouncer). While AuditStash tracks what has already been changed, Bouncer provides approval workflows and change moderation before changes are persisted.
+
 ## Testing
 
 Run the test suite:
