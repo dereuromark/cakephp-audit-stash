@@ -86,6 +86,8 @@ class CreateAuditLogs extends BaseMigration
             ->addIndex(['parent_source'])
             ->addIndex(['username'])
             ->addIndex(['created'])
+            ->addIndex(['source', 'primary_key'])
+            ->addIndex(['source', 'created'])
             ->create();
     }
 
