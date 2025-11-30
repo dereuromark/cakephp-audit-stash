@@ -115,16 +115,24 @@ public function beforeFilter(\Cake\Event\EventInterface $event)
 
 ### Option 3: Create Custom AppController for Plugin
 
-Create `src/Controller/Admin/AuditLogsController.php` in your app to override the plugin controller:
+Create `src/Controller/AuditLogsController.php` in your app to override the plugin controller:
 
 ```php
 <?php
-namespace App\Controller\Admin;
+namespace App\Controller;
 
-use AuditStash\Controller\AuditLogsController as BaseAuditLogsController;
+use AuditStash\Controller\Admin\AuditLogsController as BaseAuditLogsController;
 
 class AuditLogsController extends BaseAuditLogsController
 {
+    public function initialize(): void
+    {
+        parent::initialize();
+
+        $this->viewBuilder()->setPlugin('AuditStash');
+        $this->viewBuilder()->setTemplatePath('Admin/AuditLogs');
+    }
+
     public function beforeFilter(\Cake\Event\EventInterface $event)
     {
         parent::beforeFilter($event);
