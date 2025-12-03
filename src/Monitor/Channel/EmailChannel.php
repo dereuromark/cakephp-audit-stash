@@ -6,6 +6,7 @@ namespace AuditStash\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
 use Cake\Mailer\Mailer;
+use Exception;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -55,7 +56,7 @@ class EmailChannel implements ChannelInterface
             $mailer->deliver();
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger?->error('EmailChannel: Failed to send alert', [
                 'error' => $e->getMessage(),
                 'alert' => $alert->toArray(),

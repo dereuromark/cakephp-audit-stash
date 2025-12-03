@@ -10,6 +10,7 @@ use AuditStash\Monitor\Rule\AbstractRule;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
+use Exception;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -83,7 +84,7 @@ class AuditMonitor implements EventListenerInterface
                     $alert = $rule->createAlert($auditLog);
                     $this->sendAlert($ruleName, $alert);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger?->error('AuditMonitor: Rule check failed', [
                     'rule' => $ruleName,
                     'error' => $e->getMessage(),
@@ -107,7 +108,7 @@ class AuditMonitor implements EventListenerInterface
         foreach ($channels as $channel) {
             try {
                 $channel->send($alert);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger?->error('AuditMonitor: Channel send failed', [
                     'rule' => $ruleName,
                     'channel' => get_class($channel),

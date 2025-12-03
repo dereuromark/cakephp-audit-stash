@@ -8,6 +8,7 @@ use App\Controller\AppController;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Response;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -149,7 +150,7 @@ class AuditLogsController extends AppController
         $auditLog = $this->AuditLogs->get($id);
 
         if ($auditLog->primary_key === null) {
-            throw new \InvalidArgumentException('Audit log has no primary key');
+            throw new InvalidArgumentException('Audit log has no primary key');
         }
 
         // Load services
@@ -189,7 +190,7 @@ class AuditLogsController extends AppController
         $auditLog = $this->AuditLogs->get($id);
 
         if ($auditLog->primary_key === null) {
-            throw new \InvalidArgumentException('Audit log has no primary key');
+            throw new InvalidArgumentException('Audit log has no primary key');
         }
 
         $fields = $this->request->getData('fields');
@@ -239,7 +240,7 @@ class AuditLogsController extends AppController
     {
         if ($this->request->is('post')) {
             if ($source === null || $primaryKey === null) {
-                throw new \InvalidArgumentException('Source and primary key are required');
+                throw new InvalidArgumentException('Source and primary key are required');
             }
 
             $revertService = new RevertService();

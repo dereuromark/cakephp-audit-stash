@@ -6,6 +6,7 @@ namespace AuditStash\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
 use Cake\Http\Client;
+use Exception;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -58,7 +59,7 @@ class WebhookChannel implements ChannelInterface
                     'status' => $response->getStatusCode(),
                     'attempt' => $attempt + 1,
                 ]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger?->error('WebhookChannel: Request failed', [
                     'error' => $e->getMessage(),
                     'attempt' => $attempt + 1,

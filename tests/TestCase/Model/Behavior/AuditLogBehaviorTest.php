@@ -13,6 +13,7 @@ use Cake\Event\Event;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use SplObjectStorage;
 
 class AuditLogBehaviorTest extends TestCase
@@ -191,7 +192,7 @@ class AuditLogBehaviorTest extends TestCase
         $this->assertInstanceOf(AuditCreateEvent::class, $result);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('dataProviderForSaveType')]
+    #[DataProvider('dataProviderForSaveType')]
     public function testImplementedEvents(?string $saveType): void
     {
         Configure::write('AuditStash.saveType', $saveType);
