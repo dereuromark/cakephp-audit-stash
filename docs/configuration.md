@@ -17,6 +17,26 @@ bin/cake bake model AuditLogs
 **Performance Note:** The migration uses `binaryuuid` for the transaction field, which stores UUIDs as BINARY(16) instead of CHAR(36).
 This provides ~56% space savings and better index performance.
 
+### UUID Primary Keys
+
+The default migration creates the `primary_key` column as an integer. If your application uses UUID primary keys,
+you need to copy and adjust the migration on the app side:
+
+```bash
+# Copy the migration to your app
+cp vendor/dereuromark/cakephp-audit-stash/config/Migrations/20171018185609_CreateAuditLogs.php config/Migrations/
+```
+
+Then modify the `primary_key` column definition:
+
+```php
+->addColumn('primary_key', 'string', [
+    'default' => null,
+    'limit' => 36,
+    'null' => true,
+])
+```
+
 The table persister is configured by default, but you can explicitly set it in your `config/app_local.php` or `config/app.php`:
 
 ```php
