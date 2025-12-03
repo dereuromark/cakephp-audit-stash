@@ -12,7 +12,7 @@ use Cake\ORM\Entity;
  * @property int $id
  * @property string $transaction
  * @property string $type
- * @property int|null $primary_key
+ * @property int|string|null $primary_key
  * @property string|null $display_value
  * @property string $source
  * @property string|null $parent_source
