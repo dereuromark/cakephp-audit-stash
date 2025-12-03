@@ -74,7 +74,9 @@ $this->loadHelper('AuditStash.Audit');
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <?= $this->Form->button(__('Filter'), ['class' => 'btn btn-primary me-2']) ?>
-                    <?= $this->Html->link(__('Clear'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+                    <?php if ($this->request->getQueryParams()) { ?>
+                        <?= $this->Html->link(__('Clear'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+                    <?php } ?>
                 </div>
             </div>
             <?= $this->Form->end() ?>

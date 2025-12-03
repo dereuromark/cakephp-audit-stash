@@ -23,44 +23,44 @@ $this->loadHelper('AuditStash.Audit');
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Event Information</h5>
+                    <h5 class="mb-0"><?= __('Event Information') ?></h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
                         <tr>
-                            <th style="width: 40%;">ID</th>
+                            <th style="width: 40%;"><?= __('ID') ?></th>
                             <td><?= $this->Number->format($auditLog->id) ?></td>
                         </tr>
                         <tr>
-                            <th>Event Type</th>
+                            <th><?= __('Event Type') ?></th>
                             <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                         </tr>
                         <tr>
-                            <th>Table/Source</th>
+                            <th><?= __('Table/Source') ?></th>
                             <td><code><?= h($auditLog->source) ?></code></td>
                         </tr>
                         <tr>
-                            <th>Record ID</th>
+                            <th><?= __('Record ID') ?></th>
                             <td><?= h($auditLog->primary_key) ?></td>
                         </tr>
                         <tr>
-                            <th>Record Name</th>
+                            <th><?= __('Record Name') ?></th>
                             <td><?= h($auditLog->display_value) ?: '<em class="text-muted">N/A</em>' ?></td>
                         </tr>
                         <tr>
-                            <th>Parent Source</th>
+                            <th><?= __('Parent Source') ?></th>
                             <td><?= h($auditLog->parent_source) ?: '<em class="text-muted">N/A</em>' ?></td>
                         </tr>
                         <tr>
-                            <th>Transaction ID</th>
+                            <th><?= __('Transaction ID') ?></th>
                             <td><?= $this->Audit->transactionId($auditLog->transaction, true) ?></td>
                         </tr>
                         <tr>
-                            <th>Username</th>
+                            <th><?= __('Username') ?></th>
                             <td><?= h($auditLog->username) ?: '<em class="text-muted">N/A</em>' ?></td>
                         </tr>
                         <tr>
-                            <th>Created</th>
+                            <th><?= __('Created') ?></th>
                             <td><?= h($auditLog->created) ?></td>
                         </tr>
                     </table>
@@ -71,34 +71,10 @@ $this->loadHelper('AuditStash.Audit');
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Metadata</h5>
+                    <h5 class="mb-0"><?= __('Metadata') ?></h5>
                 </div>
                 <div class="card-body">
-                    <?php if ($auditLog->meta) { ?>
-                        <?php
-                        $meta = json_decode($auditLog->meta, true);
-                        if ($meta && is_array($meta)) {
-                        ?>
-                            <table class="table table-sm">
-                                <?php foreach ($meta as $key => $value) { ?>
-                                <tr>
-                                    <th style="width: 40%;"><?= h($key) ?></th>
-                                    <td>
-                                        <?php if (is_array($value)) { ?>
-                                            <pre class="mb-0"><code><?= h(json_encode($value, JSON_PRETTY_PRINT)) ?></code></pre>
-                                        <?php } else { ?>
-                                            <?= h($value) ?>
-                                        <?php } ?>
-                                    </td>
-                                </tr>
-                                <?php } ?>
-                            </table>
-                        <?php } else { ?>
-                            <p class="text-muted">No metadata available</p>
-                        <?php } ?>
-                    <?php } else { ?>
-                        <p class="text-muted">No metadata available</p>
-                    <?php } ?>
+                    <?= $this->Audit->metadata($auditLog->meta) ?>
                 </div>
             </div>
         </div>
@@ -107,71 +83,25 @@ $this->loadHelper('AuditStash.Audit');
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                Changes
+                <?= __('Changes') ?>
                 <?php if ($auditLog->type === 'create') { ?>
-                    <span class="badge bg-info">New Record</span>
+                    <span class="badge bg-info"><?= __('New Record') ?></span>
                 <?php } elseif ($auditLog->type === 'delete') { ?>
-                    <span class="badge bg-danger">Deleted Record</span>
+                    <span class="badge bg-danger"><?= __('Deleted Record') ?></span>
                 <?php } ?>
             </h5>
             <?php if ($auditLog->type === 'update') { ?>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff">Inline</button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-side-diff">Side-by-side</button>
+                <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff"><?= __('Inline') ?></button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-side-diff"><?= __('Side-by-side') ?></button>
             </div>
             <?php } ?>
         </div>
         <div class="card-body">
             <?php if ($auditLog->type === 'create') { ?>
-                <h6>Created with values:</h6>
-                <?php
-                $changed = json_decode($auditLog->changed, true);
-                if ($changed && is_array($changed)) {
-                ?>
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th style="width: 30%;">Field</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($changed as $field => $value) { ?>
-                            <tr>
-                                <td><strong><?= h($field) ?></strong></td>
-                                <td><?= $this->Audit->formatValue($value) ?></td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
-                <?php } else { ?>
-                    <p class="text-muted">No data available</p>
-                <?php } ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Created with values:')) ?>
             <?php } elseif ($auditLog->type === 'delete') { ?>
-                <h6>Deleted record had these values:</h6>
-                <?php
-                $original = json_decode($auditLog->original, true);
-                if ($original && is_array($original)) {
-                ?>
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th style="width: 30%;">Field</th>
-                                <th>Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($original as $field => $value) { ?>
-                            <tr>
-                                <td><strong><?= h($field) ?></strong></td>
-                                <td><?= $this->Audit->formatValue($value) ?></td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
-                <?php } else { ?>
-                    <p class="text-muted">No data available</p>
-                <?php } ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->original, __('Deleted record had these values:')) ?>
             <?php } else { ?>
                 <div id="inline-diff-view">
                     <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
@@ -184,47 +114,5 @@ $this->loadHelper('AuditStash.Audit');
     </div>
 </div>
 
-<style>
-.audit-diff {
-    font-size: 0.9rem;
-}
-.audit-diff td {
-    vertical-align: top;
-}
-.audit-diff-inline {
-    font-size: 0.9rem;
-}
-.audit-diff-inline td {
-    vertical-align: top;
-}
-pre {
-    background-color: #f8f9fa;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const btnInline = document.getElementById('btn-inline-diff');
-    const btnSide = document.getElementById('btn-side-diff');
-    const inlineView = document.getElementById('inline-diff-view');
-    const sideView = document.getElementById('side-diff-view');
-
-    if (btnInline && btnSide) {
-        btnInline.addEventListener('click', function() {
-            inlineView.style.display = 'block';
-            sideView.style.display = 'none';
-            btnInline.classList.add('active');
-            btnSide.classList.remove('active');
-        });
-
-        btnSide.addEventListener('click', function() {
-            inlineView.style.display = 'none';
-            sideView.style.display = 'block';
-            btnSide.classList.add('active');
-            btnInline.classList.remove('active');
-        });
-    }
-});
-</script>
+<?= $this->Audit->diffStyles() ?>
+<?= $this->Audit->diffScript() ?>
