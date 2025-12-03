@@ -78,7 +78,6 @@ class AuditLogsTable extends Table
             ->inList('type', ['create', 'update', 'delete', 'revert']);
 
         $validator
-            ->nonNegativeInteger('primary_key')
             ->allowEmptyString('primary_key');
 
         $validator
