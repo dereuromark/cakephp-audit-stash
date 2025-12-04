@@ -523,6 +523,10 @@ pre { background-color: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; }
 /* Side-by-side specific */
 .diff-side-by-side th:nth-child(2), .diff-side-by-side td:nth-child(2) { width: 45%; }
 .diff-side-by-side th:nth-child(4), .diff-side-by-side td:nth-child(4) { width: 45%; }
+/* Whitespace-only changes */
+.diff-wrapper .empty-line { font-weight: bold; }
+.diff-whitespace-change ins.empty-line { background-color: #acf2bd; color: #155724; text-decoration: none; padding: 1px 3px; border-radius: 2px; }
+.diff-whitespace-change del.empty-line { background-color: #fdb8c0; color: #721c24; text-decoration: line-through; padding: 1px 3px; border-radius: 2px; }
 CSS;
 
 		return '<style>' . $libraryStyles . "\n" . $customStyles . '</style>';
