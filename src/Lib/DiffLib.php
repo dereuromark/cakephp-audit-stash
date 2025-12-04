@@ -35,6 +35,11 @@ class DiffLib
         $old = str_replace(["\r\n", "\r"], "\n", $old);
         $new = str_replace(["\r\n", "\r"], "\n", $new);
 
+        // Check if this is a whitespace/newline-only change
+        if ($this->isWhitespaceOnlyChange($old, $new)) {
+            return $this->renderWhitespaceChange($old, $new);
+        }
+
         return $this->renderInline($old, $new);
     }
 
@@ -51,6 +56,11 @@ class DiffLib
         // Normalize line endings
         $old = str_replace(["\r\n", "\r"], "\n", $old);
         $new = str_replace(["\r\n", "\r"], "\n", $new);
+
+        // Check if this is a whitespace/newline-only change
+        if ($this->isWhitespaceOnlyChange($old, $new)) {
+            return $this->renderWhitespaceChange($old, $new);
+        }
 
         return $this->renderSideBySide($old, $new);
     }
@@ -137,6 +147,8 @@ class DiffLib
 
                 if (isset($row['oldHtml'])) {
                     $html .= '<td class="old">' . $row['oldHtml'] . '</td>';
+                } elseif ($row['old'] === '') {
+                    $html .= '<td class="old"><del class="empty-line">↵</del></td>';
                 } else {
                     $html .= '<td class="old">' . ($row['old'] !== null ? '<del>' . htmlspecialchars($row['old']) . '</del>' : '') . '</td>';
                 }
@@ -145,6 +157,8 @@ class DiffLib
 
                 if (isset($row['newHtml'])) {
                     $html .= '<td class="new">' . $row['newHtml'] . '</td>';
+                } elseif ($row['new'] === '') {
+                    $html .= '<td class="new"><ins class="empty-line">↵</ins></td>';
                 } else {
                     $html .= '<td class="new">' . ($row['new'] !== null ? '<ins>' . htmlspecialchars($row['new']) . '</ins>' : '') . '</td>';
                 }
@@ -256,6 +270,8 @@ class DiffLib
                     $html .= '<td class="sign">+</td>';
                     if (isset($item['html'])) {
                         $html .= '<td>' . $item['html'] . '</td>';
+                    } elseif ($line === '') {
+                        $html .= '<td><ins class="empty-line">↵</ins></td>';
                     } else {
                         $html .= '<td><ins>' . htmlspecialchars($line) . '</ins></td>';
                     }
@@ -268,6 +284,8 @@ class DiffLib
                     $html .= '<td class="sign">-</td>';
                     if (isset($item['html'])) {
                         $html .= '<td>' . $item['html'] . '</td>';
+                    } elseif ($line === '') {
+                        $html .= '<td><del class="empty-line">↵</del></td>';
                     } else {
                         $html .= '<td><del>' . htmlspecialchars($line) . '</del></td>';
                     }
@@ -526,5 +544,95 @@ class DiffLib
         $differ = new Differ($builder);
 
         return $differ->diffToArray($old, $new);
+    }
+
+    /**
+     * Check if the only difference between two strings is whitespace/newlines.
+     *
+     * @param string $old
+     * @param string $new
+     *
+     * @return bool
+     */
+    protected function isWhitespaceOnlyChange(string $old, string $new): bool
+    {
+        // Normalize all whitespace to single spaces and compare
+        $oldNormalized = preg_replace('/\s+/', ' ', trim($old));
+        $newNormalized = preg_replace('/\s+/', ' ', trim($new));
+
+        return $oldNormalized === $newNormalized && $old !== $new;
+    }
+
+    /**
+     * Render a whitespace/newline-only change with character-level highlighting.
+     *
+     * @param string $old
+     * @param string $new
+     *
+     * @return string
+     */
+    protected function renderWhitespaceChange(string $old, string $new): string
+    {
+        // Do character-level diff to show exactly where whitespace changed
+        $oldChars = preg_split('//u', $old, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $newChars = preg_split('//u', $new, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $lcs = $this->longestCommonSubsequence($oldChars, $newChars);
+
+        // Build combined output showing deletions and insertions inline
+        $html = '<div class="diff-whitespace-change">';
+        $html .= '<div class="p-2 border bg-light" style="white-space: pre-wrap; word-wrap: break-word;">';
+
+        $oldIndex = 0;
+        $newIndex = 0;
+        $lcsIndex = 0;
+        $oldCount = count($oldChars);
+        $newCount = count($newChars);
+        $lcsCount = count($lcs);
+
+        while ($oldIndex < $oldCount || $newIndex < $newCount) {
+            // Check if current old char is in LCS
+            $oldInLcs = $oldIndex < $oldCount &&
+                $lcsIndex < $lcsCount &&
+                $oldChars[$oldIndex] === $lcs[$lcsIndex];
+
+            // Check if current new char is in LCS
+            $newInLcs = $newIndex < $newCount &&
+                $lcsIndex < $lcsCount &&
+                $newChars[$newIndex] === $lcs[$lcsIndex];
+
+            if ($oldInLcs && $newInLcs) {
+                // Both match LCS - output as unchanged
+                $char = $oldChars[$oldIndex];
+                $html .= htmlspecialchars($char);
+                $oldIndex++;
+                $newIndex++;
+                $lcsIndex++;
+            } elseif (!$oldInLcs && $oldIndex < $oldCount) {
+                // Old char not in LCS - it was removed
+                $char = $oldChars[$oldIndex];
+                if ($char === "\n") {
+                    $html .= '<del class="empty-line">↵</del>';
+                } else {
+                    $html .= '<del>' . htmlspecialchars($char) . '</del>';
+                }
+                $oldIndex++;
+            } elseif (!$newInLcs && $newIndex < $newCount) {
+                // New char not in LCS - it was added
+                $char = $newChars[$newIndex];
+                if ($char === "\n") {
+                    $html .= '<ins class="empty-line">↵</ins>' . "\n";
+                } else {
+                    $html .= '<ins>' . htmlspecialchars($char) . '</ins>';
+                }
+                $newIndex++;
+            } else {
+                break;
+            }
+        }
+
+        $html .= '</div></div>';
+
+        return $html;
     }
 }

@@ -310,9 +310,10 @@ class DiffLibTest extends TestCase
     {
         $result = $this->diffLib->compare('   ', "\t\t");
 
-        // Whitespace changes should be detected
-        $this->assertStringContainsString('class="removed"', $result);
-        $this->assertStringContainsString('class="added"', $result);
+        // Whitespace-only changes use the special renderer
+        $this->assertStringContainsString('diff-whitespace-change', $result);
+        $this->assertStringContainsString('<del>', $result);
+        $this->assertStringContainsString('<ins>', $result);
     }
 
     public function testNumbersAndSymbols(): void
