@@ -319,4 +319,125 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('bg-warning', $result);
         $this->assertStringContainsString('Revert', $result);
     }
+
+    /**
+     * Test metadata method with valid JSON
+     *
+     * @return void
+     */
+    public function testMetadataWithValidJson(): void
+    {
+        $meta = json_encode(['ip' => '127.0.0.1', 'user_agent' => 'Mozilla/5.0']);
+        $result = $this->Audit->metadata($meta);
+
+        $this->assertStringContainsString('table', $result);
+        $this->assertStringContainsString('ip', $result);
+        $this->assertStringContainsString('127.0.0.1', $result);
+        $this->assertStringContainsString('user_agent', $result);
+        $this->assertStringContainsString('Mozilla/5.0', $result);
+    }
+
+    /**
+     * Test metadata method with null
+     *
+     * @return void
+     */
+    public function testMetadataWithNull(): void
+    {
+        $result = $this->Audit->metadata(null);
+
+        $this->assertStringContainsString('No metadata available', $result);
+    }
+
+    /**
+     * Test metadata method with invalid JSON
+     *
+     * @return void
+     */
+    public function testMetadataWithInvalidJson(): void
+    {
+        $result = $this->Audit->metadata('invalid json');
+
+        $this->assertStringContainsString('No metadata available', $result);
+    }
+
+    /**
+     * Test fieldValuesTable method with valid JSON
+     *
+     * @return void
+     */
+    public function testFieldValuesTableWithValidJson(): void
+    {
+        $data = json_encode(['name' => 'John', 'email' => 'john@example.com']);
+        $result = $this->Audit->fieldValuesTable($data, 'Created with values:');
+
+        $this->assertStringContainsString('table', $result);
+        $this->assertStringContainsString('Created with values:', $result);
+        $this->assertStringContainsString(__('Field'), $result);
+        $this->assertStringContainsString(__('Value'), $result);
+        $this->assertStringContainsString('name', $result);
+        $this->assertStringContainsString('John', $result);
+        $this->assertStringContainsString('email', $result);
+        $this->assertStringContainsString('john@example.com', $result);
+    }
+
+    /**
+     * Test fieldValuesTable method without title
+     *
+     * @return void
+     */
+    public function testFieldValuesTableWithoutTitle(): void
+    {
+        $data = json_encode(['name' => 'John']);
+        $result = $this->Audit->fieldValuesTable($data);
+
+        $this->assertStringContainsString('table', $result);
+        $this->assertStringNotContainsString('<h6>', $result);
+        $this->assertStringContainsString('name', $result);
+        $this->assertStringContainsString('John', $result);
+    }
+
+    /**
+     * Test fieldValuesTable method with null
+     *
+     * @return void
+     */
+    public function testFieldValuesTableWithNull(): void
+    {
+        $result = $this->Audit->fieldValuesTable(null);
+
+        $this->assertStringContainsString('No data available', $result);
+    }
+
+    /**
+     * Test diffStyles method
+     *
+     * @return void
+     */
+    public function testDiffStyles(): void
+    {
+        $result = $this->Audit->diffStyles();
+
+        $this->assertStringContainsString('<style>', $result);
+        $this->assertStringContainsString('.audit-diff', $result);
+        $this->assertStringContainsString('.diff-wrapper', $result);
+        $this->assertStringContainsString('.diff-side-by-side', $result);
+        $this->assertStringContainsString('</style>', $result);
+    }
+
+    /**
+     * Test diffScript method
+     *
+     * @return void
+     */
+    public function testDiffScript(): void
+    {
+        $result = $this->Audit->diffScript();
+
+        $this->assertStringContainsString('<script>', $result);
+        $this->assertStringContainsString('btn-inline-diff', $result);
+        $this->assertStringContainsString('btn-side-diff', $result);
+        $this->assertStringContainsString('addEventListener', $result);
+        $this->assertStringContainsString('</script>', $result);
+    }
 }

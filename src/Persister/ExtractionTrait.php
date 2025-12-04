@@ -36,7 +36,7 @@ trait ExtractionTrait
         ];
 
         $dateTimeTypeClass = version_compare(Configure::version(), '5.3', '>=')
-            ? TypeFactory::getMapped('datetime')
+            ? TypeFactory::getMapped('datetime') // @phpstan-ignore staticMethod.notFound
             : TypeFactory::getMap('datetime');
         if ($dateTimeTypeClass !== DateTimeType::class) {
             $fields['created'] = (new DateTime($event->getTimestamp()))->format('Y-m-d H:i:s');

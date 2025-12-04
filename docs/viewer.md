@@ -54,6 +54,41 @@ public function beforeRender(\Cake\Event\EventInterface $event)
 }
 ```
 
+### Configuring the Helper
+
+The AuditHelper supports configuration options for customizing diff rendering:
+
+```php
+// In your AppView.php or controller
+$this->loadHelper('AuditStash.Audit', [
+    'differOptions' => [
+        'context' => 3,              // Number of context lines around changes
+        'ignoreCase' => false,       // Case-sensitive comparison
+        'ignoreWhitespace' => false, // Whitespace-sensitive comparison
+    ],
+    'rendererOptions' => [
+        'detailLevel' => 'word',     // 'word', 'char', or 'line'
+        'showHeader' => false,       // Show diff header
+        'lineNumbers' => true,       // Show line numbers
+    ],
+]);
+```
+
+#### Enhanced Diff Rendering
+
+For enhanced word-level diff rendering, install the optional `jfcherng/php-diff` package:
+
+```bash
+composer require jfcherng/php-diff
+```
+
+When installed, the helper automatically uses this library for better diff output:
+- **Word-level highlighting**: Shows which words changed within a line (not just characters)
+- **Improved visual styling**: Better CSS for diff display
+- **Configurable detail level**: Choose between word, character, or line-level diff
+
+Without `jfcherng/php-diff`, the helper falls back to character-level diff using `sebastian/diff`.
+
 ## Features
 
 The audit log viewer provides:

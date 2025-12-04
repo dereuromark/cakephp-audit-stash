@@ -24,7 +24,7 @@ trait IndexConfigTrait
     {
         $connection = $repository->getConnection();
         $indexTemplate = $repository->getName();
-        $client = $connection->getDriver()->getConnection();
+        $client = $connection->getDriver();
         $client->setConfig(['index' => sprintf($indexTemplate, '*')]);
 
         if ($request->getQuery('at')) {

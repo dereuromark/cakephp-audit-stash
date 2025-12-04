@@ -6,19 +6,21 @@
     "require": {
         "php": ">=8.2",
         "cakephp/orm": "^5.0.0",
-        "ext-json": "*"
+        "ext-json": "*",
+        "sebastian/diff": "^6.0 || ^7.0"
     },
     "require-dev": {
         "cakephp/cakephp": "^5.1.0",
         "phpunit/phpunit": "^11.5.42 || ^12.4.0",
         "php-collective/code-sniffer": "dev-master as 0.4.6",
         "cakephp/migrations": "^4.0.0",
-        "cakephp/elastic-search": "^4.0.0",
+        "cakephp/elastic-search": "^4.0.0 || ^5.0.0",
         "friendsofcake/crud": "^7.0.0"
     },
     "suggest": {
         "cakephp/elastic-search": "The default persister engine for audit-stash is elastic search and requires this plugin",
-        "friendsofcake/crud": "audit-stash provides Crud Action classes for displaying audit logs"
+        "friendsofcake/crud": "audit-stash provides Crud Action classes for displaying audit logs",
+        "jfcherng/php-diff": "For enhanced word-level diff rendering in AuditHelper (falls back to sebastian/diff if not installed)"
     },
     "autoload": {
         "psr-4": {
@@ -50,7 +52,8 @@
     },
     "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "php-http/discovery": true
         }
     }
 }
