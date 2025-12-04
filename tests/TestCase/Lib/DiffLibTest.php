@@ -151,4 +151,242 @@ class DiffLibTest extends TestCase
         // Text is shown in character-level diff
         $this->assertStringContainsString('Text', $result);
     }
+
+    // ========== Side-by-Side Tests ==========
+
+    public function testCompareSideBySideIdenticalStrings(): void
+    {
+        $result = $this->diffLib->compareSideBySide('Hello World', 'Hello World');
+
+        $this->assertStringContainsString('<table class="diff-wrapper diff-side-by-side">', $result);
+        $this->assertStringContainsString('Before', $result);
+        $this->assertStringContainsString('After', $result);
+        $this->assertStringNotContainsString('<ins>', $result);
+        $this->assertStringNotContainsString('<del>', $result);
+    }
+
+    public function testCompareSideBySideSimpleChange(): void
+    {
+        $result = $this->diffLib->compareSideBySide('Hello World', 'Hello Everyone');
+
+        $this->assertStringContainsString('<table class="diff-wrapper diff-side-by-side">', $result);
+        $this->assertStringContainsString('class="changed"', $result);
+        // Both old and new should be visible
+        $this->assertStringContainsString('Hello', $result);
+    }
+
+    public function testCompareSideBySideMultiline(): void
+    {
+        $old = "Line 1\nLine 2\nLine 3";
+        $new = "Line 1\nModified\nLine 3";
+
+        $result = $this->diffLib->compareSideBySide($old, $new);
+
+        $this->assertStringContainsString('<table class="diff-wrapper diff-side-by-side">', $result);
+        $this->assertStringContainsString('Line 1', $result);
+        $this->assertStringContainsString('Line 3', $result);
+        $this->assertStringContainsString('class="changed"', $result);
+    }
+
+    public function testCompareSideBySideAddedLines(): void
+    {
+        $old = "Line 1\nLine 2";
+        $new = "Line 1\nNew Line\nLine 2";
+
+        $result = $this->diffLib->compareSideBySide($old, $new);
+
+        $this->assertStringContainsString('New Line', $result);
+        $this->assertStringContainsString('class="changed"', $result);
+    }
+
+    public function testCompareSideBySideRemovedLines(): void
+    {
+        $old = "Line 1\nOld Line\nLine 2";
+        $new = "Line 1\nLine 2";
+
+        $result = $this->diffLib->compareSideBySide($old, $new);
+
+        $this->assertStringContainsString('Old Line', $result);
+        $this->assertStringContainsString('class="changed"', $result);
+    }
+
+    public function testCompareSideBySideEscapesHtml(): void
+    {
+        $result = $this->diffLib->compareSideBySide('<div>old</div>', '<span>new</span>');
+
+        // HTML should be escaped (character-level diff may break up tags)
+        $this->assertStringContainsString('&lt;', $result);
+        $this->assertStringContainsString('&gt;', $result);
+        // Raw HTML tags should not be present
+        $this->assertStringNotContainsString('<div>old</div>', $result);
+        $this->assertStringNotContainsString('<span>new</span>', $result);
+    }
+
+    public function testCompareSideBySideWithContext(): void
+    {
+        $old = "1\n2\n3\n4\n5\n6\n7\n8\n9\n10";
+        $new = "1\n2\n3\n4\nCHANGED\n6\n7\n8\n9\n10";
+
+        $this->diffLib->contextLines = 2;
+        $result = $this->diffLib->compareSideBySide($old, $new);
+
+        $this->assertStringContainsString('CHANGED', $result);
+        // Context lines around the change should be visible
+        $this->assertStringContainsString('class="unchanged"', $result);
+        $this->assertStringContainsString('class="changed"', $result);
+    }
+
+    // ========== Edge Cases ==========
+
+    public function testBothEmptyStrings(): void
+    {
+        $result = $this->diffLib->compare('', '');
+
+        $this->assertStringContainsString('<table', $result);
+        $this->assertStringNotContainsString('<del>', $result);
+        $this->assertStringNotContainsString('<ins>', $result);
+    }
+
+    public function testBothEmptyStringsSideBySide(): void
+    {
+        $result = $this->diffLib->compareSideBySide('', '');
+
+        $this->assertStringContainsString('<table', $result);
+        $this->assertStringNotContainsString('<del>', $result);
+        $this->assertStringNotContainsString('<ins>', $result);
+    }
+
+    public function testWhitespaceOnlyChange(): void
+    {
+        $result = $this->diffLib->compare('hello world', 'hello  world');
+
+        // Should detect whitespace difference
+        $this->assertStringContainsString('hello', $result);
+        $this->assertStringContainsString('world', $result);
+    }
+
+    public function testVeryLongLine(): void
+    {
+        $longString = str_repeat('a', 1000);
+        $result = $this->diffLib->compare($longString, $longString . 'b');
+
+        $this->assertStringContainsString('<ins>', $result);
+        $this->assertStringContainsString('b', $result);
+    }
+
+    public function testSpecialCharacters(): void
+    {
+        $result = $this->diffLib->compare(
+            "Tab:\there\nQuotes: \"test\"",
+            "Tab:\tthere\nQuotes: 'test'",
+        );
+
+        $this->assertStringContainsString('Tab:', $result);
+        $this->assertStringContainsString('Quotes:', $result);
+    }
+
+    public function testNewlineAtEndOfFile(): void
+    {
+        $result = $this->diffLib->compare("Line 1\nLine 2\n", "Line 1\nLine 2");
+
+        // Trailing newline difference should be detected or normalized
+        $this->assertStringContainsString('Line 1', $result);
+        $this->assertStringContainsString('Line 2', $result);
+    }
+
+    public function testMixedLineEndings(): void
+    {
+        $old = "Line 1\r\nLine 2\rLine 3\n";
+        $new = "Line 1\nLine 2\nLine 3\n";
+
+        $result = $this->diffLib->compare($old, $new);
+
+        // After normalization, should be identical
+        $this->assertStringNotContainsString('<del>', $result);
+        $this->assertStringNotContainsString('<ins>', $result);
+    }
+
+    public function testOnlyWhitespaceContent(): void
+    {
+        $result = $this->diffLib->compare('   ', "\t\t");
+
+        // Whitespace changes should be detected
+        $this->assertStringContainsString('class="removed"', $result);
+        $this->assertStringContainsString('class="added"', $result);
+    }
+
+    public function testNumbersAndSymbols(): void
+    {
+        $result = $this->diffLib->compare(
+            'Price: $100.00 (10% off)',
+            'Price: $90.00 (20% off)',
+        );
+
+        $this->assertStringContainsString('Price:', $result);
+        $this->assertStringContainsString('$', $result);
+        $this->assertStringContainsString('%', $result);
+    }
+
+    public function testJsonContent(): void
+    {
+        $old = '{"name": "John", "age": 30}';
+        $new = '{"name": "Jane", "age": 31}';
+
+        $result = $this->diffLib->compare($old, $new);
+
+        $this->assertStringContainsString('name', $result);
+        $this->assertStringContainsString('age', $result);
+    }
+
+    public function testLargeContextLines(): void
+    {
+        $old = "1\n2\n3\n4\n5";
+        $new = "1\n2\nX\n4\n5";
+
+        $this->diffLib->contextLines = 10;
+        $result = $this->diffLib->compare($old, $new);
+
+        // All lines should be visible with large context
+        $this->assertStringContainsString('1', $result);
+        $this->assertStringContainsString('5', $result);
+        $this->assertStringNotContainsString('class="separator"', $result);
+    }
+
+    public function testZeroContextLines(): void
+    {
+        $old = "1\n2\n3\n4\n5";
+        $new = "1\n2\nX\n4\n5";
+
+        $this->diffLib->contextLines = 0;
+        $result = $this->diffLib->compare($old, $new);
+
+        // Only changed lines should be visible
+        $this->assertStringContainsString('X', $result);
+        $this->assertStringContainsString('<del>', $result);
+        $this->assertStringContainsString('<ins>', $result);
+    }
+
+    public function testMultipleChangesInSameFile(): void
+    {
+        $old = "A\nB\nC\nD\nE\nF\nG";
+        $new = "A\nX\nC\nD\nY\nF\nG";
+
+        $this->diffLib->contextLines = 1;
+        $result = $this->diffLib->compare($old, $new);
+
+        // Both changes should be visible
+        $this->assertStringContainsString('X', $result);
+        $this->assertStringContainsString('Y', $result);
+    }
+
+    public function testCompareSideBySideCharacterHighlighting(): void
+    {
+        $result = $this->diffLib->compareSideBySide('The cat sat', 'The bat sat');
+
+        // Character-level highlighting should be present
+        $this->assertStringContainsString('class="changed"', $result);
+        // Common parts should be visible
+        $this->assertStringContainsString('The', $result);
+        $this->assertStringContainsString('sat', $result);
+    }
 }
