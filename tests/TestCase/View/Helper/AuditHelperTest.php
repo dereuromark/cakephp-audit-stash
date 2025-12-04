@@ -421,8 +421,7 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('<style>', $result);
         $this->assertStringContainsString('.audit-diff', $result);
         $this->assertStringContainsString('.diff-wrapper', $result);
-        // jfcherng/php-diff uses .diff-wrapper.diff classes
-        $this->assertStringContainsString('.diff-wrapper.diff', $result);
+        $this->assertStringContainsString('.diff-side-by-side', $result);
         $this->assertStringContainsString('</style>', $result);
     }
 

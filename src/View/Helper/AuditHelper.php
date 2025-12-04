@@ -507,18 +507,22 @@ class AuditHelper extends Helper {
 .audit-diff, .audit-diff-inline { font-size: 0.9rem; }
 .audit-diff td, .audit-diff-inline td { vertical-align: top; }
 pre { background-color: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; }
-.diff-wrapper { margin: 0; }
-.diff-wrapper table { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; }
+.diff-wrapper { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; }
 .diff-wrapper th, .diff-wrapper td { padding: 4px 8px; border: 1px solid #dee2e6; vertical-align: top; }
-.diff-wrapper .line-num { color: #6c757d; text-align: right; width: 40px; user-select: none; }
+.diff-wrapper .line-num { width: 40px; background: #f8f9fa; color: #6c757d; text-align: right; user-select: none; }
+.diff-wrapper .sign { width: 20px; text-align: center; font-weight: bold; }
+.diff-wrapper tr.unchanged td { background: #f8f9fa; }
+.diff-wrapper tr.added td { background: #e6ffec; }
+.diff-wrapper tr.removed td { background: #ffebe9; }
+.diff-wrapper tr.changed td { background: #fef6d9; }
+.diff-wrapper tr.separator td { background: #f0f0f0; font-style: italic; }
+.diff-wrapper ins { background: #94f094; text-decoration: none; padding: 1px 2px; font-weight: bold; }
+.diff-wrapper del { background: #f09494; text-decoration: none; padding: 1px 2px; font-weight: bold; }
 .diff-wrapper .old { background-color: #ffebe9; }
 .diff-wrapper .new { background-color: #e6ffec; }
-.diff-wrapper .added { background-color: #e6ffec; }
-.diff-wrapper .removed { background-color: #ffebe9; }
-.diff-wrapper .unchanged { background-color: #f8f9fa; }
-.diff-wrapper del { background-color: #ffc0c0; text-decoration: none; }
-.diff-wrapper ins { background-color: #a0ffa0; text-decoration: none; }
-.diff-wrapper .separator td { background-color: #f0f0f0; }
+/* Side-by-side specific */
+.diff-side-by-side th:nth-child(2), .diff-side-by-side td:nth-child(2) { width: 45%; }
+.diff-side-by-side th:nth-child(4), .diff-side-by-side td:nth-child(4) { width: 45%; }
 CSS;
 
 		return '<style>' . $libraryStyles . "\n" . $customStyles . '</style>';
