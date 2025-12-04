@@ -19,7 +19,8 @@
     },
     "suggest": {
         "cakephp/elastic-search": "The default persister engine for audit-stash is elastic search and requires this plugin",
-        "friendsofcake/crud": "audit-stash provides Crud Action classes for displaying audit logs"
+        "friendsofcake/crud": "audit-stash provides Crud Action classes for displaying audit logs",
+        "jfcherng/php-diff": "For enhanced word-level diff rendering in AuditHelper (falls back to sebastian/diff if not installed)"
     },
     "autoload": {
         "psr-4": {

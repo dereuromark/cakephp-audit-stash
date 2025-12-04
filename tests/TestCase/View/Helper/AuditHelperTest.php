@@ -373,8 +373,8 @@ class AuditHelperTest extends TestCase
 
         $this->assertStringContainsString('table', $result);
         $this->assertStringContainsString('Created with values:', $result);
-        $this->assertStringContainsString('Field', $result);
-        $this->assertStringContainsString('Value', $result);
+        $this->assertStringContainsString(__('Field'), $result);
+        $this->assertStringContainsString(__('Value'), $result);
         $this->assertStringContainsString('name', $result);
         $this->assertStringContainsString('John', $result);
         $this->assertStringContainsString('email', $result);
@@ -421,7 +421,8 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('<style>', $result);
         $this->assertStringContainsString('.audit-diff', $result);
         $this->assertStringContainsString('.diff-wrapper', $result);
-        $this->assertStringContainsString('.diff-side-by-side', $result);
+        // jfcherng/php-diff uses .diff-wrapper.diff classes
+        $this->assertStringContainsString('.diff-wrapper.diff', $result);
         $this->assertStringContainsString('</style>', $result);
     }
 
