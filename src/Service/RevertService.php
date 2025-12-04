@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Service;
 
+use AuditStash\AuditStashPlugin;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
@@ -206,12 +207,12 @@ class RevertService
             'type' => 'revert',
             'source' => $source,
             'primary_key' => (string)$primaryKey,
-            'original' => json_encode($currentState),
-            'changed' => json_encode($targetState),
+            'original' => json_encode($currentState, AuditStashPlugin::JSON_FLAGS),
+            'changed' => json_encode($targetState, AuditStashPlugin::JSON_FLAGS),
             'meta' => json_encode([
                 'revert_to_audit_id' => $auditLogId,
                 'revert_type' => $revertType,
-            ]),
+            ], AuditStashPlugin::JSON_FLAGS),
             'created' => new DateTime(),
         ]);
 

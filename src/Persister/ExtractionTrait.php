@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Persister;
 
+use AuditStash\AuditStashPlugin;
 use AuditStash\Event\BaseEvent;
 use AuditStash\EventInterface;
 use Cake\Core\Configure;
@@ -189,7 +190,7 @@ trait ExtractionTrait
             return null;
         }
 
-        $encoded = json_encode($value);
+        $encoded = json_encode($value, AuditStashPlugin::JSON_FLAGS);
 
         return $encoded !== false ? $encoded : null;
     }
