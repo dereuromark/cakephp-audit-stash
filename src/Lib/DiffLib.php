@@ -569,10 +569,18 @@ class DiffLib
      * @param string $old
      * @param string $new
      *
-     * @return string
+     * @return string|null Returns null if text is too long for character-level diff
      */
-    public function renderWhitespaceChange(string $old, string $new): string
+    public function renderWhitespaceChange(string $old, string $new): ?string
     {
+        // Skip character-level diff for very long strings to avoid memory exhaustion
+        // LCS algorithm uses O(m*n) memory
+        $oldLen = mb_strlen($old);
+        $newLen = mb_strlen($new);
+        if ($oldLen > $this->maxCharDiffLength || $newLen > $this->maxCharDiffLength) {
+            return null;
+        }
+
         // Do character-level diff to show exactly where whitespace changed
         $oldChars = preg_split('//u', $old, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $newChars = preg_split('//u', $new, -1, PREG_SPLIT_NO_EMPTY) ?: [];

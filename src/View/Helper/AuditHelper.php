@@ -116,7 +116,11 @@ class AuditHelper extends Helper {
 		// Check for whitespace-only changes first - use DiffLib for special rendering
 		$diffLib = new DiffLib();
 		if ($diffLib->isWhitespaceOnlyChange($old, $new)) {
-			return $diffLib->renderWhitespaceChange($old, $new);
+			$result = $diffLib->renderWhitespaceChange($old, $new);
+			if ($result !== null) {
+				return $result;
+			}
+			// Fall through to regular diff if text too long
 		}
 
 		if ($this->hasJfcherngDiff()) {
