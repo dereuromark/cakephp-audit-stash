@@ -554,7 +554,7 @@ class DiffLib
      *
      * @return bool
      */
-    protected function isWhitespaceOnlyChange(string $old, string $new): bool
+    public function isWhitespaceOnlyChange(string $old, string $new): bool
     {
         // Normalize all whitespace to single spaces and compare
         $oldNormalized = preg_replace('/\s+/', ' ', trim($old));
@@ -571,7 +571,7 @@ class DiffLib
      *
      * @return string
      */
-    protected function renderWhitespaceChange(string $old, string $new): string
+    public function renderWhitespaceChange(string $old, string $new): string
     {
         // Do character-level diff to show exactly where whitespace changed
         $oldChars = preg_split('//u', $old, -1, PREG_SPLIT_NO_EMPTY) ?: [];
