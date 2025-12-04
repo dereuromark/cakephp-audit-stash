@@ -383,6 +383,13 @@ class DiffLib
     }
 
     /**
+     * Maximum characters for character-level diff (to avoid memory exhaustion).
+     *
+     * @var int
+     */
+    protected int $maxCharDiffLength = 1000;
+
+    /**
      * Compute character-level diff between two lines.
      *
      * @param string $oldLine
@@ -392,6 +399,18 @@ class DiffLib
      */
     protected function computeCharDiff(string $oldLine, string $newLine): array
     {
+        $oldLen = mb_strlen($oldLine);
+        $newLen = mb_strlen($newLine);
+
+        // Skip character-level diff for very long strings to avoid memory exhaustion
+        // LCS algorithm uses O(m*n) memory which can be massive for large strings
+        if ($oldLen > $this->maxCharDiffLength || $newLen > $this->maxCharDiffLength) {
+            return [
+                '<del>' . htmlspecialchars($oldLine) . '</del>',
+                '<ins>' . htmlspecialchars($newLine) . '</ins>',
+            ];
+        }
+
         $oldChars = preg_split('//u', $oldLine, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $newChars = preg_split('//u', $newLine, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
