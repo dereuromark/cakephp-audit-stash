@@ -357,6 +357,7 @@ class TablePersisterTest extends TestCase
             function (EventInterface $event, EntityInterface $entity) {
                 $entity->setError('field', ['error']);
 
+                $event->stopPropagation();
                 $event->setResult(false);
             },
         );
