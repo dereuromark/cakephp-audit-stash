@@ -103,7 +103,6 @@ class AuditIntegrationTest extends TestCase
     {
         $entity = $this->table->get(1);
         $entity->title = 'Changed title';
-        $entity->published = 'Y';
 
         $this->persister
             ->expects($this->once())
