@@ -31,10 +31,10 @@ $this->loadHelper('AuditStash.Audit');
                     <th>Reverting to</th>
                     <td><?= h($auditLog->created) ?></td>
                 </tr>
-                <?php if ($auditLog->username) { ?>
+                <?php if ($auditLog->user) { ?>
                 <tr>
                     <th>Originally changed by</th>
-                    <td><?= h($auditLog->username) ?></td>
+                    <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
                 </tr>
                 <?php } ?>
             </table>

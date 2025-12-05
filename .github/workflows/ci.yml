@@ -4,20 +4,22 @@ on:
   push:
   pull_request:
   workflow_dispatch:
-  
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  testsuite:
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        operating-system: [ ubuntu-24.04 ]
         php-version: ['8.2', '8.5']
+        prefer-lowest: ['']
+        include:
+          - php-version: '8.2'
+            prefer-lowest: 'prefer-lowest'
 
-    name: PHP ${{ matrix.php-version }} Test
+    name: PHP ${{ matrix.php-version }} Test ${{ matrix.prefer-lowest }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -26,17 +28,29 @@ jobs:
           extensions: mbstring, intl
           coverage: pcov
 
-      - name: PHP Version
-        run: php -v
+      - name: Get composer cache directory
+        id: composercache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
-      - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Composer install
         run: |
-          composer self-update
-          composer validate
-          composer install --prefer-dist --no-progress
+          composer --version
+          if ${{ matrix.prefer-lowest == 'prefer-lowest' }}
+          then
+            composer update --prefer-lowest --prefer-stable
+            composer require --dev dereuromark/composer-prefer-lowest:dev-master
+          else
+            composer install --no-progress --prefer-dist --optimize-autoloader
+          fi
 
-      - name: Test Suite
+      - name: Run PHPUnit
         run: |
           if [[ ${{ matrix.php-version }} == '8.2' ]]; then
             vendor/bin/phpunit --coverage-clover=coverage.xml
@@ -44,14 +58,52 @@ jobs:
             vendor/bin/phpunit
           fi
 
+      - name: Validate prefer-lowest
+        if: matrix.prefer-lowest == 'prefer-lowest'
+        run: vendor/bin/validate-prefer-lowest -m
+
       - name: Upload coverage reports to Codecov
-        if: success() && matrix.php-version == '8.2'
+        if: success() && matrix.php-version == '8.2' && matrix.prefer-lowest != 'prefer-lowest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  validation:
+    name: Coding Standard & Static Analysis
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl
+          coverage: none
+
+      - name: Get composer cache directory
+        id: composercache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Composer Setup
+        run: composer stan-setup
+
+      - name: Run phpstan
+        run: vendor/bin/phpstan analyze --error-format=github
+
+      - name: Run phpcs
+        run: composer cs-check
+
   elastic_integration_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         version: ['~5.1.0']
@@ -72,8 +124,7 @@ jobs:
 
     name: Elastic Search Integration Test
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -81,8 +132,16 @@ jobs:
           php-version: '8.2'
           extensions: mbstring, intl
 
-      - name: PHP Version
-        run: php -v
+      - name: Get composer cache directory
+        id: composercache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Test
         env:

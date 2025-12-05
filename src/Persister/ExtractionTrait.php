@@ -128,6 +128,12 @@ trait ExtractionTrait
             'meta' => $meta,
         ];
 
+        // Always extract user to its dedicated column if present
+        if (isset($extracted['meta']['user'])) {
+            $extracted['user'] = $extracted['meta']['user'];
+            unset($extracted['meta']['user']);
+        }
+
         if (
             !$fields ||
             empty($extracted['meta'])
