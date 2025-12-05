@@ -89,6 +89,88 @@ When installed, the helper automatically uses this library for better diff outpu
 
 Without `jfcherng/php-diff`, the helper falls back to character-level diff using `sebastian/diff`.
 
+### Linking User to Backend
+
+By default, the user value in audit logs is displayed as plain text. You can configure it to link to your user management backend by setting `AuditStash.linkUser` in your app configuration.
+
+**String Pattern:**
+
+```php
+// In config/app.php or config/app_local.php
+'AuditStash' => [
+    'linkUser' => '/admin/users/view/{user}',
+],
+```
+
+Available placeholders: `{user}` (the linkable part), `{display}` (the display name), `{raw}` (original value).
+
+**Callable (recommended for conditional linking):**
+
+```php
+// In config/app.php
+'AuditStash' => [
+    'linkUser' => function ($id, $displayName, $raw) {
+        // Only link numeric user IDs
+        if (is_numeric($id)) {
+            return '/admin/users/view/' . $id;
+        }
+        // Return null to display without link
+        return null;
+    },
+],
+```
+
+**Array URL (CakePHP routing):**
+
+```php
+// In config/app.php
+'AuditStash' => [
+    'linkUser' => [
+        'prefix' => 'Admin',
+        'controller' => 'Users',
+        'action' => 'view',
+        '{user}',
+    ],
+],
+```
+
+#### Compound User Format (ID + Display Name)
+
+You can store both a linkable ID and a display name in a single value using the compound format `id:displayName`:
+
+```php
+// In your AppController
+EventManager::instance()->on(
+    new RequestMetadata(
+        request: $this->getRequest(),
+        user: $userId ? ($userId . ':' . $username) : null, // e.g., "123:john_doe"
+    ),
+);
+```
+
+With this format:
+- The **first part** (before `:`) is used for linking (`{user}` placeholder)
+- The **second part** (after `:`) is displayed to users (`{display}` placeholder)
+
+```php
+// Example: user value "456:Jane Smith"
+'AuditStash' => [
+    'linkUser' => '/admin/users/view/{user}', // Links to /admin/users/view/456
+],
+// Displays: <a href="/admin/users/view/456">Jane Smith</a>
+```
+
+To use a different separator (e.g., if usernames contain `:`):
+
+```php
+'AuditStash' => [
+    'userSeparator' => '|', // Use pipe instead of colon
+    'linkUser' => '/admin/users/view/{user}',
+],
+
+// Then store as: "456|Jane Smith"
+```
+
 ## Features
 
 The audit log viewer provides:

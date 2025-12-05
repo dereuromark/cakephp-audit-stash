@@ -51,9 +51,9 @@ class AuditLogsController extends AppController
             $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
         }
 
-        // Filter by username
-        if ($this->request->getQuery('username')) {
-            $query->where(['AuditLogs.username LIKE' => '%' . $this->request->getQuery('username') . '%']);
+        // Filter by user
+        if ($this->request->getQuery('user')) {
+            $query->where(['AuditLogs.user LIKE' => '%' . $this->request->getQuery('user') . '%']);
         }
 
         // Filter by event type
@@ -282,8 +282,8 @@ class AuditLogsController extends AppController
         if ($this->request->getQuery('source')) {
             $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
         }
-        if ($this->request->getQuery('username')) {
-            $query->where(['AuditLogs.username LIKE' => '%' . $this->request->getQuery('username') . '%']);
+        if ($this->request->getQuery('user')) {
+            $query->where(['AuditLogs.user LIKE' => '%' . $this->request->getQuery('user') . '%']);
         }
         if ($this->request->getQuery('type')) {
             $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
@@ -336,7 +336,7 @@ class AuditLogsController extends AppController
             'Source',
             'Primary Key',
             'Display Value',
-            'Username',
+            'User',
             'Original',
             'Changed',
             'Meta',
@@ -352,7 +352,7 @@ class AuditLogsController extends AppController
                 $log->source,
                 $log->primary_key,
                 $log->display_value,
-                $log->username,
+                $log->user,
                 $log->original,
                 $log->changed,
                 $log->meta,
@@ -393,7 +393,7 @@ class AuditLogsController extends AppController
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,
-                'username' => $log->username,
+                'user' => $log->user,
                 'original' => $log->original ? json_decode($log->original, true) : null,
                 'changed' => $log->changed ? json_decode($log->changed, true) : null,
                 'meta' => $log->meta ? json_decode($log->meta, true) : null,

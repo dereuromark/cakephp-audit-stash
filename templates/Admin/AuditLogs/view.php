@@ -56,8 +56,8 @@ $this->loadHelper('AuditStash.Audit');
                             <td><?= $this->Audit->transactionId($auditLog->transaction, true) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('Username') ?></th>
-                            <td><?= h($auditLog->username) ?: '<em class="text-muted">N/A</em>' ?></td>
+                            <th><?= __('User') ?></th>
+                            <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
                         </tr>
                         <tr>
                             <th><?= __('Created') ?></th>

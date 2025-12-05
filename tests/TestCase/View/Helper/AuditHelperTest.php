@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\View\Helper;
 
 use AuditStash\View\Helper\AuditHelper;
+use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 
@@ -40,6 +41,8 @@ class AuditHelperTest extends TestCase
     protected function tearDown(): void
     {
         unset($this->Audit);
+        Configure::delete('AuditStash.linkUser');
+        Configure::delete('AuditStash.userSeparator');
 
         parent::tearDown();
     }
@@ -439,5 +442,203 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('btn-side-diff', $result);
         $this->assertStringContainsString('addEventListener', $result);
         $this->assertStringContainsString('</script>', $result);
+    }
+
+    /**
+     * Test formatUser with null value
+     *
+     * @return void
+     */
+    public function testFormatUserNull(): void
+    {
+        $result = $this->Audit->formatUser(null);
+
+        $this->assertStringContainsString('N/A', $result);
+        $this->assertStringContainsString('text-muted', $result);
+    }
+
+    /**
+     * Test formatUser with empty string
+     *
+     * @return void
+     */
+    public function testFormatUserEmpty(): void
+    {
+        $result = $this->Audit->formatUser('');
+
+        $this->assertStringContainsString('N/A', $result);
+        $this->assertStringContainsString('text-muted', $result);
+    }
+
+    /**
+     * Test formatUser with string value (no link config)
+     *
+     * @return void
+     */
+    public function testFormatUserStringNoLink(): void
+    {
+        $result = $this->Audit->formatUser('john_doe');
+
+        $this->assertSame('john_doe', $result);
+    }
+
+    /**
+     * Test formatUser with integer value (no link config)
+     *
+     * @return void
+     */
+    public function testFormatUserIntegerNoLink(): void
+    {
+        $result = $this->Audit->formatUser(123);
+
+        $this->assertSame('123', $result);
+    }
+
+    /**
+     * Test formatUser with string pattern config
+     *
+     * @return void
+     */
+    public function testFormatUserWithStringPattern(): void
+    {
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
+
+        $result = $this->Audit->formatUser(123);
+
+        $this->assertStringContainsString('href="/admin/users/view/123"', $result);
+        $this->assertStringContainsString('>123</a>', $result);
+    }
+
+    /**
+     * Test formatUser with callable config
+     *
+     * @return void
+     */
+    public function testFormatUserWithCallable(): void
+    {
+        Configure::write('AuditStash.linkUser', function ($user) {
+            if (is_numeric($user)) {
+                return '/admin/users/view/' . $user;
+            }
+
+            return null;
+        });
+
+        // Numeric user gets linked
+        $result = $this->Audit->formatUser(456);
+        $this->assertStringContainsString('href="/admin/users/view/456"', $result);
+        $this->assertStringContainsString('>456</a>', $result);
+
+        // Non-numeric user does not get linked
+        $result = $this->Audit->formatUser('john@example.com');
+        $this->assertSame('john@example.com', $result);
+    }
+
+    /**
+     * Test formatUser with callable returning null (no link)
+     *
+     * @return void
+     */
+    public function testFormatUserWithCallableReturningNull(): void
+    {
+        Configure::write('AuditStash.linkUser', function ($user) {
+            return null; // Always return null
+        });
+
+        $result = $this->Audit->formatUser(789);
+
+        // Should just return escaped value without link
+        $this->assertSame('789', $result);
+        $this->assertStringNotContainsString('href=', $result);
+    }
+
+    /**
+     * Test formatUser escapes HTML in user value
+     *
+     * @return void
+     */
+    public function testFormatUserEscapesHtml(): void
+    {
+        $result = $this->Audit->formatUser('<script>alert(1)</script>');
+
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringContainsString('&lt;script&gt;', $result);
+    }
+
+    /**
+     * Test formatUser with compound format (id:displayName)
+     *
+     * @return void
+     */
+    public function testFormatUserCompoundFormat(): void
+    {
+        // Without link config - displays the displayName part
+        $result = $this->Audit->formatUser('123:John Doe');
+
+        $this->assertSame('John Doe', $result);
+    }
+
+    /**
+     * Test formatUser with compound format and link config
+     *
+     * @return void
+     */
+    public function testFormatUserCompoundFormatWithLink(): void
+    {
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
+
+        $result = $this->Audit->formatUser('456:Jane Smith');
+
+        // Links to ID but displays the name
+        $this->assertStringContainsString('href="/admin/users/view/456"', $result);
+        $this->assertStringContainsString('>Jane Smith</a>', $result);
+    }
+
+    /**
+     * Test formatUser with compound format using {display} placeholder
+     *
+     * @return void
+     */
+    public function testFormatUserCompoundFormatDisplayPlaceholder(): void
+    {
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}/{display}');
+
+        $result = $this->Audit->formatUser('789:admin');
+
+        $this->assertStringContainsString('href="/admin/users/view/789/admin"', $result);
+        $this->assertStringContainsString('>admin</a>', $result);
+    }
+
+    /**
+     * Test formatUser with custom separator
+     *
+     * @return void
+     */
+    public function testFormatUserCustomSeparator(): void
+    {
+        Configure::write('AuditStash.userSeparator', '|');
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
+
+        $result = $this->Audit->formatUser('123|Jane');
+
+        $this->assertStringContainsString('href="/admin/users/view/123"', $result);
+        $this->assertStringContainsString('>Jane</a>', $result);
+    }
+
+    /**
+     * Test formatUser with callable receiving parsed values
+     *
+     * @return void
+     */
+    public function testFormatUserCallableWithParsedValues(): void
+    {
+        Configure::write('AuditStash.linkUser', function ($id, $displayName, $raw) {
+            return '/users/' . $id . '?name=' . urlencode($displayName);
+        });
+
+        $result = $this->Audit->formatUser('42:John Doe');
+
+        $this->assertStringContainsString('href="/users/42?name=John+Doe"', $result);
+        $this->assertStringContainsString('>John Doe</a>', $result);
     }
 }

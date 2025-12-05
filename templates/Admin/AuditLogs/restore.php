@@ -31,10 +31,10 @@ $this->loadHelper('AuditStash.Audit');
                     <th>Deleted</th>
                     <td><?= h($deleteLog->created) ?></td>
                 </tr>
-                <?php if ($deleteLog->username) { ?>
+                <?php if ($deleteLog->user) { ?>
                 <tr>
                     <th>Deleted by</th>
-                    <td><?= h($deleteLog->username) ?></td>
+                    <td><?= $this->Audit->formatUser($deleteLog->user) ?></td>
                 </tr>
                 <?php } ?>
                 <?php } ?>

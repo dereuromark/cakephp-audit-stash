@@ -33,10 +33,10 @@ $this->loadHelper('AuditStash.Audit');
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <?= $this->Form->control('username', [
+                    <?= $this->Form->control('user', [
                         'type' => 'text',
-                        'label' => 'Username',
-                        'placeholder' => 'Search by username',
+                        'label' => 'User',
+                        'placeholder' => 'Search by user',
                         'class' => 'form-control',
                     ]) ?>
                 </div>
@@ -111,7 +111,7 @@ $this->loadHelper('AuditStash.Audit');
                     <th><?= $this->Paginator->sort('source', 'Table') ?></th>
                     <th><?= $this->Paginator->sort('primary_key', 'Record ID') ?></th>
                     <th><?= $this->Paginator->sort('display_value', 'Record') ?></th>
-                    <th><?= $this->Paginator->sort('username', 'User') ?></th>
+                    <th><?= $this->Paginator->sort('user', 'User') ?></th>
                     <th>Changes</th>
                     <th class="actions"><?= __('Actions') ?></th>
                 </tr>
@@ -125,7 +125,7 @@ $this->loadHelper('AuditStash.Audit');
                     <td><code><?= h($auditLog->source) ?></code></td>
                     <td><?= h($auditLog->primary_key) ?></td>
                     <td><?= h($auditLog->display_value) ?></td>
-                    <td><?= h($auditLog->username) ?></td>
+                    <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">
                         <?= $this->Html->link(__('View'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-sm btn-outline-primary']) ?>

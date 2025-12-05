@@ -55,7 +55,7 @@ class AuditLogsControllerTest extends TestCase
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
-            'username' => 'testuser',
+            'user' => 'testuser',
             'created' => new DateTime(),
         ]);
         $auditLogsTable->save($log1);
@@ -65,7 +65,7 @@ class AuditLogsControllerTest extends TestCase
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 2,
-            'username' => 'admin',
+            'user' => 'admin',
             'created' => new DateTime(),
         ]);
         $auditLogsTable->save($log2);
@@ -92,13 +92,13 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
 
-        // Test filter by username
+        // Test filter by user
         $this->get([
             'prefix' => 'Admin',
             'plugin' => 'AuditStash',
             'controller' => 'AuditLogs',
             'action' => 'index',
-            '?' => ['username' => 'admin'],
+            '?' => ['user' => 'admin'],
         ]);
 
         $this->assertResponseOk();
@@ -151,7 +151,7 @@ class AuditLogsControllerTest extends TestCase
             'source' => 'articles',
             'primary_key' => 1,
             'display_value' => 'Test Article',
-            'username' => 'testuser',
+            'user' => 'testuser',
             'original' => json_encode(['title' => 'Old Title']),
             'changed' => json_encode(['title' => 'New Title']),
             'created' => new DateTime(),
@@ -249,7 +249,7 @@ class AuditLogsControllerTest extends TestCase
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
-            'username' => 'testuser',
+            'user' => 'testuser',
             'created' => new DateTime(),
         ]);
         $auditLogsTable->save($log);
@@ -284,7 +284,7 @@ class AuditLogsControllerTest extends TestCase
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
-            'username' => 'testuser',
+            'user' => 'testuser',
             'original' => json_encode(['title' => 'Old']),
             'changed' => json_encode(['title' => 'New']),
             'created' => new DateTime(),
