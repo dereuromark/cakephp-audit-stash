@@ -171,6 +171,87 @@ To use a different separator (e.g., if usernames contain `:`):
 // Then store as: "456|Jane Smith"
 ```
 
+### Linking Records to Backend
+
+By default, the record ID in audit logs is displayed as plain text. You can configure it to link to your record management backend by setting `AuditStash.linkRecord` in your app configuration.
+
+**String Pattern:**
+
+```php
+// In config/app.php or config/app_local.php
+'AuditStash' => [
+    'linkRecord' => '/admin/{source}/view/{primary_key}',
+],
+```
+
+Available placeholders: `{source}` (table name), `{primary_key}` (record ID), `{display}` (display value if provided).
+
+**Callable (recommended for conditional linking or complex routing):**
+
+```php
+// In config/app.php
+'AuditStash' => [
+    'linkRecord' => function ($source, $primaryKey, $displayValue) {
+        // Convert CamelCase table names to controller URLs
+        $controller = Inflector::dasherize($source);
+        return '/admin/' . $controller . '/view/' . $primaryKey;
+    },
+],
+```
+
+The callable receives three parameters:
+- `$source` - The table/source name (e.g., 'Articles', 'Users')
+- `$primaryKey` - The primary key value
+- `$displayValue` - The display value if provided (falls back to primary key)
+
+Return `null` from the callable to display the value without a link.
+
+**Array URL (CakePHP routing):**
+
+```php
+// In config/app.php
+'AuditStash' => [
+    'linkRecord' => [
+        'prefix' => 'Admin',
+        'controller' => '{source}',
+        'action' => 'view',
+        '{primary_key}',
+    ],
+],
+```
+
+**Example: Conditional linking based on table:**
+
+```php
+'AuditStash' => [
+    'linkRecord' => function ($source, $primaryKey, $displayValue) {
+        // Only link certain tables
+        $linkableTables = ['Articles', 'Users', 'Comments'];
+        if (!in_array($source, $linkableTables)) {
+            return null; // No link for other tables
+        }
+
+        return '/admin/' . Inflector::dasherize($source) . '/view/' . $primaryKey;
+    },
+],
+```
+
+**Using with `formatRecord()` in templates:**
+
+The `formatRecord()` helper method is used in the built-in audit log templates. You can also use it in your own templates:
+
+```php
+// Basic usage - displays primary key with optional link
+<?= $this->Audit->formatRecord('Articles', 123) ?>
+// Output (with linkRecord configured): <a href="/admin/articles/view/123">123</a>
+// Output (without linkRecord): 123
+
+// With display value - shows the display value but links using primary key
+<?= $this->Audit->formatRecord('Articles', 123, 'My Article Title') ?>
+// Output (with linkRecord configured): <a href="/admin/articles/view/123">My Article Title</a>
+// Output (without linkRecord): My Article Title
+```
+
 ## Features
 
 The audit log viewer provides:

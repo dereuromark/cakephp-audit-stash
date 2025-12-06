@@ -105,7 +105,6 @@ $this->loadHelper('AuditStash.Audit');
         <table class="table table-striped table-hover">
             <thead>
                 <tr>
-                    <th><?= $this->Paginator->sort('id') ?></th>
                     <th><?= $this->Paginator->sort('created', 'Date/Time') ?></th>
                     <th><?= $this->Paginator->sort('type', 'Event') ?></th>
                     <th><?= $this->Paginator->sort('source', 'Table') ?></th>
@@ -119,12 +118,11 @@ $this->loadHelper('AuditStash.Audit');
             <tbody>
                 <?php foreach ($auditLogs as $auditLog) { ?>
                 <tr>
-                    <td><?= $this->Number->format($auditLog->id) ?></td>
                     <td><small><?= h($auditLog->created) ?></small></td>
                     <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                     <td><code><?= h($auditLog->source) ?></code></td>
-                    <td><?= h($auditLog->primary_key) ?></td>
-                    <td><?= h($auditLog->display_value) ?></td>
+                    <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
+                    <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?></td>
                     <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">

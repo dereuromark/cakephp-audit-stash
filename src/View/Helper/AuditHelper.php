@@ -511,6 +511,75 @@ class AuditHelper extends Helper
     }
 
     /**
+     * Format record for display, optionally linking to the record.
+     *
+     * Configure linking via `AuditStash.linkRecord`:
+     * - String pattern: '/admin/{source}/view/{primary_key}' - placeholders: {source}, {primary_key}, {display}
+     * - Callable: function($source, $primaryKey, $displayValue) { return ['controller' => $source, 'action' => 'view', $primaryKey]; }
+     * - Array URL: ['prefix' => 'Admin', 'controller' => '{source}', 'action' => 'view', '{primary_key}']
+     *
+     * @param string $source Table/source name (e.g., 'Articles', 'Users')
+     * @param string|int $primaryKey Primary key value
+     * @param string|null $displayValue Optional display value (shown instead of primary key)
+     *
+     * @return string HTML output
+     */
+    public function formatRecord(string $source, string|int $primaryKey, ?string $displayValue = null): string
+    {
+        $display = $displayValue ?? (string)$primaryKey;
+
+        $linkConfig = Configure::read('AuditStash.linkRecord');
+        if ($linkConfig) {
+            $url = $this->buildRecordUrl($linkConfig, $source, (string)$primaryKey, $display);
+            if ($url) {
+                return $this->Html->link(h($display), $url);
+            }
+        }
+
+        return h($display);
+    }
+
+    /**
+     * Build URL for record link.
+     *
+     * @param callable|array|string $linkConfig Link configuration
+     * @param string $source Table/source name
+     * @param string $primaryKey Primary key value
+     * @param string $displayValue Display value
+     *
+     * @return array|string|null URL or null if no link
+     */
+    protected function buildRecordUrl(
+        callable|string|array $linkConfig,
+        string $source,
+        string $primaryKey,
+        string $displayValue,
+    ): string|array|null {
+        if (is_callable($linkConfig)) {
+            return $linkConfig($source, $primaryKey, $displayValue);
+        }
+
+        $replacements = [
+            '{source}' => $source,
+            '{primary_key}' => $primaryKey,
+            '{display}' => $displayValue,
+        ];
+
+        if (is_string($linkConfig)) {
+            return str_replace(array_keys($replacements), array_values($replacements), $linkConfig);
+        }
+
+        // Replace placeholders in array values
+        return array_map(function ($value) use ($replacements) {
+            if (is_string($value) && isset($replacements[$value])) {
+                return $replacements[$value];
+            }
+
+            return $value;
+        }, $linkConfig);
+    }
+
+    /**
      * Render revert button
      *
      * @param int $auditLogId Audit log ID

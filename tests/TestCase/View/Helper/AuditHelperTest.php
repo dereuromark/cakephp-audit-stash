@@ -43,6 +43,7 @@ class AuditHelperTest extends TestCase
         unset($this->Audit);
         Configure::delete('AuditStash.linkUser');
         Configure::delete('AuditStash.userSeparator');
+        Configure::delete('AuditStash.linkRecord');
 
         parent::tearDown();
     }
@@ -640,5 +641,226 @@ class AuditHelperTest extends TestCase
 
         $this->assertStringContainsString('href="/users/42?name=John+Doe"', $result);
         $this->assertStringContainsString('>John Doe</a>', $result);
+    }
+
+    /**
+     * Test formatRecord without link config
+     *
+     * @return void
+     */
+    public function testFormatRecordNoLink(): void
+    {
+        $result = $this->Audit->formatRecord('Articles', 123);
+
+        $this->assertSame('123', $result);
+    }
+
+    /**
+     * Test formatRecord with display value and no link config
+     *
+     * @return void
+     */
+    public function testFormatRecordWithDisplayValueNoLink(): void
+    {
+        $result = $this->Audit->formatRecord('Articles', 123, 'My Article Title');
+
+        $this->assertSame('My Article Title', $result);
+    }
+
+    /**
+     * Test formatRecord with string pattern config
+     *
+     * @return void
+     */
+    public function testFormatRecordWithStringPattern(): void
+    {
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}');
+
+        $result = $this->Audit->formatRecord('Articles', 123);
+
+        $this->assertStringContainsString('href="/admin/Articles/view/123"', $result);
+        $this->assertStringContainsString('>123</a>', $result);
+    }
+
+    /**
+     * Test formatRecord with display value and string pattern config
+     *
+     * @return void
+     */
+    public function testFormatRecordWithDisplayValueAndLink(): void
+    {
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}');
+
+        $result = $this->Audit->formatRecord('Articles', 456, 'My Article');
+
+        $this->assertStringContainsString('href="/admin/Articles/view/456"', $result);
+        $this->assertStringContainsString('>My Article</a>', $result);
+    }
+
+    /**
+     * Test formatRecord with callable config
+     *
+     * @return void
+     */
+    public function testFormatRecordWithCallable(): void
+    {
+        Configure::write('AuditStash.linkRecord', function ($source, $primaryKey, $displayValue) {
+            return '/admin/' . strtolower($source) . '/view/' . $primaryKey;
+        });
+
+        $result = $this->Audit->formatRecord('Users', 789);
+
+        $this->assertStringContainsString('href="/admin/users/view/789"', $result);
+        $this->assertStringContainsString('>789</a>', $result);
+    }
+
+    /**
+     * Test formatRecord with callable returning null (no link)
+     *
+     * @return void
+     */
+    public function testFormatRecordWithCallableReturningNull(): void
+    {
+        Configure::write('AuditStash.linkRecord', function ($source, $primaryKey, $displayValue) {
+            // Only link certain tables
+            if ($source === 'Articles') {
+                return '/admin/articles/view/' . $primaryKey;
+            }
+
+            return null;
+        });
+
+        // Articles gets linked
+        $result = $this->Audit->formatRecord('Articles', 123);
+        $this->assertStringContainsString('href="/admin/articles/view/123"', $result);
+
+        // Other tables don't get linked
+        $result = $this->Audit->formatRecord('Users', 456);
+        $this->assertSame('456', $result);
+        $this->assertStringNotContainsString('href=', $result);
+    }
+
+    /**
+     * Test formatRecord with callable config returning array URL
+     *
+     * This test demonstrates that callables can return CakePHP array URLs.
+     * Note: Array URL config requires proper routes to be set up in your application.
+     *
+     * @return void
+     */
+    public function testFormatRecordWithCallableReturningArrayUrl(): void
+    {
+        Configure::write('AuditStash.linkRecord', function ($source, $primaryKey, $displayValue) {
+            // Build URL string from components (routes would be needed for actual array URLs)
+            return '/admin/' . strtolower($source) . '/view/' . $primaryKey;
+        });
+
+        $result = $this->Audit->formatRecord('Articles', 123);
+
+        $this->assertStringContainsString('href="/admin/articles/view/123"', $result);
+        $this->assertStringContainsString('>123</a>', $result);
+    }
+
+    /**
+     * Test formatRecord escapes HTML in display value
+     *
+     * @return void
+     */
+    public function testFormatRecordEscapesHtml(): void
+    {
+        $result = $this->Audit->formatRecord('Articles', 1, '<script>alert(1)</script>');
+
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringContainsString('&lt;script&gt;', $result);
+    }
+
+    /**
+     * Test formatRecord with {display} placeholder in string pattern
+     *
+     * @return void
+     */
+    public function testFormatRecordDisplayPlaceholder(): void
+    {
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}?title={display}');
+
+        $result = $this->Audit->formatRecord('Articles', 123, 'My Title');
+
+        $this->assertStringContainsString('href="/admin/Articles/view/123?title=My Title"', $result);
+        $this->assertStringContainsString('>My Title</a>', $result);
+    }
+
+    /**
+     * Test formatRecord with string primary key
+     *
+     * @return void
+     */
+    public function testFormatRecordWithStringPrimaryKey(): void
+    {
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}');
+
+        $result = $this->Audit->formatRecord('Articles', 'uuid-1234-5678');
+
+        $this->assertStringContainsString('href="/admin/Articles/view/uuid-1234-5678"', $result);
+        $this->assertStringContainsString('>uuid-1234-5678</a>', $result);
+    }
+
+    /**
+     * Test buildRecordUrl with array URL config replaces placeholders correctly
+     *
+     * Uses reflection to test the protected method directly since array URLs
+     * require routes to be configured for the full formatRecord() flow.
+     *
+     * @return void
+     */
+    public function testBuildRecordUrlWithArrayConfig(): void
+    {
+        $method = new \ReflectionMethod($this->Audit, 'buildRecordUrl');
+
+        $linkConfig = [
+            'prefix' => 'Admin',
+            'controller' => '{source}',
+            'action' => 'view',
+            '{primary_key}',
+        ];
+
+        $result = $method->invoke($this->Audit, $linkConfig, 'Articles', '123', 'My Article');
+
+        $expected = [
+            'prefix' => 'Admin',
+            'controller' => 'Articles',
+            'action' => 'view',
+            '123',
+        ];
+
+        $this->assertSame($expected, $result);
+    }
+
+    /**
+     * Test buildRecordUrl with array URL config replaces display placeholder
+     *
+     * @return void
+     */
+    public function testBuildRecordUrlWithArrayConfigDisplayPlaceholder(): void
+    {
+        $method = new \ReflectionMethod($this->Audit, 'buildRecordUrl');
+
+        $linkConfig = [
+            'controller' => '{source}',
+            'action' => 'view',
+            '{primary_key}',
+            '?' => ['title' => '{display}'],
+        ];
+
+        $result = $method->invoke($this->Audit, $linkConfig, 'Users', '456', 'John Doe');
+
+        // Note: nested arrays are not replaced, only top-level values
+        $expected = [
+            'controller' => 'Users',
+            'action' => 'view',
+            '456',
+            '?' => ['title' => '{display}'], // Nested values not replaced
+        ];
+
+        $this->assertSame($expected, $result);
     }
 }

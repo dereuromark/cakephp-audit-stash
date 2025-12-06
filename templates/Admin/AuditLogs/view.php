@@ -28,10 +28,6 @@ $this->loadHelper('AuditStash.Audit');
                 <div class="card-body">
                     <table class="table table-sm">
                         <tr>
-                            <th style="width: 40%;"><?= __('ID') ?></th>
-                            <td><?= $this->Number->format($auditLog->id) ?></td>
-                        </tr>
-                        <tr>
                             <th><?= __('Event Type') ?></th>
                             <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                         </tr>
@@ -41,11 +37,11 @@ $this->loadHelper('AuditStash.Audit');
                         </tr>
                         <tr>
                             <th><?= __('Record ID') ?></th>
-                            <td><?= h($auditLog->primary_key) ?></td>
+                            <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
                         </tr>
                         <tr>
                             <th><?= __('Record Name') ?></th>
-                            <td><?= h($auditLog->display_value) ?: '<em class="text-muted">N/A</em>' ?></td>
+                            <td><?= $auditLog->display_value ? $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) : '<em class="text-muted">N/A</em>' ?></td>
                         </tr>
                         <tr>
                             <th><?= __('Parent Source') ?></th>

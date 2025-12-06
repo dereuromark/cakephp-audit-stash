@@ -25,7 +25,7 @@ $this->loadHelper('AuditStash.Audit');
             <table class="table table-sm">
                 <tr>
                     <th style="width: 30%;">Record</th>
-                    <td><code><?= h($auditLog->source) ?></code> #<?= h($auditLog->primary_key) ?></td>
+                    <td><code><?= h($auditLog->source) ?></code> #<?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
                 </tr>
                 <tr>
                     <th>Reverting to</th>
