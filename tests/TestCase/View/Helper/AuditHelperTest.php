@@ -8,6 +8,7 @@ use AuditStash\View\Helper\AuditHelper;
 use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
+use ReflectionMethod;
 
 /**
  * AuditStash\View\Helper\AuditHelper Test Case
@@ -814,7 +815,7 @@ class AuditHelperTest extends TestCase
      */
     public function testBuildRecordUrlWithArrayConfig(): void
     {
-        $method = new \ReflectionMethod($this->Audit, 'buildRecordUrl');
+        $method = new ReflectionMethod($this->Audit, 'buildRecordUrl');
 
         $linkConfig = [
             'prefix' => 'Admin',
@@ -842,7 +843,7 @@ class AuditHelperTest extends TestCase
      */
     public function testBuildRecordUrlWithArrayConfigDisplayPlaceholder(): void
     {
-        $method = new \ReflectionMethod($this->Audit, 'buildRecordUrl');
+        $method = new ReflectionMethod($this->Audit, 'buildRecordUrl');
 
         $linkConfig = [
             'controller' => '{source}',
