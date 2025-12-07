@@ -142,7 +142,7 @@ class AuditLogBehavior extends Behavior
         return new $auditEvent(
             $transactionId,
             $primary,
-            $this->_table->getTable(),
+            $this->_table->getRegistryAlias(),
             $changed,
             $original,
             $entity,
@@ -203,7 +203,7 @@ class AuditLogBehavior extends Behavior
         $auditEvent = $this->createEvent($transaction, $entity, $changed, $original);
 
         if (!empty($options['_sourceTable'])) {
-            $auditEvent->setParentSourceName($options['_sourceTable']->getTable());
+            $auditEvent->setParentSourceName($options['_sourceTable']->getRegistryAlias());
         }
 
         $options['_auditQueue']->attach($entity, $auditEvent);
@@ -261,7 +261,7 @@ class AuditLogBehavior extends Behavior
             return;
         }
         $transaction = $options['_auditTransaction'];
-        $parent = isset($options['_sourceTable']) ? $options['_sourceTable']->getTable() : null;
+        $parent = isset($options['_sourceTable']) ? $options['_sourceTable']->getRegistryAlias() : null;
         $primary = $entity->extract((array)$this->_table->getPrimaryKey());
 
         // Get display field value for human-friendly identification
@@ -287,7 +287,7 @@ class AuditLogBehavior extends Behavior
         $auditEvent = new AuditDeleteEvent(
             $transaction,
             $primary,
-            $this->_table->getTable(),
+            $this->_table->getRegistryAlias(),
             $parent,
             $original,
             $displayValue,

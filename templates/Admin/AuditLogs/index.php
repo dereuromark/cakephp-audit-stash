@@ -19,8 +19,8 @@ $this->loadHelper('AuditStash.Audit');
                 <div class="col-md-3">
                     <?= $this->Form->control('source', [
                         'type' => 'select',
-                        'options' => ['' => 'All Tables'] + $sources,
-                        'label' => 'Table/Source',
+                        'options' => ['' => 'All Sources'] + $sources,
+                        'label' => 'Source',
                         'class' => 'form-select',
                     ]) ?>
                 </div>
@@ -107,7 +107,7 @@ $this->loadHelper('AuditStash.Audit');
                 <tr>
                     <th><?= $this->Paginator->sort('created', 'Date/Time') ?></th>
                     <th><?= $this->Paginator->sort('type', 'Event') ?></th>
-                    <th><?= $this->Paginator->sort('source', 'Table') ?></th>
+                    <th><?= $this->Paginator->sort('source', 'Source') ?></th>
                     <th><?= $this->Paginator->sort('primary_key', 'Record ID') ?></th>
                     <th><?= $this->Paginator->sort('display_value', 'Record') ?></th>
                     <th><?= $this->Paginator->sort('user', 'User') ?></th>

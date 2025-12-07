@@ -32,7 +32,7 @@ $this->loadHelper('AuditStash.Audit');
                             <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('Table/Source') ?></th>
+                            <th><?= __('Source') ?></th>
                             <td><code><?= h($auditLog->source) ?></code></td>
                         </tr>
                         <tr>

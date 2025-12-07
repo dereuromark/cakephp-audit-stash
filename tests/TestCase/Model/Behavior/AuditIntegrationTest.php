@@ -76,7 +76,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertInstanceOf(AuditCreateEvent::class, $event);
 
                 $this->assertEquals(4, $event->getId());
-                $this->assertEquals('articles', $event->getSourceName());
+                $this->assertEquals('Articles', $event->getSourceName());
                 $this->assertEquals(
                     $event->getOriginal(),
                     array_intersect_assoc($event->getOriginal(), $event->getChanged()),
@@ -113,7 +113,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertInstanceOf(AuditUpdateEvent::class, $event);
 
                 $this->assertEquals(1, $event->getId());
-                $this->assertEquals('articles', $event->getSourceName());
+                $this->assertEquals('Articles', $event->getSourceName());
                 $expected = [
                     'title' => 'Changed title',
                 ];
@@ -147,7 +147,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertInstanceOf(AuditCreateEvent::class, $event);
 
                 $this->assertEquals(4, $event->getId());
-                $this->assertEquals('articles', $event->getSourceName());
+                $this->assertEquals('Articles', $event->getSourceName());
                 $changed = $event->getChanged();
                 $this->assertEquals(1, $changed['author_id']);
                 $this->assertFalse(isset($changed['author']));
@@ -178,7 +178,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertInstanceOf(AuditUpdateEvent::class, $event);
 
                 $this->assertEquals(1, $event->getId());
-                $this->assertEquals('articles', $event->getSourceName());
+                $this->assertEquals('Articles', $event->getSourceName());
                 $expected = [
                     'title' => 'Changed title',
                     'author_id' => 2,
@@ -214,8 +214,8 @@ class AuditIntegrationTest extends TestCase
             ->method('logEvents')
             ->willReturnCallback(function (array $events) use ($entity) {
                 $this->assertCount(2, $events);
-                $this->assertEquals('authors', $events[0]->getSourceName());
-                $this->assertEquals('articles', $events[1]->getSourceName());
+                $this->assertEquals('Authors', $events[0]->getSourceName());
+                $this->assertEquals('Articles', $events[1]->getSourceName());
 
                 $this->assertInstanceOf(AuditCreateEvent::class, $events[0]);
                 $this->assertNotEmpty($events[0]->getTransactionId());
@@ -257,8 +257,8 @@ class AuditIntegrationTest extends TestCase
             ->method('logEvents')
             ->willReturnCallback(function (array $events) use ($entity) {
                 $this->assertCount(2, $events);
-                $this->assertEquals('comments', $events[0]->getSourceName());
-                $this->assertEquals('comments', $events[1]->getSourceName());
+                $this->assertEquals('Comments', $events[0]->getSourceName());
+                $this->assertEquals('Comments', $events[1]->getSourceName());
 
                 $this->assertNotEmpty($events[0]->getTransactionId());
                 $this->assertSame($events[0]->getTransactionId(), $events[1]->getTransactionId());
@@ -307,10 +307,10 @@ class AuditIntegrationTest extends TestCase
             ->method('logEvents')
             ->willReturnCallback(function (array $events) use ($entity) {
                 $this->assertCount(3, $events);
-                $this->assertEquals('comments', $events[0]->getSourceName());
-                $this->assertEquals('articles', $events[0]->getParentSourceName());
-                $this->assertEquals('comments', $events[1]->getSourceName());
-                $this->assertEquals('articles', $events[2]->getSourceName());
+                $this->assertEquals('Comments', $events[0]->getSourceName());
+                $this->assertEquals('Articles', $events[0]->getParentSourceName());
+                $this->assertEquals('Comments', $events[1]->getSourceName());
+                $this->assertEquals('Articles', $events[2]->getSourceName());
 
                 $this->assertNotEmpty($events[0]->getTransactionId());
                 $this->assertSame($events[0]->getTransactionId(), $events[1]->getTransactionId());
@@ -348,9 +348,9 @@ class AuditIntegrationTest extends TestCase
             ->method('logEvents')
             ->willReturnCallback(function (array $events) use ($entity) {
                 $this->assertCount(3, $events);
-                $this->assertEquals('tags', $events[0]->getSourceName());
-                $this->assertEquals('articles_tags', $events[1]->getSourceName());
-                $this->assertEquals('articles_tags', $events[2]->getSourceName());
+                $this->assertEquals('Tags', $events[0]->getSourceName());
+                $this->assertEquals('ArticlesTags', $events[1]->getSourceName());
+                $this->assertEquals('ArticlesTags', $events[2]->getSourceName());
 
                 $this->assertNotEmpty($events[0]->getTransactionId());
                 $this->assertSame($events[0]->getTransactionId(), $events[1]->getTransactionId());
@@ -374,7 +374,7 @@ class AuditIntegrationTest extends TestCase
                 $this->assertCount(1, $events);
                 $this->assertinstanceOf(AuditDeleteEvent::class, $events[0]);
                 $this->assertEquals(1, $events[0]->getId());
-                $this->assertEquals('articles', $events[0]->getSourceName());
+                $this->assertEquals('Articles', $events[0]->getSourceName());
                 $this->assertNotEmpty($events[0]->getTransactionId());
             });
 
@@ -417,11 +417,11 @@ class AuditIntegrationTest extends TestCase
                     $this->assertEquals($id, $event->getTransactionId());
                 }
 
-                $this->assertEquals('comments', $events[0]->getSourceName());
-                $this->assertEquals('comments', $events[1]->getSourceName());
-                $this->assertEquals('articles_tags', $events[2]->getSourceName());
-                $this->assertEquals('articles_tags', $events[3]->getSourceName());
-                $this->assertEquals('articles', $events[4]->getSourceName());
+                $this->assertEquals('Comments', $events[0]->getSourceName());
+                $this->assertEquals('Comments', $events[1]->getSourceName());
+                $this->assertEquals('ArticlesTags', $events[2]->getSourceName());
+                $this->assertEquals('ArticlesTags', $events[3]->getSourceName());
+                $this->assertEquals('Articles', $events[4]->getSourceName());
             });
 
         $this->table->delete($entity);
