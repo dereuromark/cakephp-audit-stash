@@ -14,7 +14,7 @@ $this->loadHelper('AuditStash.Audit');
             <h3><?= __('Audit Timeline') ?></h3>
             <p class="text-muted mb-0">
                 <strong>Source:</strong> <code><?= h($source) ?></code> |
-                <strong>Record ID:</strong> <?= $this->Audit->formatRecord($source, $primaryKey) ?>
+                <strong>Record:</strong> <?= $this->Audit->formatRecord($source, $primaryKey) ?>
             </p>
         </div>
         <div>

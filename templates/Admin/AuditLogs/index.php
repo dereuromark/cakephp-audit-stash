@@ -108,8 +108,7 @@ $this->loadHelper('AuditStash.Audit');
                     <th><?= $this->Paginator->sort('created', 'Date/Time') ?></th>
                     <th><?= $this->Paginator->sort('type', 'Event') ?></th>
                     <th><?= $this->Paginator->sort('source', 'Source') ?></th>
-                    <th><?= $this->Paginator->sort('primary_key', 'Record ID') ?></th>
-                    <th><?= $this->Paginator->sort('display_value', 'Record') ?></th>
+                    <th><?= $this->Paginator->sort('primary_key', 'Record') ?></th>
                     <th><?= $this->Paginator->sort('user_id', 'User') ?></th>
                     <th>Changes</th>
                     <th class="actions"><?= __('Actions') ?></th>
@@ -121,8 +120,13 @@ $this->loadHelper('AuditStash.Audit');
                     <td><small><?= h($auditLog->created) ?></small></td>
                     <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                     <td><code><?= h($auditLog->source) ?></code></td>
-                    <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
-                    <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?></td>
+                    <td>
+                        <?php if ($auditLog->primary_key) { ?>
+                            <?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?>
+                        <?php } else { ?>
+                            <span class="badge bg-success">New</span>
+                        <?php } ?>
+                    </td>
                     <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">

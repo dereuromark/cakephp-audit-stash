@@ -36,12 +36,14 @@ $this->loadHelper('AuditStash.Audit');
                             <td><code><?= h($auditLog->source) ?></code></td>
                         </tr>
                         <tr>
-                            <th><?= __('Record ID') ?></th>
-                            <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
-                        </tr>
-                        <tr>
-                            <th><?= __('Record Name') ?></th>
-                            <td><?= $auditLog->display_value ? $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) : '<em class="text-muted">N/A</em>' ?></td>
+                            <th><?= __('Record') ?></th>
+                            <td>
+                                <?php if ($auditLog->primary_key) { ?>
+                                    <?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?>
+                                <?php } else { ?>
+                                    <span class="badge bg-success">New</span>
+                                <?php } ?>
+                            </td>
                         </tr>
                         <tr>
                             <th><?= __('Parent Source') ?></th>
