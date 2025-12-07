@@ -16,7 +16,8 @@ use Cake\ORM\Entity;
  * @property string|null $display_value
  * @property string $source
  * @property string|null $parent_source
- * @property string|null $user
+ * @property string|null $user_id
+ * @property string|null $user_display
  * @property string|null $original
  * @property string|null $changed
  * @property string|null $meta
@@ -36,7 +37,8 @@ class AuditLog extends Entity
         'display_value' => true,
         'source' => true,
         'parent_source' => true,
-        'user' => true,
+        'user_id' => true,
+        'user_display' => true,
         'original' => true,
         'changed' => true,
         'meta' => true,

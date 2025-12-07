@@ -410,105 +410,93 @@ class AuditHelper extends Helper
     /**
      * Format user for display, optionally linking to user record.
      *
-     * Supports compound format "id:displayName" for storing both linkable ID and display name.
-     * Configure separator via `AuditStash.userSeparator` (default: ':').
-     *
      * Configure linking via `AuditStash.linkUser`:
-     * - String pattern: '/admin/users/view/{user}' - placeholders: {user}, {display}, {raw}
-     * - Callable: function($user, $displayName, $raw) { return '/admin/users/view/' . $user; }
+     * - String pattern: '/admin/users/view/{user}' - placeholders: {user}, {display}
+     * - Callable: function($userId, $userDisplay) { return '/admin/users/view/' . $userId; }
      * - Array URL: ['prefix' => 'Admin', 'controller' => 'Users', 'action' => 'view', '{user}']
      *
-     * @param string|int|null $user User identifier (ID, "id:name", username, email, etc.)
+     * @param string|int|null $userId User ID for linking
+     * @param string|null $userDisplay Optional display value (from user_display column)
      *
      * @return string HTML output
      */
-    public function formatUser(string|int|null $user): string
+    public function formatUser(string|int|null $userId, ?string $userDisplay = null): string
     {
-        if ($user === null || $user === '') {
+        if (($userId === null || $userId === '') && ($userDisplay === null || $userDisplay === '')) {
             return '<em class="text-muted">N/A</em>';
         }
 
-        $separator = Configure::read('AuditStash.userSeparator') ?? ':';
-        $parsed = $this->parseUserValue((string)$user, $separator);
+        $displayName = $this->getUserDisplayName($userId, $userDisplay);
 
         $linkConfig = Configure::read('AuditStash.linkUser');
-        if ($linkConfig) {
-            $url = $this->buildUserUrl($linkConfig, $parsed['id'], $parsed['display'], (string)$user);
+        if ($linkConfig && $userId !== null && $userId !== '') {
+            $url = $this->buildUserUrl($linkConfig, (string)$userId, $displayName);
             if ($url) {
-                return $this->Html->link(h($parsed['display']), $url);
+                return $this->Html->link(h($displayName), $url);
             }
         }
 
-        return h($parsed['display']);
+        return h($displayName);
     }
 
     /**
-     * Parse user value into ID and display name.
+     * Get display name for user.
      *
-     * Supports compound format "id:displayName" where the first part before separator
-     * is used for linking (ID) and the second part for display.
+     * Uses userDisplay if provided. Otherwise, formats userId as "User #id" for
+     * UUIDs/numeric values, or shows the raw value for usernames/emails.
      *
-     * For bare IDs (no separator), displays as "User #id" for UUIDs or numeric IDs,
-     * or the raw value if it looks like a username/email.
+     * @param string|int|null $userId User ID
+     * @param string|null $userDisplay Optional display value
      *
-     * @param string $user Raw user value
-     * @param string $separator Separator character (default ':')
-     *
-     * @return array{id: string, display: string} Parsed values
+     * @return string Display name
      */
-    protected function parseUserValue(string $user, string $separator): array
+    protected function getUserDisplayName(string|int|null $userId, ?string $userDisplay): string
     {
-        if ($separator !== '' && str_contains($user, $separator)) {
-            $parts = explode($separator, $user, 2);
-
-            return [
-                'id' => $parts[0],
-                'display' => $parts[1] ?? $parts[0],
-            ];
+        // If explicit display value provided, use it
+        if ($userDisplay !== null && $userDisplay !== '') {
+            return $userDisplay;
         }
+
+        // No display value, fall back to userId
+        if ($userId === null || $userId === '') {
+            return '';
+        }
+
+        $user = (string)$userId;
 
         // For bare values, check if it looks like an ID (UUID or numeric)
         $isUuid = (bool)preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $user);
         $isNumeric = ctype_digit($user);
 
         if ($isUuid || $isNumeric) {
-            return [
-                'id' => $user,
-                'display' => __('User #{0}', $user),
-            ];
+            return __('User #{0}', $user);
         }
 
         // Looks like a username/email, use as-is
-        return [
-            'id' => $user,
-            'display' => $user,
-        ];
+        return $user;
     }
 
     /**
      * Build URL for user link.
      *
      * @param callable|array|string $linkConfig Link configuration
-     * @param string $id User ID (for linking)
+     * @param string $user User ID (for linking)
      * @param string $displayName Display name
-     * @param string $raw Raw user value
      *
      * @return array|string|null URL or null if no link
      */
     protected function buildUserUrl(
         callable|string|array $linkConfig,
-        string $id,
+        string $user,
         string $displayName,
-        string $raw,
     ): string|array|null {
         if (is_callable($linkConfig)) {
-            return $linkConfig($id, $displayName, $raw);
+            return $linkConfig($user, $displayName);
         }
 
         $replacements = [
-            '{user}' => $id,
+            '{user}' => $user,
             '{display}' => $displayName,
-            '{raw}' => $raw,
         ];
 
         if (is_string($linkConfig)) {

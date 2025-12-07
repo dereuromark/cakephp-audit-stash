@@ -33,10 +33,10 @@ $this->loadHelper('AuditStash.Audit');
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <?= $this->Form->control('user', [
+                    <?= $this->Form->control('user_id', [
                         'type' => 'text',
-                        'label' => 'User',
-                        'placeholder' => 'Search by user',
+                        'label' => 'User ID',
+                        'placeholder' => 'Search by user ID',
                         'class' => 'form-control',
                     ]) ?>
                 </div>
@@ -110,7 +110,7 @@ $this->loadHelper('AuditStash.Audit');
                     <th><?= $this->Paginator->sort('source', 'Source') ?></th>
                     <th><?= $this->Paginator->sort('primary_key', 'Record ID') ?></th>
                     <th><?= $this->Paginator->sort('display_value', 'Record') ?></th>
-                    <th><?= $this->Paginator->sort('user', 'User') ?></th>
+                    <th><?= $this->Paginator->sort('user_id', 'User') ?></th>
                     <th>Changes</th>
                     <th class="actions"><?= __('Actions') ?></th>
                 </tr>
@@ -123,7 +123,7 @@ $this->loadHelper('AuditStash.Audit');
                     <td><code><?= h($auditLog->source) ?></code></td>
                     <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key) ?></td>
                     <td><?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?></td>
-                    <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
+                    <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">
                         <?= $this->Html->link(__('View'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-sm btn-outline-primary']) ?>

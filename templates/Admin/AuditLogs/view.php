@@ -53,7 +53,7 @@ $this->loadHelper('AuditStash.Audit');
                         </tr>
                         <tr>
                             <th><?= __('User') ?></th>
-                            <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
+                            <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                         </tr>
                         <tr>
                             <th><?= __('Created') ?></th>

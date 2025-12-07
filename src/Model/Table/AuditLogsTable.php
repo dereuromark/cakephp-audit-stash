@@ -97,9 +97,14 @@ class AuditLogsTable extends Table
             ->allowEmptyString('parent_source');
 
         $validator
-            ->scalar('user')
-            ->maxLength('user', 255)
-            ->allowEmptyString('user');
+            ->scalar('user_id')
+            ->maxLength('user_id', 36)
+            ->allowEmptyString('user_id');
+
+        $validator
+            ->scalar('user_display')
+            ->maxLength('user_display', 255)
+            ->allowEmptyString('user_display');
 
         $validator
             ->scalar('original')

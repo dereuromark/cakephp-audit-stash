@@ -61,11 +61,9 @@ public function initialize(array $config = []): void
 It is often useful to store the identifier of the user that is triggering the changes in a certain table. For this purpose, `AuditStash`
 provides the `RequestMetadata` listener class, that is capable of storing the current URL, IP and logged in user.
 
-The `user` parameter accepts a string, integer, or null value. You can pass:
-- **User ID** (integer) - Most common for lookups
-- **Username** (string) - Useful for human-readable logs
-- **Email** (string) - Alternative identifier for audit trails
-- **Compound format** (string) - `"id:displayName"` for both linking and display
+The listener accepts two user-related parameters:
+- **userId** (optional): The user ID for linking/filtering (string or integer)
+- **userDisplay** (optional): A human-readable display value (username, email, full name, etc.)
 
 You need to add this listener to your application in the `AppController::beforeFilter()` method.
 
@@ -84,37 +82,23 @@ class AppController extends Controller
         parent::beforeFilter($event);
 
         $identity = $this->getRequest()->getAttribute('identity');
-        $user = null;
-        if ($identity) {
-            // Compound format: "id:displayName" - ID for linking, name for display
-            $user = $identity->getIdentifier() . ':' . $identity->get('username');
-        }
 
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $user,
+                userId: $identity?->getIdentifier(),
+                userDisplay: $identity?->get('username'),
             ),
         );
     }
 }
 ```
 
-The compound format `"id:displayName"` allows the audit viewer to:
-- Display the human-readable name (e.g., "John Doe")
-- Link to the user record using the ID (e.g., `/admin/users/view/d4c54ae8-...`)
+This stores:
+- `user_id`: The user ID (used for linking to user records and filtering)
+- `user_display`: The display value (shown in the audit viewer as "John Doe" instead of a UUID)
 
-You can customize the separator via `Configure::write('AuditStash.userSeparator', '|')` if your usernames might contain colons.
-
-You can also pass just a single field instead:
-
-```php
-// Store just the username (no linking capability)
-user: $this->getRequest()->getAttribute('identity')?->get('username'),
-
-// Store just the ID (displays as "User #id")
-user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
-```
+If `userDisplay` is not provided, IDs will display as "User #id" for UUIDs/numeric values, or the raw value if it looks like a username/email.
 
 ### Using TinyAuth
 
@@ -130,33 +114,15 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
 
-        // Compound format: "id:displayName" - ID for linking, name for display
-        $user = null;
-        if ($this->AuthUser->id()) {
-            $user = $this->AuthUser->id() . ':' . $this->AuthUser->user('username');
-        }
-
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $user,
+                userId: $this->AuthUser->id(),
+                userDisplay: $this->AuthUser->user('username'),
             ),
         );
     }
 }
-```
-
-You can also pass just a single field instead:
-
-```php
-// Store just the user ID (displays as "User #id")
-user: $this->AuthUser->id(),
-
-// Store just the username (no linking capability)
-user: $this->AuthUser->user('username'),
-
-// Store just the email
-user: $this->AuthUser->user('email'),
 ```
 
 ### Attaching Globally vs Per-Table
@@ -171,11 +137,13 @@ public function beforeFilter(EventInterface $event)
 {
     parent::beforeFilter($event);
 
+    $identity = $this->getRequest()->getAttribute('identity');
     $eventManager = $this->fetchTable()->getEventManager();
     $eventManager->on(
         new RequestMetadata(
             request: $this->getRequest(),
-            user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+            userId: $identity?->getIdentifier(),
+            userDisplay: $identity?->get('username'),
         ),
     );
 }
@@ -183,8 +151,7 @@ public function beforeFilter(EventInterface $event)
 
 ### Storing Additional User Information
 
-If you need to store more user information beyond a single identifier (e.g., both user ID and email, or user name), you can create a
-custom metadata listener using the `AuditStash.beforeLog` event:
+If you need to store more user information beyond `userId` and `userDisplay` (e.g., user email, role, etc.), you can add custom metadata using the `AuditStash.beforeLog` event:
 
 ```php
 use Cake\Event\EventInterface;
@@ -194,21 +161,23 @@ public function beforeFilter(EventInterface $event)
 {
     parent::beforeFilter($event);
 
-    // First, add the basic RequestMetadata with user ID
+    $identity = $this->getRequest()->getAttribute('identity');
+
+    // Add the basic RequestMetadata with user ID and display name
     EventManager::instance()->on(
         new RequestMetadata(
             request: $this->getRequest(),
-            user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+            userId: $identity?->getIdentifier(),
+            userDisplay: $identity?->get('username'),
         ),
     );
 
-    // Then add additional user info via custom metadata
-    $identity = $this->getRequest()->getAttribute('identity');
+    // Optionally add additional user info via custom metadata
     EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs) use ($identity): void {
         foreach ($logs as $log) {
             $log->setMetaInfo($log->getMetaInfo() + [
                 'user_email' => $identity?->get('email'),
-                'user_name' => $identity?->get('name'),
+                'user_role' => $identity?->get('role'),
             ]);
         }
     });

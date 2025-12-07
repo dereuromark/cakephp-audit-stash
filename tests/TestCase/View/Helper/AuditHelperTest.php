@@ -43,7 +43,6 @@ class AuditHelperTest extends TestCase
     {
         unset($this->Audit);
         Configure::delete('AuditStash.linkUser');
-        Configure::delete('AuditStash.userSeparator');
         Configure::delete('AuditStash.linkRecord');
 
         parent::tearDown();
@@ -583,28 +582,28 @@ class AuditHelperTest extends TestCase
     }
 
     /**
-     * Test formatUser with compound format (id:displayName)
+     * Test formatUser with separate user_display parameter
      *
      * @return void
      */
-    public function testFormatUserCompoundFormat(): void
+    public function testFormatUserWithUserDisplay(): void
     {
-        // Without link config - displays the displayName part
-        $result = $this->Audit->formatUser('123:John Doe');
+        // Displays the userDisplay value
+        $result = $this->Audit->formatUser('123', 'John Doe');
 
         $this->assertSame('John Doe', $result);
     }
 
     /**
-     * Test formatUser with compound format and link config
+     * Test formatUser with user_display and link config
      *
      * @return void
      */
-    public function testFormatUserCompoundFormatWithLink(): void
+    public function testFormatUserWithUserDisplayAndLink(): void
     {
         Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
 
-        $result = $this->Audit->formatUser('456:Jane Smith');
+        $result = $this->Audit->formatUser('456', 'Jane Smith');
 
         // Links to ID but displays the name
         $this->assertStringContainsString('href="/admin/users/view/456"', $result);
@@ -612,51 +611,48 @@ class AuditHelperTest extends TestCase
     }
 
     /**
-     * Test formatUser with compound format using {display} placeholder
+     * Test formatUser with {display} placeholder
      *
      * @return void
      */
-    public function testFormatUserCompoundFormatDisplayPlaceholder(): void
+    public function testFormatUserDisplayPlaceholder(): void
     {
         Configure::write('AuditStash.linkUser', '/admin/users/view/{user}/{display}');
 
-        $result = $this->Audit->formatUser('789:admin');
+        $result = $this->Audit->formatUser('789', 'admin');
 
         $this->assertStringContainsString('href="/admin/users/view/789/admin"', $result);
         $this->assertStringContainsString('>admin</a>', $result);
     }
 
     /**
-     * Test formatUser with custom separator
+     * Test formatUser with callable receiving userId and userDisplay
      *
      * @return void
      */
-    public function testFormatUserCustomSeparator(): void
+    public function testFormatUserCallableWithUserDisplay(): void
     {
-        Configure::write('AuditStash.userSeparator', '|');
-        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
-
-        $result = $this->Audit->formatUser('123|Jane');
-
-        $this->assertStringContainsString('href="/admin/users/view/123"', $result);
-        $this->assertStringContainsString('>Jane</a>', $result);
-    }
-
-    /**
-     * Test formatUser with callable receiving parsed values
-     *
-     * @return void
-     */
-    public function testFormatUserCallableWithParsedValues(): void
-    {
-        Configure::write('AuditStash.linkUser', function ($id, $displayName, $raw) {
-            return '/users/' . $id . '?name=' . urlencode($displayName);
+        Configure::write('AuditStash.linkUser', function ($userId, $displayName) {
+            return '/users/' . $userId . '?name=' . urlencode($displayName);
         });
 
-        $result = $this->Audit->formatUser('42:John Doe');
+        $result = $this->Audit->formatUser('42', 'John Doe');
 
         $this->assertStringContainsString('href="/users/42?name=John+Doe"', $result);
         $this->assertStringContainsString('>John Doe</a>', $result);
+    }
+
+    /**
+     * Test formatUser with only userDisplay (no userId)
+     *
+     * @return void
+     */
+    public function testFormatUserOnlyUserDisplay(): void
+    {
+        // When only userDisplay is provided (userId is null)
+        $result = $this->Audit->formatUser(null, 'John Doe');
+
+        $this->assertSame('John Doe', $result);
     }
 
     /**

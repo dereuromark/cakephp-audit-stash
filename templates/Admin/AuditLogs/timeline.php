@@ -91,7 +91,7 @@ $this->loadHelper('AuditStash.Audit');
                                     <div class="row mb-2">
                                         <div class="col-md-6">
                                             <small class="text-muted">
-                                                <strong>User:</strong> <?= $this->Audit->formatUser($auditLog->user) ?>
+                                                <strong>User:</strong> <?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?>
                                             </small>
                                         </div>
                                         <div class="col-md-6 text-end">

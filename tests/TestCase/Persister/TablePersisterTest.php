@@ -698,7 +698,8 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], [], new Entity());
         $event->setMetaInfo([
             'ip' => '127.0.0.1',
-            'user' => 'john_doe',
+            'user_id' => 'abc-123',
+            'user_display' => 'john_doe',
         ]);
 
         $entity = new Entity([
@@ -712,7 +713,8 @@ class TablePersisterTest extends TestCase
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
             'meta' => '{"ip":"127.0.0.1"}',
-            'user' => 'john_doe',
+            'user_id' => 'abc-123',
+            'user_display' => 'john_doe',
         ]);
         $entity->setSource('AuditLogs');
 
@@ -770,7 +772,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], [], new Entity());
         $event->setMetaInfo([
             'ip' => '127.0.0.1',
-            'user' => 123,
+            'user_id' => 123,
         ]);
 
         $entity = new Entity([
@@ -784,7 +786,7 @@ class TablePersisterTest extends TestCase
             'created' => new DateTime($event->getTimestamp()),
             'primary_key' => 1,
             'meta' => '{"ip":"127.0.0.1"}',
-            'user' => 123,
+            'user_id' => 123,
         ]);
         $entity->setSource('AuditLogs');
 

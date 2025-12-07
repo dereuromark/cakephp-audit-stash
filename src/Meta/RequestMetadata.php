@@ -22,24 +22,34 @@ class RequestMetadata implements EventListenerInterface
     protected Request $request;
 
     /**
-     * The current user name or id.
+     * The current user ID.
      *
-     * @var mixed
+     * @var string|int|null
      */
-    protected mixed $user;
+    protected string|int|null $userId;
+
+    /**
+     * The current user's display value (name, email, or any identifier for display).
+     *
+     * @var string|null
+     */
+    protected ?string $userDisplay;
 
     /**
      * Constructor.
      *
      * @param \Cake\Http\ServerRequest $request The current request
-     * @param string|int|null $user The current user id or username
+     * @param string|int|null $userId The current user ID (for linking/filtering)
+     * @param string|null $userDisplay The current user's display value (optional, for human-readable display)
      */
     public function __construct(
         Request $request,
-        int|string|null $user = null,
+        int|string|null $userId = null,
+        ?string $userDisplay = null,
     ) {
         $this->request = $request;
-        $this->user = $user;
+        $this->userId = $userId;
+        $this->userDisplay = $userDisplay;
     }
 
     /**
@@ -65,7 +75,8 @@ class RequestMetadata implements EventListenerInterface
         $meta = [
             'ip' => $this->request->clientIp(),
             'url' => $this->request->getRequestTarget(),
-            'user' => $this->user,
+            'user_id' => $this->userId,
+            'user_display' => $this->userDisplay,
         ];
 
         foreach ($logs as $log) {

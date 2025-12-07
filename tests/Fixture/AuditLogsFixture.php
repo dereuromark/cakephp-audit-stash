@@ -24,7 +24,8 @@ class AuditLogsFixture extends TestFixture
         'display_value' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
         'source' => ['type' => 'string', 'length' => 255, 'null' => false, 'default' => null],
         'parent_source' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
-        'user' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
+        'user_id' => ['type' => 'string', 'length' => 36, 'null' => true, 'default' => null],
+        'user_display' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
         'original' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
         'changed' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
         'meta' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
@@ -39,7 +40,7 @@ class AuditLogsFixture extends TestFixture
             'idx_display_value' => ['type' => 'index', 'columns' => ['display_value']],
             'idx_source' => ['type' => 'index', 'columns' => ['source']],
             'idx_parent_source' => ['type' => 'index', 'columns' => ['parent_source']],
-            'idx_user' => ['type' => 'index', 'columns' => ['user']],
+            'idx_user_id' => ['type' => 'index', 'columns' => ['user_id']],
             'idx_created' => ['type' => 'index', 'columns' => ['created']],
         ],
         '_options' => [

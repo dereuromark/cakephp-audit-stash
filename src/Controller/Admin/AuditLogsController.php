@@ -51,9 +51,9 @@ class AuditLogsController extends AppController
             $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
         }
 
-        // Filter by user
-        if ($this->request->getQuery('user')) {
-            $query->where(['AuditLogs.user LIKE' => '%' . $this->request->getQuery('user') . '%']);
+        // Filter by user ID
+        if ($this->request->getQuery('user_id')) {
+            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
         }
 
         // Filter by event type
@@ -282,8 +282,8 @@ class AuditLogsController extends AppController
         if ($this->request->getQuery('source')) {
             $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
         }
-        if ($this->request->getQuery('user')) {
-            $query->where(['AuditLogs.user LIKE' => '%' . $this->request->getQuery('user') . '%']);
+        if ($this->request->getQuery('user_id')) {
+            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
         }
         if ($this->request->getQuery('type')) {
             $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
@@ -336,7 +336,8 @@ class AuditLogsController extends AppController
             'Source',
             'Primary Key',
             'Display Value',
-            'User',
+            'User ID',
+            'User Display',
             'Original',
             'Changed',
             'Meta',
@@ -352,7 +353,8 @@ class AuditLogsController extends AppController
                 $log->source,
                 $log->primary_key,
                 $log->display_value,
-                $log->user,
+                $log->user_id,
+                $log->user_display,
                 $log->original,
                 $log->changed,
                 $log->meta,
@@ -393,7 +395,8 @@ class AuditLogsController extends AppController
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,
-                'user' => $log->user,
+                'user_id' => $log->user_id,
+                'user_display' => $log->user_display,
                 'original' => $log->original ? json_decode($log->original, true) : null,
                 'changed' => $log->changed ? json_decode($log->changed, true) : null,
                 'meta' => $log->meta ? json_decode($log->meta, true) : null,
