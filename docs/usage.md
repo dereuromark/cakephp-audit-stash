@@ -65,6 +65,7 @@ The `user` parameter accepts a string, integer, or null value. You can pass:
 - **User ID** (integer) - Most common for lookups
 - **Username** (string) - Useful for human-readable logs
 - **Email** (string) - Alternative identifier for audit trails
+- **Compound format** (string) - `"id:displayName"` for both linking and display
 
 You need to add this listener to your application in the `AppController::beforeFilter()` method.
 
@@ -82,24 +83,37 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
 
+        $identity = $this->getRequest()->getAttribute('identity');
+        $user = null;
+        if ($identity) {
+            // Compound format: "id:displayName" - ID for linking, name for display
+            $user = $identity->getIdentifier() . ':' . $identity->get('username');
+        }
+
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+                user: $user,
             ),
         );
     }
 }
 ```
 
-You can also pass other user fields instead of the identifier:
+The compound format `"id:displayName"` allows the audit viewer to:
+- Display the human-readable name (e.g., "John Doe")
+- Link to the user record using the ID (e.g., `/admin/users/view/d4c54ae8-...`)
+
+You can customize the separator via `Configure::write('AuditStash.userSeparator', '|')` if your usernames might contain colons.
+
+You can also pass just a single field instead:
 
 ```php
-// Store username instead of ID
+// Store just the username (no linking capability)
 user: $this->getRequest()->getAttribute('identity')?->get('username'),
 
-// Store email instead of ID
-user: $this->getRequest()->getAttribute('identity')?->get('email'),
+// Store just the ID (displays as "User #id")
+user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
 ```
 
 ### Using TinyAuth
@@ -116,26 +130,32 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
 
+        // Compound format: "id:displayName" - ID for linking, name for display
+        $user = null;
+        if ($this->AuthUser->id()) {
+            $user = $this->AuthUser->id() . ':' . $this->AuthUser->user('username');
+        }
+
         EventManager::instance()->on(
             new RequestMetadata(
                 request: $this->getRequest(),
-                user: $this->AuthUser->user('email'),
+                user: $user,
             ),
         );
     }
 }
 ```
 
-You can pass any field from the user session:
+You can also pass just a single field instead:
 
 ```php
-// Store user ID
+// Store just the user ID (displays as "User #id")
 user: $this->AuthUser->id(),
 
-// Store username
+// Store just the username (no linking capability)
 user: $this->AuthUser->user('username'),
 
-// Store email
+// Store just the email
 user: $this->AuthUser->user('email'),
 ```
 

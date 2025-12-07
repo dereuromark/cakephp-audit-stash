@@ -493,7 +493,21 @@ class AuditHelperTest extends TestCase
     {
         $result = $this->Audit->formatUser(123);
 
-        $this->assertSame('123', $result);
+        // Numeric IDs display as "User #id"
+        $this->assertStringContainsString('User #123', $result);
+    }
+
+    /**
+     * Test formatUser with UUID value (no link config)
+     *
+     * @return void
+     */
+    public function testFormatUserUuidNoLink(): void
+    {
+        $result = $this->Audit->formatUser('d4c54ae8-78ec-4d81-abd4-6eb7796dedad');
+
+        // UUID IDs display as "User #uuid"
+        $this->assertStringContainsString('User #d4c54ae8-78ec-4d81-abd4-6eb7796dedad', $result);
     }
 
     /**
@@ -508,7 +522,8 @@ class AuditHelperTest extends TestCase
         $result = $this->Audit->formatUser(123);
 
         $this->assertStringContainsString('href="/admin/users/view/123"', $result);
-        $this->assertStringContainsString('>123</a>', $result);
+        // Numeric IDs display as "User #id"
+        $this->assertStringContainsString('>User #123</a>', $result);
     }
 
     /**
@@ -526,12 +541,12 @@ class AuditHelperTest extends TestCase
             return null;
         });
 
-        // Numeric user gets linked
+        // Numeric user gets linked with "User #id" display
         $result = $this->Audit->formatUser(456);
         $this->assertStringContainsString('href="/admin/users/view/456"', $result);
-        $this->assertStringContainsString('>456</a>', $result);
+        $this->assertStringContainsString('>User #456</a>', $result);
 
-        // Non-numeric user does not get linked
+        // Non-numeric user (email) does not get linked, shows as-is
         $result = $this->Audit->formatUser('john@example.com');
         $this->assertSame('john@example.com', $result);
     }
@@ -549,8 +564,8 @@ class AuditHelperTest extends TestCase
 
         $result = $this->Audit->formatUser(789);
 
-        // Should just return escaped value without link
-        $this->assertSame('789', $result);
+        // Should just return escaped value without link, but with "User #id" format
+        $this->assertStringContainsString('User #789', $result);
         $this->assertStringNotContainsString('href=', $result);
     }
 

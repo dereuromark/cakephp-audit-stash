@@ -448,6 +448,9 @@ class AuditHelper extends Helper
      * Supports compound format "id:displayName" where the first part before separator
      * is used for linking (ID) and the second part for display.
      *
+     * For bare IDs (no separator), displays as "User #id" for UUIDs or numeric IDs,
+     * or the raw value if it looks like a username/email.
+     *
      * @param string $user Raw user value
      * @param string $separator Separator character (default ':')
      *
@@ -464,6 +467,18 @@ class AuditHelper extends Helper
             ];
         }
 
+        // For bare values, check if it looks like an ID (UUID or numeric)
+        $isUuid = (bool)preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $user);
+        $isNumeric = ctype_digit($user);
+
+        if ($isUuid || $isNumeric) {
+            return [
+                'id' => $user,
+                'display' => __('User #{0}', $user),
+            ];
+        }
+
+        // Looks like a username/email, use as-is
         return [
             'id' => $user,
             'display' => $user,
