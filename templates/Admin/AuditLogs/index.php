@@ -1,9 +1,9 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var iterable<\App\Model\Entity\AuditLog> $auditLogs
- * @var array $sources
- * @var array $eventTypes
+ * @var iterable<\AuditStash\Model\Entity\AuditLog> $auditLogs
+ * @var array<string, string> $sources
+ * @var array<string> $eventTypes
  */
 
 $this->loadHelper('AuditStash.Audit');

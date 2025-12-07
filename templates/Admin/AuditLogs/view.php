@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var \App\Model\Entity\AuditLog $auditLog
+ * @var \AuditStash\Model\Entity\AuditLog $auditLog
  */
 
 $this->loadHelper('AuditStash.Audit');
