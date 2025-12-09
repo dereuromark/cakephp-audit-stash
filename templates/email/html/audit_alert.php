@@ -1,5 +1,6 @@
 <?php
 /**
+ * @var \App\View\AppView $this
  * @var \AuditStash\Monitor\Alert $alert
  * @var \AuditStash\Model\Entity\AuditLog $auditLog
  */

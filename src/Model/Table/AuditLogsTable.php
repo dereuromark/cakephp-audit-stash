@@ -14,7 +14,7 @@ use Cake\Validation\Validator;
  * @method \AuditStash\Model\Entity\AuditLog newEntity(array $data, array $options = [])
  * @method array<\AuditStash\Model\Entity\AuditLog> newEntities(array $data, array $options = [])
  * @method \AuditStash\Model\Entity\AuditLog get(mixed $primaryKey, array|string $finder = 'all', \Psr\SimpleCache\CacheInterface|string|null $cache = null, \Closure|string|null $cacheKey = null, mixed ...$args)
- * @method \AuditStash\Model\Entity\AuditLog findOrCreate($search, ?callable $callback = null, array $options = [])
+ * @method \AuditStash\Model\Entity\AuditLog findOrCreate(\Cake\ORM\Query\SelectQuery|callable|array $search, ?callable $callback = null, array $options = [])
  * @method \AuditStash\Model\Entity\AuditLog patchEntity(\Cake\Datasource\EntityInterface $entity, array $data, array $options = [])
  * @method array<\AuditStash\Model\Entity\AuditLog> patchEntities(iterable $entities, array $data, array $options = [])
  * @method \AuditStash\Model\Entity\AuditLog|false save(\Cake\Datasource\EntityInterface $entity, array $options = [])
@@ -24,6 +24,7 @@ use Cake\Validation\Validator;
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog> deleteManyOrFail(iterable $entities, array $options = [])
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
+ * @extends \Cake\ORM\Table<array{Timestamp: \Cake\ORM\Behavior\TimestampBehavior}>
  */
 class AuditLogsTable extends Table
 {
