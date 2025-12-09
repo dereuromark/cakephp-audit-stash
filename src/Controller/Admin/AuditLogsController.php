@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
+use AuditStash\AuditLogType;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Response;
@@ -260,7 +261,7 @@ class AuditLogsController extends AppController
             ->where([
                 'source' => $source,
                 'primary_key' => $primaryKey,
-                'type' => 'delete',
+                'type' => AuditLogType::Delete,
             ])
             ->orderBy(['created' => 'DESC'])
             ->first();
@@ -349,7 +350,7 @@ class AuditLogsController extends AppController
             fputcsv($output, [
                 $log->id,
                 $log->transaction,
-                $log->type,
+                $log->type->value,
                 $log->source,
                 $log->primary_key,
                 $log->display_value,
@@ -391,7 +392,7 @@ class AuditLogsController extends AppController
             $data[] = [
                 'id' => $log->id,
                 'transaction' => $log->transaction,
-                'type' => $log->type,
+                'type' => $log->type->value,
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,

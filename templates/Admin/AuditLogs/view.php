@@ -4,6 +4,8 @@
  * @var \AuditStash\Model\Entity\AuditLog $auditLog
  */
 
+use AuditStash\AuditLogType;
+
 $this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs view content">
@@ -82,13 +84,13 @@ $this->loadHelper('AuditStash.Audit');
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <?= __('Changes') ?>
-                <?php if ($auditLog->type === 'create') { ?>
+                <?php if ($auditLog->type === AuditLogType::Create) { ?>
                     <span class="badge bg-info"><?= __('New Record') ?></span>
-                <?php } elseif ($auditLog->type === 'delete') { ?>
+                <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
                     <span class="badge bg-danger"><?= __('Deleted Record') ?></span>
                 <?php } ?>
             </h5>
-            <?php if ($auditLog->type === 'update') { ?>
+            <?php if ($auditLog->type === AuditLogType::Update) { ?>
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff"><?= __('Inline') ?></button>
                 <button type="button" class="btn btn-outline-secondary" id="btn-side-diff"><?= __('Side-by-side') ?></button>
@@ -96,9 +98,9 @@ $this->loadHelper('AuditStash.Audit');
             <?php } ?>
         </div>
         <div class="card-body">
-            <?php if ($auditLog->type === 'create') { ?>
+            <?php if ($auditLog->type === AuditLogType::Create) { ?>
                 <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Created with values:')) ?>
-            <?php } elseif ($auditLog->type === 'delete') { ?>
+            <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
                 <?= $this->Audit->fieldValuesTable($auditLog->original, __('Deleted record had these values:')) ?>
             <?php } else { ?>
                 <div id="inline-diff-view">

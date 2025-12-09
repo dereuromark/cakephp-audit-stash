@@ -90,7 +90,7 @@ class Alert
             'message' => $this->message,
             'audit_log' => [
                 'id' => $this->auditLog->id,
-                'type' => $this->auditLog->type,
+                'type' => $this->auditLog->type->value,
                 'source' => $this->auditLog->source,
                 'primary_key' => $this->auditLog->primary_key,
                 'transaction' => $this->auditLog->transaction,

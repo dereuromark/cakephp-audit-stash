@@ -101,7 +101,7 @@ $severityColor = $severityColors[$alert->getSeverity()] ?? '#6c757d';
                     </tr>
                     <tr>
                         <td>Type</td>
-                        <td><?= h(ucfirst($auditLog->type)) ?></td>
+                        <td><?= h(ucfirst($auditLog->type->value)) ?></td>
                     </tr>
                     <tr>
                         <td>Table</td>

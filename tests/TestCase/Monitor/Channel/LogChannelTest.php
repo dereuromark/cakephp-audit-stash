@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Monitor\Channel;
 
+use AuditStash\AuditLogType;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\LogChannel;
@@ -56,7 +57,7 @@ class LogChannelTest extends TestCase
 
         $auditLog = new AuditLog([
             'id' => 1,
-            'type' => 'delete',
+            'type' => AuditLogType::Delete,
             'source' => 'users',
             'primary_key' => 123,
             'transaction' => 'abc-123',
@@ -98,7 +99,7 @@ class LogChannelTest extends TestCase
         foreach ($testCases as $severity => $expectedLevel) {
             $auditLog = new AuditLog([
                 'id' => 1,
-                'type' => 'delete',
+                'type' => AuditLogType::Delete,
                 'source' => 'test',
                 'primary_key' => 1,
                 'transaction' => 'test',

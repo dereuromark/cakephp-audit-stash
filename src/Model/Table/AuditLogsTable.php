@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AuditStash\Model\Table;
 
+use AuditStash\AuditLogType;
+use Cake\Database\Type\EnumType;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
@@ -50,6 +52,8 @@ class AuditLogsTable extends Table
                 ],
             ],
         ]);
+
+        $this->getSchema()->setColumnType('type', EnumType::from(AuditLogType::class));
     }
 
     /**
@@ -72,11 +76,8 @@ class AuditLogsTable extends Table
             ->notEmptyString('transaction');
 
         $validator
-            ->scalar('type')
-            ->maxLength('type', 7)
             ->requirePresence('type', 'create')
-            ->notEmptyString('type')
-            ->inList('type', ['create', 'update', 'delete', 'revert']);
+            ->notEmptyString('type');
 
         $validator
             ->allowEmptyString('primary_key');

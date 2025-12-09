@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Service;
 
+use AuditStash\AuditLogType;
 use AuditStash\Service\RevertService;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -82,7 +83,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a revert audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => 'revert'])
+            ->where(['type' => AuditLogType::Revert])
             ->first();
 
         $this->assertNotNull($revertLog);
@@ -133,7 +134,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a partial revert audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => 'revert'])
+            ->where(['type' => AuditLogType::Revert])
             ->first();
 
         $this->assertNotNull($revertLog);
@@ -180,7 +181,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a restore audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => 'revert'])
+            ->where(['type' => AuditLogType::Revert])
             ->first();
 
         $this->assertNotNull($revertLog);

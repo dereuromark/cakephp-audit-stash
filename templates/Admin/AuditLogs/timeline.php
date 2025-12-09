@@ -6,6 +6,8 @@
  * @var string|int $primaryKey
  */
 
+use AuditStash\AuditLogType;
+
 $this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs timeline content">
@@ -39,11 +41,11 @@ $this->loadHelper('AuditStash.Audit');
                         </div>
                         <div class="col-md-1 text-center">
                             <div class="timeline-marker">
-                                <?php if ($auditLog->type === 'create') { ?>
+                                <?php if ($auditLog->type === AuditLogType::Create) { ?>
                                     <div class="marker marker-success"></div>
-                                <?php } elseif ($auditLog->type === 'update') { ?>
+                                <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
                                     <div class="marker marker-primary"></div>
-                                <?php } elseif ($auditLog->type === 'revert') { ?>
+                                <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
                                     <div class="marker marker-warning"></div>
                                 <?php } else { ?>
                                     <div class="marker marker-danger"></div>
@@ -59,11 +61,11 @@ $this->loadHelper('AuditStash.Audit');
                                     <div>
                                         <?= $this->Audit->eventTypeBadge($auditLog->type) ?>
                                         <span class="ms-2">
-                                            <?php if ($auditLog->type === 'create') { ?>
+                                            <?php if ($auditLog->type === AuditLogType::Create) { ?>
                                                 Record created
-                                            <?php } elseif ($auditLog->type === 'update') { ?>
+                                            <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
                                                 <?= $this->Audit->changeSummary($auditLog->changed) ?>
-                                            <?php } elseif ($auditLog->type === 'revert') { ?>
+                                            <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
                                                 <?php
                                                 $meta = json_decode($auditLog->meta, true);
                                                 $revertType = $meta['revert_type'] ?? 'unknown';
@@ -80,9 +82,9 @@ $this->loadHelper('AuditStash.Audit');
                                             ['action' => 'view', $auditLog->id],
                                             ['class' => 'btn btn-sm btn-outline-primary']
                                         ) ?>
-                                        <?php if ($auditLog->type === 'delete') { ?>
+                                        <?php if ($auditLog->type === AuditLogType::Delete) { ?>
                                             <?= $this->Audit->restoreButton($auditLog->source, $auditLog->primary_key) ?>
-                                        <?php } elseif ($auditLog->type !== 'revert') { ?>
+                                        <?php } elseif ($auditLog->type !== AuditLogType::Revert) { ?>
                                             <?= $this->Audit->revertButton($auditLog->id) ?>
                                         <?php } ?>
                                     </div>
@@ -102,7 +104,7 @@ $this->loadHelper('AuditStash.Audit');
                                         </div>
                                     </div>
 
-                                    <?php if ($auditLog->type === 'create') { ?>
+                                    <?php if ($auditLog->type === AuditLogType::Create) { ?>
                                         <div class="changes-preview">
                                             <strong>Initial values:</strong>
                                             <?php
@@ -123,18 +125,18 @@ $this->loadHelper('AuditStash.Audit');
                                             }
                                             ?>
                                         </div>
-                                    <?php } elseif ($auditLog->type === 'update') { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
                                         <details>
                                             <summary class="cursor-pointer text-primary">Show changes</summary>
                                             <div class="mt-2">
                                                 <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
                                             </div>
                                         </details>
-                                    <?php } elseif ($auditLog->type === 'delete') { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
                                         <div class="alert alert-danger mb-0">
                                             <strong>Record was deleted</strong>
                                         </div>
-                                    <?php } elseif ($auditLog->type === 'revert') { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
                                         <div class="alert alert-warning mb-2">
                                             <?php
                                             $meta = json_decode($auditLog->meta, true);

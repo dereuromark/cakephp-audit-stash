@@ -350,20 +350,18 @@ class AuditHelper extends Helper
     /**
      * Display event type badge
      *
-     * @param string $type Event type (create, update, delete, revert)
+     * @param \AuditStash\AuditLogType $type Event type
      *
      * @return string HTML badge
      */
-    public function eventTypeBadge(string $type): string
+    public function eventTypeBadge(AuditLogType $type): string
     {
-        $badges = [
-            AuditLogType::Create->value => '<span class="badge bg-success">Create</span>',
-            AuditLogType::Update->value => '<span class="badge bg-primary">Update</span>',
-            AuditLogType::Delete->value => '<span class="badge bg-danger">Delete</span>',
-            AuditLogType::Revert->value => '<span class="badge bg-warning">Revert</span>',
-        ];
-
-        return $badges[$type] ?? '<span class="badge bg-secondary">' . h($type) . '</span>';
+        return match ($type) {
+            AuditLogType::Create => '<span class="badge bg-success">Create</span>',
+            AuditLogType::Update => '<span class="badge bg-primary">Update</span>',
+            AuditLogType::Delete => '<span class="badge bg-danger">Delete</span>',
+            AuditLogType::Revert => '<span class="badge bg-warning">Revert</span>',
+        };
     }
 
     /**

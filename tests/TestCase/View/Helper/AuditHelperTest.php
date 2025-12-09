@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\View\Helper;
 
+use AuditStash\AuditLogType;
 use AuditStash\View\Helper\AuditHelper;
 use Cake\Core\Configure;
 use Cake\TestSuite\TestCase;
@@ -107,17 +108,17 @@ class AuditHelperTest extends TestCase
      */
     public function testEventTypeBadge(): void
     {
-        $result = $this->Audit->eventTypeBadge('create');
+        $result = $this->Audit->eventTypeBadge(AuditLogType::Create);
         $this->assertStringContainsString('badge', $result);
         $this->assertStringContainsString('Create', $result);
         $this->assertStringContainsString('bg-success', $result);
 
-        $result = $this->Audit->eventTypeBadge('update');
+        $result = $this->Audit->eventTypeBadge(AuditLogType::Update);
         $this->assertStringContainsString('badge', $result);
         $this->assertStringContainsString('Update', $result);
         $this->assertStringContainsString('bg-primary', $result);
 
-        $result = $this->Audit->eventTypeBadge('delete');
+        $result = $this->Audit->eventTypeBadge(AuditLogType::Delete);
         $this->assertStringContainsString('badge', $result);
         $this->assertStringContainsString('Delete', $result);
         $this->assertStringContainsString('bg-danger', $result);
@@ -317,7 +318,7 @@ class AuditHelperTest extends TestCase
      */
     public function testEventTypeBadgeRevert(): void
     {
-        $result = $this->Audit->eventTypeBadge('revert');
+        $result = $this->Audit->eventTypeBadge(AuditLogType::Revert);
 
         $this->assertStringContainsString('badge', $result);
         $this->assertStringContainsString('bg-warning', $result);
