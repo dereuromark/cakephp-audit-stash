@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AuditStash\Event;
 
+use AuditStash\AuditLogType;
+
 /**
  * Represents an audit log event for a newly created record.
  */
@@ -16,6 +18,6 @@ class AuditCreateEvent extends BaseEvent
      */
     public function getEventType(): string
     {
-        return 'create';
+        return AuditLogType::Create->value;
     }
 }

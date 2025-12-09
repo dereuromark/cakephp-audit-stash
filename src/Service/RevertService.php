@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Service;
 
+use AuditStash\AuditLogType;
 use AuditStash\AuditStashPlugin;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
@@ -129,7 +130,7 @@ class RevertService
                 ->where([
                     'source' => $source,
                     'primary_key' => (string)$primaryKey,
-                    'type' => 'delete',
+                    'type' => AuditLogType::Delete->value,
                 ])
                 ->orderBy(['created' => 'DESC'])
                 ->first();
@@ -204,7 +205,7 @@ class RevertService
 
         $auditLog = $auditLogs->newEntity([
             'transaction' => Text::uuid(),
-            'type' => 'revert',
+            'type' => AuditLogType::Revert->value,
             'source' => $source,
             'primary_key' => (string)$primaryKey,
             'original' => json_encode($currentState, AuditStashPlugin::JSON_FLAGS),

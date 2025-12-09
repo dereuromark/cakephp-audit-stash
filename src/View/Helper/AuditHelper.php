@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\View\Helper;
 
+use AuditStash\AuditLogType;
 use AuditStash\Lib\DiffLib;
 use Cake\Core\Configure;
 use Cake\View\Helper;
@@ -356,10 +357,10 @@ class AuditHelper extends Helper
     public function eventTypeBadge(string $type): string
     {
         $badges = [
-            'create' => '<span class="badge bg-success">Create</span>',
-            'update' => '<span class="badge bg-primary">Update</span>',
-            'delete' => '<span class="badge bg-danger">Delete</span>',
-            'revert' => '<span class="badge bg-warning">Revert</span>',
+            AuditLogType::Create->value => '<span class="badge bg-success">Create</span>',
+            AuditLogType::Update->value => '<span class="badge bg-primary">Update</span>',
+            AuditLogType::Delete->value => '<span class="badge bg-danger">Delete</span>',
+            AuditLogType::Revert->value => '<span class="badge bg-warning">Revert</span>',
         ];
 
         return $badges[$type] ?? '<span class="badge bg-secondary">' . h($type) . '</span>';

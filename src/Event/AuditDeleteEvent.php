@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AuditStash\Event;
 
+use AuditStash\AuditLogType;
+
 /**
  * Represents an audit log event for a newly deleted record.
  */
@@ -43,6 +45,6 @@ class AuditDeleteEvent extends BaseEvent
      */
     public function getEventType(): string
     {
-        return 'delete';
+        return AuditLogType::Delete->value;
     }
 }

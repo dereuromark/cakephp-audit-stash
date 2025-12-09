@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Monitor\Rule;
 
+use AuditStash\AuditLogType;
 use AuditStash\Model\Entity\AuditLog;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -22,7 +23,7 @@ class MassDeleteRule extends AbstractRule
      */
     public function matches(AuditLog $auditLog): bool
     {
-        if ($auditLog->type !== 'delete') {
+        if ($auditLog->type !== AuditLogType::Delete->value) {
             return false;
         }
 
@@ -39,7 +40,7 @@ class MassDeleteRule extends AbstractRule
 
         $count = $auditLogsTable->find()
             ->where([
-                'type' => 'delete',
+                'type' => AuditLogType::Delete->value,
                 'source' => $auditLog->source,
                 'created >=' => $since,
             ])
@@ -70,7 +71,7 @@ class MassDeleteRule extends AbstractRule
 
         $count = $auditLogsTable->find()
             ->where([
-                'type' => 'delete',
+                'type' => AuditLogType::Delete->value,
                 'source' => $auditLog->source,
                 'created >=' => $since,
             ])
@@ -96,7 +97,7 @@ class MassDeleteRule extends AbstractRule
 
         $count = $auditLogsTable->find()
             ->where([
-                'type' => 'delete',
+                'type' => AuditLogType::Delete->value,
                 'source' => $auditLog->source,
                 'created >=' => $since,
             ])

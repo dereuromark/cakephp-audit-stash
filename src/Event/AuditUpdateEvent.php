@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AuditStash\Event;
 
+use AuditStash\AuditLogType;
+
 /**
  * Represents an audit log event for a modified record.
  */
@@ -16,6 +18,6 @@ class AuditUpdateEvent extends BaseEvent
      */
     public function getEventType(): string
     {
-        return 'update';
+        return AuditLogType::Update->value;
     }
 }
