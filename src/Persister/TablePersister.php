@@ -120,7 +120,7 @@ class TablePersister implements PersisterInterface
         'logErrors' => true,
         'primaryKeyExtractionStrategy' => self::STRATEGY_AUTOMATIC,
         'serializeFields' => true,
-        'table' => 'AuditLogs',
+        'table' => 'AuditStash.AuditLogs',
         'unsetExtractedMetaFields' => true,
     ];
 

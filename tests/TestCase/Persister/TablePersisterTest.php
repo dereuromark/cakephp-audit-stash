@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Persister;
 
 use AuditStash\Event\AuditCreateEvent;
+use AuditStash\Model\Table\AuditLogsTable as PluginAuditLogsTable;
 use AuditStash\Persister\TablePersister;
 use AuditStash\Test\AuditLogsTable;
 use Cake\Datasource\EntityInterface;
@@ -62,7 +63,7 @@ class TablePersisterTest extends TestCase
             'logErrors' => true,
             'primaryKeyExtractionStrategy' => TablePersister::STRATEGY_AUTOMATIC,
             'serializeFields' => true,
-            'table' => 'AuditLogs',
+            'table' => 'AuditStash.AuditLogs',
             'unsetExtractedMetaFields' => true,
         ];
         $this->assertEquals($expected, $this->TablePersister->getConfig());
@@ -73,7 +74,7 @@ class TablePersisterTest extends TestCase
      */
     public function testGetTableDefault()
     {
-        $this->assertInstanceOf(AuditLogsTable::class, $this->TablePersister->getTable());
+        $this->assertInstanceOf(PluginAuditLogsTable::class, $this->TablePersister->getTable());
     }
 
     /**
@@ -81,7 +82,7 @@ class TablePersisterTest extends TestCase
      */
     public function testSetTableAsAlias()
     {
-        $this->assertInstanceOf(AuditLogsTable::class, $this->TablePersister->getTable());
+        $this->assertInstanceOf(PluginAuditLogsTable::class, $this->TablePersister->getTable());
         $this->assertInstanceOf(TablePersister::class, $this->TablePersister->setTable('Custom'));
         $this->assertInstanceOf(Table::class, $this->TablePersister->getTable());
         $this->assertEquals('Custom', $this->TablePersister->getTable()->getAlias());
@@ -93,7 +94,7 @@ class TablePersisterTest extends TestCase
     public function testSetTableAsObject()
     {
         $customTable = $this->getTableLocator()->get('Custom');
-        $this->assertInstanceOf(AuditLogsTable::class, $this->TablePersister->getTable());
+        $this->assertInstanceOf(PluginAuditLogsTable::class, $this->TablePersister->getTable());
         $this->assertInstanceOf(TablePersister::class, $this->TablePersister->setTable($customTable));
         $this->assertSame($customTable, $this->TablePersister->getTable());
     }
