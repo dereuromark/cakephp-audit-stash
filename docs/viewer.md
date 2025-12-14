@@ -319,7 +319,7 @@ Create `src/Controller/Admin/AuditLogsController.php` in your app to override th
 <?php
 namespace App\Controller\Admin;
 
-use AuditStash\Controller\AuditLogsController as BaseAuditLogsController;
+use AuditStash\Controller\Admin\AuditLogsController as BaseAuditLogsController;
 
 class AuditLogsController extends BaseAuditLogsController
 {
