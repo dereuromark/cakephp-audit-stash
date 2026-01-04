@@ -503,7 +503,7 @@ Anywhere you wish to use `Connection::transactional()`, you will need to first i
 
 ```php
 use App\Model\Audit\AuditTrail;
-use ArrayObject
+use ArrayObject;
 use Cake\Event\Event;
 ```
 
@@ -523,7 +523,7 @@ $success = $this->Bookmarks->connection()->transactional(function () use ($trail
 
 if ($success) {
     $event = new Event('Model.afterCommit', $this->Bookmarks);
-    $this->Bookmarks->->behaviors()->get('AuditLog')->afterCommit(
+    $this->Bookmarks->behaviors()->get('AuditLog')->afterCommit(
         $event,
         $result,
         new ArrayObject($auditTrail->toSaveOptions()),
