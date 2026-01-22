@@ -206,7 +206,7 @@ class AuditLogBehavior extends Behavior
             $auditEvent->setParentSourceName($options['_sourceTable']->getRegistryAlias());
         }
 
-        $options['_auditQueue']->attach($entity, $auditEvent);
+        $options['_auditQueue']->offsetSet($entity, $auditEvent);
 
         if (Configure::read('AuditStash.saveType') === 'afterSave') {
             $this->afterCommit(new Event(''), $entity, $options);
@@ -292,7 +292,7 @@ class AuditLogBehavior extends Behavior
             $original,
             $displayValue,
         );
-        $options['_auditQueue']->attach($entity, $auditEvent);
+        $options['_auditQueue']->offsetSet($entity, $auditEvent);
         if (Configure::read('AuditStash.saveType') === 'afterSave') {
             $this->afterCommit(new Event(''), $entity, $options);
         }
