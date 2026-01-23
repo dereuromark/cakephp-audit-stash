@@ -115,6 +115,41 @@ The following audit events will be created:
 
 All events in a single save operation share the same `transaction` ID, making it easy to see all related changes.
 
+### Logging Cascade-Deleted Records
+
+When deleting a parent record with `dependent => true` associations, the dependent records are also deleted (cascade delete).
+By default, these cascade-deleted records are NOT logged unless the dependent tables also have `AuditLogBehavior` attached.
+
+To automatically log cascade-deleted dependent records without adding the behavior to each dependent table, enable the `cascadeDeletes` option:
+
+```php
+public function initialize(array $config = []): void
+{
+    // Set up the association with dependent = true
+    $this->hasMany('Comments', [
+        'dependent' => true,
+    ]);
+
+    // Enable cascade delete logging
+    $this->addBehavior('AuditStash.AuditLog', [
+        'cascadeDeletes' => true,
+    ]);
+}
+```
+
+When `cascadeDeletes` is enabled:
+- Before the parent record is deleted, the behavior queries for all dependent `HasMany` and `HasOne` records
+- After deletion, audit events are created for all cascade-deleted records
+- All events share the same transaction ID for traceability
+- The `parent_source` field indicates which table triggered the cascade delete
+
+This is particularly useful when:
+- You don't want to add `AuditLogBehavior` to every dependent table
+- You want to avoid using `setCascadeCallbacks(true)` for performance reasons
+- You need a complete audit trail of all deleted records in a single operation
+
+**Note:** The `cascadeDeletes` option is disabled by default for backward compatibility.
+
 ## Storing The Logged In User
 
 It is often useful to store the identifier of the user that is triggering the changes in a certain table. For this purpose, `AuditStash`
