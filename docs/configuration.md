@@ -32,6 +32,9 @@ To enable native JSON columns:
 bin/cake migrations migrate -p AuditStash
 ```
 
+The `TablePersister` automatically detects JSON columns and skips manual JSON encoding to avoid double-encoding.
+This means you don't need to change any configuration - it just works.
+
 **Note:** This requires MySQL 5.7.8+, MariaDB 10.2.7+, or PostgreSQL 9.2+. SQLite does not support native JSON columns.
 
 ### UUID Primary Keys
