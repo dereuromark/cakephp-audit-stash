@@ -56,6 +56,65 @@ public function initialize(array $config = []): void
 }
 ```
 
+### Logging BelongsToMany (Junction Table) Changes
+
+When working with many-to-many relationships (BelongsToMany), changes happen in the junction table (e.g., `articles_tags`).
+To track these changes, you need to add the `AuditLogBehavior` to both the target table and the junction table.
+
+```php
+// In ArticlesTable
+public function initialize(array $config = []): void
+{
+    $this->belongsToMany('Tags', [
+        'joinTable' => 'articles_tags',
+    ]);
+
+    // Audit the Articles table
+    $this->addBehavior('AuditStash.AuditLog');
+}
+
+// In TagsTable
+public function initialize(array $config = []): void
+{
+    $this->belongsToMany('Articles', [
+        'joinTable' => 'articles_tags',
+    ]);
+
+    // Audit the Tags table
+    $this->addBehavior('AuditStash.AuditLog');
+}
+
+// In ArticlesTagsTable (junction table)
+public function initialize(array $config = []): void
+{
+    // Audit the junction table to track tag assignments/removals
+    $this->addBehavior('AuditStash.AuditLog');
+}
+```
+
+Alternatively, you can add the behavior to the junction table dynamically:
+
+```php
+// In ArticlesTable::initialize()
+$this->Tags->junction()->addBehavior('AuditStash.AuditLog');
+```
+
+With this setup, when you add or remove tags from an article:
+
+```php
+$article = $this->Articles->get($id, contain: ['Tags']);
+$article->tags[] = $this->Tags->get(5); // Add a new tag
+$article->setDirty('tags', true);
+$this->Articles->save($article);
+```
+
+The following audit events will be created:
+1. **Tags** - If a new tag was created
+2. **ArticlesTags** - For each new tag association (create event)
+3. **ArticlesTags** - For each removed tag association (delete event, if using `replace` strategy)
+
+All events in a single save operation share the same `transaction` ID, making it easy to see all related changes.
+
 ## Storing The Logged In User
 
 It is often useful to store the identifier of the user that is triggering the changes in a certain table. For this purpose, `AuditStash`
