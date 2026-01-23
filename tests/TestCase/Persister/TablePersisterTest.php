@@ -813,7 +813,8 @@ class TablePersisterTest extends TestCase
      */
     public function testJsonColumnAutoDetection(): void
     {
-        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], ['title' => 'Test'], new Entity());
+        // Constructor: transactionId, id, source, changed, original, entity
+        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
         $event->setMetaInfo(['ip' => '127.0.0.1']);
 
         // Create a mock table with JSON column types
@@ -859,7 +860,8 @@ class TablePersisterTest extends TestCase
      */
     public function testSerializationWithTextColumns(): void
     {
-        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], ['title' => 'Test'], new Entity());
+        // Constructor: transactionId, id, source, changed, original, entity
+        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
         $event->setMetaInfo(['ip' => '127.0.0.1']);
 
         // Create a mock table with TEXT column types (not JSON)
