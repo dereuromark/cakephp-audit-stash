@@ -8,6 +8,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Model\Table\AuditLogsTable as PluginAuditLogsTable;
 use AuditStash\Persister\TablePersister;
 use AuditStash\Test\AuditLogsTable;
+use Cake\Database\Schema\TableSchemaInterface;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\EventInterface;
 use Cake\ORM\Entity;
@@ -817,7 +818,7 @@ class TablePersisterTest extends TestCase
 
         // Create a mock table with JSON column types
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['save', 'getSchema']);
-        $schema = $this->createMock(\Cake\Database\Schema\TableSchemaInterface::class);
+        $schema = $this->createMock(TableSchemaInterface::class);
         $schema->method('getColumnType')
             ->willReturnCallback(function ($column) {
                 // Return 'json' for the serializable columns
@@ -863,7 +864,7 @@ class TablePersisterTest extends TestCase
 
         // Create a mock table with TEXT column types (not JSON)
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['save', 'getSchema']);
-        $schema = $this->createMock(\Cake\Database\Schema\TableSchemaInterface::class);
+        $schema = $this->createMock(TableSchemaInterface::class);
         $schema->method('getColumnType')
             ->willReturnCallback(function ($column) {
                 // Return 'text' for all columns (no JSON)
