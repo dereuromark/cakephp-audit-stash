@@ -426,4 +426,81 @@ class AuditIntegrationTest extends TestCase
 
         $this->table->delete($entity);
     }
+
+    /**
+     * Tests that cascade-deleted dependent records are logged when cascadeDeletes
+     * option is enabled, even without AuditLogBehavior on dependent tables.
+     *
+     * This is useful when:
+     * - Dependent tables don't have AuditLogBehavior attached
+     * - You don't want to use setCascadeCallbacks(true) for performance reasons
+     *
+     * @return void
+     */
+    public function testDeleteWithCascadeDeletesOption()
+    {
+        // Configure the behavior with cascadeDeletes enabled
+        $this->table->behaviors()->get('AuditLog')->setConfig('cascadeDeletes', true);
+
+        // Set up hasMany association with dependent = true
+        // Note: We're NOT adding AuditLogBehavior to Comments
+        $this->table->Comments->setDependent(true);
+
+        $entity = $this->table->get(1);
+
+        $this->persister
+            ->expects($this->once())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) {
+                // Should log: 2 comments (cascade) + 1 article (parent)
+                $this->assertCount(3, $events);
+
+                $transactionId = $events[0]->getTransactionId();
+                foreach ($events as $event) {
+                    $this->assertInstanceOf(AuditDeleteEvent::class, $event);
+                    $this->assertNotEmpty($event->getTransactionId());
+                    $this->assertEquals($transactionId, $event->getTransactionId());
+                }
+
+                // First two events should be the cascade-deleted comments
+                $this->assertEquals('Comments', $events[0]->getSourceName());
+                $this->assertEquals('Articles', $events[0]->getParentSourceName());
+                $this->assertEquals('Comments', $events[1]->getSourceName());
+                $this->assertEquals('Articles', $events[1]->getParentSourceName());
+
+                // Last event should be the parent article
+                $this->assertEquals('Articles', $events[2]->getSourceName());
+                $this->assertNull($events[2]->getParentSourceName());
+
+                // Verify cascade-deleted records have original data captured
+                $this->assertNotEmpty($events[0]->getOriginal());
+                $this->assertArrayHasKey('comment', $events[0]->getOriginal());
+            });
+
+        $this->table->delete($entity);
+    }
+
+    /**
+     * Tests that cascadeDeletes option is disabled by default (backward compatible).
+     *
+     * @return void
+     */
+    public function testDeleteWithCascadeDeletesDisabledByDefault()
+    {
+        // Set up dependent association but don't enable cascadeDeletes
+        $this->table->Comments->setDependent(true);
+
+        $entity = $this->table->get(1);
+
+        $this->persister
+            ->expects($this->once())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) {
+                // Should only log the parent article, not the cascade-deleted comments
+                $this->assertCount(1, $events);
+                $this->assertEquals('Articles', $events[0]->getSourceName());
+            });
+
+        $this->table->delete($entity);
+    }
 }

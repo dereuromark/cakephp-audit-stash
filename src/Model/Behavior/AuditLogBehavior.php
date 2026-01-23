@@ -14,6 +14,8 @@ use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
+use Cake\ORM\Association\HasMany;
+use Cake\ORM\Association\HasOne;
 use Cake\ORM\Behavior;
 use Cake\Utility\Inflector;
 use Cake\Utility\Text;
@@ -29,6 +31,11 @@ class AuditLogBehavior extends Behavior
     /**
      * Default configuration.
      *
+     * - `blacklist`: Fields to exclude from audit logging (default: created, modified, id)
+     * - `whitelist`: Fields to include in audit logging (if empty, all fields except blacklisted are included)
+     * - `sensitive`: Fields to redact in audit logs (values shown as ****)
+     * - `cascadeDeletes`: Whether to log cascade-deleted dependent records (default: false)
+     *
      * @var array<string, mixed>
      */
     protected array $_defaultConfig = [
@@ -37,6 +44,7 @@ class AuditLogBehavior extends Behavior
         'blacklist' => ['created', 'modified', 'id'],
         'whitelist' => [],
         'sensitive' => [],
+        'cascadeDeletes' => false,
     ];
 
     /**
@@ -89,6 +97,66 @@ class AuditLogBehavior extends Behavior
 
         if (!isset($options['_auditQueue'])) {
             $options['_auditQueue'] = new SplObjectStorage();
+        }
+
+        // Capture cascade-deleted dependent records before they are deleted
+        if ($event->getName() === 'Model.beforeDelete' && $this->getConfig('cascadeDeletes')) {
+            $this->captureCascadeDeletes($entity, $options);
+        }
+    }
+
+    /**
+     * Captures dependent records that will be cascade-deleted for audit logging.
+     *
+     * @param \Cake\Datasource\EntityInterface $entity The parent entity being deleted
+     * @param \ArrayObject $options The delete options
+     *
+     * @return void
+     */
+    protected function captureCascadeDeletes(EntityInterface $entity, ArrayObject $options): void
+    {
+        if (!isset($options['_cascadeDeleteRecords'])) {
+            $options['_cascadeDeleteRecords'] = [];
+        }
+
+        $primaryKey = $this->_table->getPrimaryKey();
+        $primaryValue = $entity->get(is_array($primaryKey) ? $primaryKey[0] : $primaryKey);
+
+        if ($primaryValue === null) {
+            return;
+        }
+
+        foreach ($this->_table->associations() as $association) {
+            // Only process HasMany and HasOne associations with dependent = true
+            if (!($association instanceof HasMany || $association instanceof HasOne)) {
+                continue;
+            }
+
+            if (!$association->getDependent()) {
+                continue;
+            }
+
+            $target = $association->getTarget();
+            $foreignKey = $association->getForeignKey();
+
+            if (!is_string($foreignKey)) {
+                continue;
+            }
+
+            // Query for dependent records
+            $dependentRecords = $target->find()
+                ->where([$target->aliasField($foreignKey) => $primaryValue])
+                ->all()
+                ->toArray();
+
+            foreach ($dependentRecords as $record) {
+                $options['_cascadeDeleteRecords'][] = [
+                    'entity' => $record,
+                    'source' => $target->getRegistryAlias(),
+                    'displayField' => $target->getDisplayField(),
+                    'primaryKey' => $target->getPrimaryKey(),
+                ];
+            }
         }
     }
 
@@ -284,6 +352,11 @@ class AuditLogBehavior extends Behavior
 
         $this->redactArray($original);
 
+        // Log cascade-deleted dependent records first (children are deleted before parent)
+        if ($this->getConfig('cascadeDeletes') && !empty($options['_cascadeDeleteRecords'])) {
+            $this->logCascadeDeletes($transaction, $options);
+        }
+
         $auditEvent = new AuditDeleteEvent(
             $transaction,
             $primary,
@@ -293,9 +366,69 @@ class AuditLogBehavior extends Behavior
             $displayValue,
         );
         $options['_auditQueue']->offsetSet($entity, $auditEvent);
+
         if (Configure::read('AuditStash.saveType') === 'afterSave') {
             $this->afterCommit(new Event(''), $entity, $options);
         }
+    }
+
+    /**
+     * Creates audit delete events for cascade-deleted dependent records.
+     *
+     * @param string $transaction The transaction ID
+     * @param \ArrayObject $options The delete options containing captured records
+     *
+     * @return void
+     */
+    protected function logCascadeDeletes(string $transaction, ArrayObject $options): void
+    {
+        $parentSource = $this->_table->getRegistryAlias();
+        $config = $this->_config;
+
+        foreach ($options['_cascadeDeleteRecords'] as $record) {
+            /** @var \Cake\Datasource\EntityInterface $dependentEntity */
+            $dependentEntity = $record['entity'];
+            /** @var string $source */
+            $source = $record['source'];
+            /** @var array<string>|string $displayField */
+            $displayField = $record['displayField'];
+            /** @var array<string>|string $primaryKey */
+            $primaryKey = $record['primaryKey'];
+
+            $primary = $dependentEntity->extract((array)$primaryKey);
+
+            // Get display value
+            $displayValue = null;
+            if (is_string($displayField) && $dependentEntity->has($displayField)) {
+                $displayValue = (string)$dependentEntity->get($displayField);
+            }
+
+            // Get original values
+            $original = $dependentEntity->toArray();
+
+            // Filter out blacklisted fields
+            foreach ($original as $key => $value) {
+                if (in_array($key, $config['blacklist'], true)) {
+                    unset($original[$key]);
+                }
+            }
+
+            $this->redactArray($original);
+
+            $auditEvent = new AuditDeleteEvent(
+                $transaction,
+                $primary,
+                $source,
+                $parentSource,
+                $original,
+                $displayValue,
+            );
+
+            $options['_auditQueue']->offsetSet($dependentEntity, $auditEvent);
+        }
+
+        // Clear processed records
+        $options['_cascadeDeleteRecords'] = [];
     }
 
     /**
