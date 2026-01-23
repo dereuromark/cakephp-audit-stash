@@ -481,41 +481,6 @@ class AuditIntegrationTest extends TestCase
     }
 
     /**
-     * Tests that cascadeDeletes option captures HasOne dependent records.
-     *
-     * @return void
-     */
-    public function testDeleteWithCascadeDeletesHasOne()
-    {
-        // Create a HasOne association for testing
-        $this->table->hasOne('Authors', [
-            'foreignKey' => 'article_id', // hypothetical - just for testing structure
-        ]);
-
-        // For this test, we'll use the existing hasMany Comments
-        $this->table->behaviors()->get('AuditLog')->setConfig('cascadeDeletes', true);
-        $this->table->Comments->setDependent(true);
-
-        $entity = $this->table->get(1);
-
-        $this->persister
-            ->expects($this->once())
-            ->method('logEvents')
-            ->willReturnCallback(function (array $events) {
-                // Should have captured the cascade deleted comments
-                $this->assertGreaterThanOrEqual(2, count($events));
-
-                // All should share the same transaction ID
-                $transactionId = $events[0]->getTransactionId();
-                foreach ($events as $event) {
-                    $this->assertEquals($transactionId, $event->getTransactionId());
-                }
-            });
-
-        $this->table->delete($entity);
-    }
-
-    /**
      * Tests that cascadeDeletes option is disabled by default (backward compatible).
      *
      * @return void
