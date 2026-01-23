@@ -17,6 +17,23 @@ bin/cake bake model AuditLogs
 **Performance Note:** The migration uses `binaryuuid` for the transaction field, which stores UUIDs as BINARY(16) instead of CHAR(36).
 This provides ~56% space savings and better index performance.
 
+### Native JSON Columns
+
+The plugin includes a migration (`20260123120000_UseJsonColumnTypes`) that converts the `original`, `changed`, and `meta`
+columns from TEXT to native JSON type. This provides:
+
+- **Automatic JSON validation** on insert/update (database will reject malformed JSON)
+- **Better query performance** with JSON functions (e.g., `JSON_EXTRACT()` in MySQL)
+- **Ability to create indexes** on JSON paths (MySQL 8.0+)
+
+To enable native JSON columns:
+
+```bash
+bin/cake migrations migrate -p AuditStash
+```
+
+**Note:** This requires MySQL 5.7.8+, MariaDB 10.2.7+, or PostgreSQL 9.2+. SQLite does not support native JSON columns.
+
 ### UUID Primary Keys
 
 The default migration creates the `primary_key` column as an integer. If your application uses UUID primary keys,

@@ -54,6 +54,11 @@ class AuditLogsTable extends Table
         ]);
 
         $this->getSchema()->setColumnType('type', EnumType::from(AuditLogType::class));
+
+        // Set JSON column types for proper array handling
+        $this->getSchema()->setColumnType('original', 'json');
+        $this->getSchema()->setColumnType('changed', 'json');
+        $this->getSchema()->setColumnType('meta', 'json');
     }
 
     /**
@@ -109,15 +114,12 @@ class AuditLogsTable extends Table
             ->allowEmptyString('user_display');
 
         $validator
-            ->scalar('original')
             ->allowEmptyString('original');
 
         $validator
-            ->scalar('changed')
             ->allowEmptyString('changed');
 
         $validator
-            ->scalar('meta')
             ->allowEmptyString('meta');
 
         return $validator;
