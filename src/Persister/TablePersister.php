@@ -190,6 +190,12 @@ class TablePersister implements PersisterInterface
         $unsetExtractedMetaFields = $this->getConfig('unsetExtractedMetaFields');
         $logErrors = $this->getConfig('logErrors');
 
+        // Auto-detect JSON columns to avoid double-encoding
+        // When columns are native JSON type, CakePHP handles encoding automatically
+        if ($serializeFields && $this->hasJsonColumns($persisterTable)) {
+            $serializeFields = false;
+        }
+
         foreach ($auditLogs as $log) {
             $fields = $this->extractBasicFields($log, $serializeFields);
             $fields += $this->extractPrimaryKeyFields($log, $primaryKeyExtractionStrategy);
@@ -208,5 +214,29 @@ class TablePersister implements PersisterInterface
                 $this->log($this->toErrorLog($persisterEntity));
             }
         }
+    }
+
+    /**
+     * Checks if the table has JSON column types for the serializable fields.
+     *
+     * When native JSON columns are used, CakePHP's type system handles
+     * encoding/decoding automatically, so we should not serialize manually.
+     *
+     * @param \Cake\ORM\Table $table The table to check
+     *
+     * @return bool True if any of the serializable columns are JSON type
+     */
+    protected function hasJsonColumns(Table $table): bool
+    {
+        $schema = $table->getSchema();
+        $jsonColumns = ['original', 'changed', 'meta'];
+
+        foreach ($jsonColumns as $column) {
+            if ($schema->getColumnType($column) === 'json') {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
