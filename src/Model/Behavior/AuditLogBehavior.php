@@ -352,6 +352,11 @@ class AuditLogBehavior extends Behavior
 
         $this->redactArray($original);
 
+        // Log cascade-deleted dependent records first (children are deleted before parent)
+        if ($this->getConfig('cascadeDeletes') && !empty($options['_cascadeDeleteRecords'])) {
+            $this->logCascadeDeletes($transaction, $options);
+        }
+
         $auditEvent = new AuditDeleteEvent(
             $transaction,
             $primary,
@@ -361,11 +366,6 @@ class AuditLogBehavior extends Behavior
             $displayValue,
         );
         $options['_auditQueue']->offsetSet($entity, $auditEvent);
-
-        // Log cascade-deleted dependent records
-        if ($this->getConfig('cascadeDeletes') && !empty($options['_cascadeDeleteRecords'])) {
-            $this->logCascadeDeletes($transaction, $options);
-        }
 
         if (Configure::read('AuditStash.saveType') === 'afterSave') {
             $this->afterCommit(new Event(''), $entity, $options);
@@ -390,9 +390,9 @@ class AuditLogBehavior extends Behavior
             $dependentEntity = $record['entity'];
             /** @var string $source */
             $source = $record['source'];
-            /** @var string|array<string> $displayField */
+            /** @var array<string>|string $displayField */
             $displayField = $record['displayField'];
-            /** @var string|array<string> $primaryKey */
+            /** @var array<string>|string $primaryKey */
             $primaryKey = $record['primaryKey'];
 
             $primary = $dependentEntity->extract((array)$primaryKey);
