@@ -36,6 +36,7 @@ trait ExtractionTrait
             'created' => new DateTime($event->getTimestamp()),
         ];
 
+        /** @var class-string<\Cake\Database\TypeInterface>|null $dateTimeTypeClass */
         $dateTimeTypeClass = version_compare(Configure::version(), '5.3', '>=')
             ? TypeFactory::getMapped('datetime') // @phpstan-ignore staticMethod.notFound
             : TypeFactory::getMap('datetime');
