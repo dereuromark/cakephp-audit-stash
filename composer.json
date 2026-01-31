@@ -13,7 +13,7 @@
         "cakephp/cakephp": "^5.1.6",
         "phpunit/phpunit": "^11.5.42 || ^12.4.0",
         "php-collective/code-sniffer": "dev-master as 0.4.6",
-        "cakephp/migrations": "^4.0.0",
+        "cakephp/migrations": "^5.0.0",
         "cakephp/elastic-search": "^4.0.0 || ^5.0.0",
         "friendsofcake/crud": "^7.0.0"
     },
