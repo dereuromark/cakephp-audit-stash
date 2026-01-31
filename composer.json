@@ -5,12 +5,12 @@
     "license": "MIT",
     "require": {
         "php": ">=8.2",
-        "cakephp/orm": "^5.0.0",
+        "cakephp/orm": "^5.2.0",
         "ext-json": "*",
         "sebastian/diff": "^6.0 || ^7.0"
     },
     "require-dev": {
-        "cakephp/cakephp": "^5.1.6",
+        "cakephp/cakephp": "^5.2.0",
         "phpunit/phpunit": "^11.5.42 || ^12.4.0",
         "php-collective/code-sniffer": "dev-master as 0.4.6",
         "cakephp/migrations": "^5.0.0",

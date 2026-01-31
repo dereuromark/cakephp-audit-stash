@@ -26,7 +26,6 @@ use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\FactoryLocator;
-use Cake\ElasticSearch\IndexRegistry;
 use Cake\ElasticSearch\TestSuite\Fixture\MappingGenerator;
 use Cake\Routing\Router;
 use Cake\TestSuite\Fixture\SchemaLoader;
@@ -62,9 +61,16 @@ if (env('elastic_dsn') && env('FIXTURE_MAPPINGS_METADATA')) {
     $schema->reload();
     Router::reload();
 
-    $indexRegistry = new IndexRegistry();
-    FactoryLocator::add('Elastic', $indexRegistry);
-    FactoryLocator::add('ElasticSearch', $indexRegistry);
+    // @phpcs:ignore
+    if (class_exists(\Cake\ElasticSearch\Datasource\IndexLocator::class)) {
+        // @phpcs:ignore
+        $locator = new \Cake\ElasticSearch\Datasource\IndexLocator();
+    } else {
+        // @phpcs:ignore
+        $locator = new \Cake\ElasticSearch\IndexRegistry();
+    }
+    FactoryLocator::add('Elastic', $locator);
+    FactoryLocator::add('ElasticSearch', $locator);
 }
 
 if (!getenv('db_dsn')) {
