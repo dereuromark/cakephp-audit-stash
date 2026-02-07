@@ -67,7 +67,6 @@ class EventFactory
 
         $reflection = new ReflectionObject($event);
         $timestamp = $reflection->getProperty('timestamp');
-        $timestamp->setAccessible(true);
         $timestamp->setValue($event, $data['@timestamp']);
         $event->setMetaInfo($data['meta']);
 
