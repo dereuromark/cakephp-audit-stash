@@ -9,7 +9,6 @@
     <coverage/>
     <php>
         <ini name="memory_limit" value="-1"/>
-        <ini name="apc.enable_cli" value="1"/>
         <env name="FIXTURE_SCHEMA_METADATA" value="tests/schema.php"/>
         <env name="FIXTURE_MAPPINGS_METADATA" value="tests/mappings.php"/>
     </php>
