@@ -7,7 +7,7 @@
         "php": ">=8.2",
         "cakephp/orm": "^5.2.0",
         "ext-json": "*",
-        "sebastian/diff": "^6.0 || ^7.0"
+        "sebastian/diff": "^6.0 || ^7.0 || ^8.0"
     },
     "require-dev": {
         "cakephp/cakephp": "^5.2.0",
