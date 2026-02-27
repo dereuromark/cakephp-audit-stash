@@ -299,7 +299,9 @@ class AuditLogBehavior extends Behavior
             return;
         }
 
-        $events = collection($options['_auditQueue'])
+        /** @var \SplObjectStorage<\Cake\Datasource\EntityInterface, \AuditStash\Event\BaseEvent> $queue */
+        $queue = $options['_auditQueue'];
+        $events = collection($queue)
             ->map(fn ($entity, $pos, $it): mixed => $it->getInfo())
             ->toList();
 
