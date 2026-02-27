@@ -103,19 +103,18 @@ jobs:
         run: composer cs-check
 
   elastic_integration_test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         version: ['~5.3.0']
 
     services:
       elasticsearch:
-        image: elasticsearch:8.17.0
+        image: elasticsearch:7.17.6
         ports:
           - 9200/tcp
         env:
           discovery.type: single-node
-          xpack.security.enabled: false
           ES_JAVA_OPTS: -Xms500m -Xmx500m
         options: >-
           --health-cmd "curl http://127.0.0.1:9200/_cluster/health"
@@ -151,6 +150,5 @@ jobs:
           composer self-update
           rm -rf composer.lock
           composer require cakephp/cakephp:${{matrix.version}} --no-update
-          composer require elasticsearch/elasticsearch:^8.0 --no-update
           composer install --prefer-dist --no-progress
           vendor/bin/phpunit tests/TestCase/Persister/ElasticSearchPersisterIntegrationTest.php
