@@ -110,11 +110,12 @@ jobs:
 
     services:
       elasticsearch:
-        image: elasticsearch:7.17.6
+        image: elasticsearch:8.17.0
         ports:
           - 9200/tcp
         env:
           discovery.type: single-node
+          xpack.security.enabled: false
           ES_JAVA_OPTS: -Xms500m -Xmx500m
         options: >-
           --health-cmd "curl http://127.0.0.1:9200/_cluster/health"
