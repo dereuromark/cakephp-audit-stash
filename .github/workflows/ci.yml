@@ -151,5 +151,6 @@ jobs:
           composer self-update
           rm -rf composer.lock
           composer require cakephp/cakephp:${{matrix.version}} --no-update
+          composer require elasticsearch/elasticsearch:^8.0 --no-update
           composer install --prefer-dist --no-progress
           vendor/bin/phpunit tests/TestCase/Persister/ElasticSearchPersisterIntegrationTest.php
