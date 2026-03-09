@@ -15,7 +15,7 @@ use Migrations\BaseMigration;
  * For databases that don't support JSON (older MySQL, SQLite), this migration
  * will be a no-op as the text type will be preserved.
  *
- * @see https://github.com/lorenzo/audit-stash/issues/39
+ * @see https://github.com/dereuromark/cakephp-audit-stash/issues/39
  */
 class UseJsonColumnTypes extends BaseMigration
 {
