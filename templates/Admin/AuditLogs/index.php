@@ -96,9 +96,11 @@ $this->loadHelper('AuditStash.Audit');
                 <div class="collapse<?= $hasAdvancedFilters ? ' show' : '' ?>" id="advancedFilters">
                     <div class="row g-3 mt-2">
                         <div class="col-md-3">
+                            <label class="form-label"><?= __('Changed Field') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __('Find records where this field was modified') ?></small>
                             <?= $this->Form->control('changed_field', [
                                 'type' => 'text',
-                                'label' => 'Changed Field',
+                                'label' => false,
                                 'placeholder' => 'Field name',
                                 'class' => 'form-control',
                                 'list' => 'changed-fields-list',
@@ -108,11 +110,10 @@ $this->loadHelper('AuditStash.Audit');
                                     <option value="<?= h($field) ?>">
                                 <?php } ?>
                             </datalist>
-                            <small class="text-muted"><?= __('Find records where this field was modified') ?></small>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label"><?= __('Value Search') ?></label>
-                            <small class="text-muted d-block mb-1"><?= __('Find records where a field changed to a specific value (both required)') ?></small>
+                            <small class="text-muted d-block mb-1"><?= __('Find where field changed to specific value (both required)') ?></small>
                             <div class="row g-2">
                                 <div class="col-6">
                                     <?= $this->Form->control('field_name', [
