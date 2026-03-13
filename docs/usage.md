@@ -56,6 +56,46 @@ public function initialize(array $config = []): void
 }
 ```
 
+### Filtering Insignificant Changes
+
+The behavior can be configured to ignore changes that aren't meaningful for your audit trail. This helps reduce noise and storage:
+
+```php
+public function initialize(array $config = []): void
+{
+    $this->addBehavior('AuditStash.AuditLog', [
+        // Skip logging if only timestamp fields changed (created, modified, updated_at, etc.)
+        'ignoreTimestampOnly' => true,
+
+        // Skip logging if only these specific fields changed
+        'ignoreFields' => ['last_login', 'view_count'],
+
+        // Ignore whitespace-only changes (e.g., "hello " vs "hello")
+        'ignoreWhitespace' => true,
+
+        // Ignore case-only changes (e.g., "Hello" vs "hello")
+        'ignoreCase' => true,
+    ]);
+}
+```
+
+Available options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ignoreEmpty` | `true` | Skip logging if no meaningful changes after filtering |
+| `ignoreTimestampOnly` | `false` | Skip logging if only timestamp fields changed (`created`, `modified`, `updated`, `updated_at`, `created_at`, `modified_at`) |
+| `ignoreFields` | `[]` | Skip logging if only these fields changed |
+| `ignoreWhitespace` | `false` | Ignore whitespace-only differences in string values |
+| `ignoreCase` | `false` | Ignore case-only differences in string values |
+
+**Example use cases:**
+
+- Enable `ignoreTimestampOnly` when your ORM auto-updates `modified` on every save
+- Use `ignoreFields` for counters or cache fields that change frequently but aren't audit-worthy
+- Enable `ignoreWhitespace` when form submissions may normalize whitespace differently
+- Enable `ignoreCase` when case normalization happens but doesn't represent a real change
+
 ### Logging BelongsToMany (Junction Table) Changes
 
 When working with many-to-many relationships (BelongsToMany), changes happen in the junction table (e.g., `articles_tags`).
