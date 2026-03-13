@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Database;
 
+use Cake\Database\Expression\ComparisonExpression;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
@@ -138,11 +139,21 @@ class JsonQueryHelper
      */
     public static function jsonEquals(SelectQuery $query, string $column, string $key, mixed $value): QueryExpression
     {
+        $driver = self::getDriverName($query);
         $expr = $query->expr();
 
         $extractExpr = self::jsonExtract($query, $column, $key);
 
-        // Compare extracted value to the given value (cast to string for comparison)
+        // For SQLite, json_extract returns native types (int for numbers)
+        // We need to match the type for proper comparison
+        if ($driver === 'Sqlite') {
+            // Determine the binding type based on value type
+            $type = is_int($value) ? 'integer' : 'string';
+
+            return $expr->add(new ComparisonExpression($extractExpr, $value, $type, '='));
+        }
+
+        // For MySQL/PostgreSQL, compare as strings
         return $expr->eq($extractExpr, (string)$value, 'string');
     }
 
