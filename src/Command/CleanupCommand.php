@@ -10,6 +10,7 @@ use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 use Cake\I18n\DateTime;
+use InvalidArgumentException;
 
 /**
  * Cleanup old audit logs command.
@@ -27,9 +28,9 @@ use Cake\I18n\DateTime;
  *       'retention' => [
  *           'default' => 90,
  *           'tables' => [
- *               'users' => 365,
- *               'orders' => 730,
- *               'compliance_logs' => false, // Never delete
+ *               'Users' => 365,
+ *               'Orders' => 730,
+ *               'ComplianceLogs' => false, // Never delete
  *           ],
  *       ],
  *   ]
@@ -57,6 +58,8 @@ class CleanupCommand extends Command
      */
     public function buildOptionParser(ConsoleOptionParser $parser): ConsoleOptionParser
     {
+        parent::buildOptionParser($parser);
+
         $parser
             ->setDescription('Cleanup old audit logs based on configured retention periods.')
             ->addOption('retention', [
@@ -87,10 +90,11 @@ class CleanupCommand extends Command
      */
     public function execute(Arguments $args, ConsoleIo $io): int
     {
-        // Check persister type
+        // Check persister type - only TablePersister is supported
         $persister = Configure::read('AuditStash.persister', 'AuditStash\Persister\TablePersister');
-        if (str_contains($persister, 'ElasticSearch')) {
-            $io->error('This command only works with TablePersister');
+        if (!str_contains($persister, 'TablePersister')) {
+            $io->error('This command only works with TablePersister.');
+            $io->error('For Elasticsearch, use Index Lifecycle Management (ILM) policies instead.');
 
             return self::CODE_ERROR;
         }
@@ -187,6 +191,8 @@ class CleanupCommand extends Command
      * @param \Cake\Console\Arguments $args Command arguments
      * @param string|null $table Table name for table-specific retention
      *
+     * @throws \InvalidArgumentException If retention option is not a valid non-negative integer
+     *
      * @return int|null Retention period in days, or null if disabled
      */
     protected function getRetentionDays(Arguments $args, ?string $table): ?int
@@ -194,17 +200,26 @@ class CleanupCommand extends Command
         // Command line option takes precedence
         $retention = $args->getOption('retention');
         if ($retention !== null && $retention !== false) {
+            if (!is_numeric($retention) || (int)$retention < 0) {
+                throw new InvalidArgumentException(
+                    'Retention period must be a non-negative integer.',
+                );
+            }
+
             return (int)$retention;
         }
 
         // Check for table-specific retention in config
+        // Read entire tables array to handle dotted table names (e.g., 'MyPlugin.Users')
         if ($table) {
-            $tableRetention = Configure::read('AuditStash.retention.tables.' . $table);
-            // false means retention is disabled for this table
-            if ($tableRetention === false) {
-                return null;
-            }
-            if ($tableRetention !== null) {
+            $tables = Configure::read('AuditStash.retention.tables') ?? [];
+            if (array_key_exists($table, $tables)) {
+                $tableRetention = $tables[$table];
+                // false means retention is disabled for this table
+                if ($tableRetention === false) {
+                    return null;
+                }
+
                 return (int)$tableRetention;
             }
         }

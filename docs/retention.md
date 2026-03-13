@@ -12,10 +12,10 @@ Configure retention policies in your `config/app.php` or `config/app_local.php`:
     'retention' => [
         'default' => 90, // Keep logs for 90 days by default
         'tables' => [
-            'users' => 365,           // Keep user logs for 1 year
-            'orders' => 2555,         // Keep order logs for 7 years
-            'sessions' => 30,         // Keep session logs for 30 days
-            'compliance_logs' => false, // Never delete (keep forever)
+            'Users' => 365,           // Keep user logs for 1 year
+            'Orders' => 2555,         // Keep order logs for 7 years
+            'Sessions' => 30,         // Keep session logs for 30 days
+            'ComplianceLogs' => false, // Never delete (keep forever)
         ],
     ],
 ],
@@ -28,6 +28,20 @@ Configure retention policies in your `config/app.php` or `config/app_local.php`:
 - If no `default` is configured, falls back to 90 days
 - Set a table's retention to `false` to disable cleanup entirely (keep logs forever)
 
+### Table Key Naming
+
+Table keys in the `tables` array must match the `source` column in your audit logs exactly (case-sensitive). By default, CakePHP uses CamelCase table names:
+
+```php
+'tables' => [
+    'Users' => 365,               // Match CamelCase table name
+    'OrderItems' => 730,          // Not 'order_items' or 'orderitems'
+    'MyPlugin.Users' => 365,      // Plugin-prefixed tables also supported
+],
+```
+
+Check your actual `source` values in the `audit_logs` table to ensure the keys match.
+
 ### Disabling Retention for Specific Tables
 
 For compliance or legal requirements, you may need to keep certain logs forever. Set the table's retention to `false`:
@@ -37,8 +51,8 @@ For compliance or legal requirements, you may need to keep certain logs forever.
     'retention' => [
         'default' => 90,
         'tables' => [
-            'financial_transactions' => false, // Never delete
-            'user_consent_logs' => false,      // Never delete
+            'FinancialTransactions' => false, // Never delete
+            'UserConsentLogs' => false,       // Never delete
         ],
     ],
 ],
@@ -47,8 +61,8 @@ For compliance or legal requirements, you may need to keep certain logs forever.
 When running cleanup for a table with disabled retention:
 
 ```bash
-bin/cake audit_stash cleanup --table financial_transactions --force
-# Output: Retention is disabled for table "financial_transactions". No logs will be deleted.
+bin/cake audit_stash cleanup --table FinancialTransactions --force
+# Output: Retention is disabled for table "FinancialTransactions". No logs will be deleted.
 ```
 
 ### Alternative: Selective Cleanup via Script
@@ -58,9 +72,9 @@ If you prefer not to use config-based retention, you can selectively cleanup spe
 ```bash
 #!/bin/bash
 # cleanup-audit-logs.sh
-bin/cake audit_stash cleanup --table sessions --force
-bin/cake audit_stash cleanup --table api_requests --force
-# orders and users are intentionally not cleaned
+bin/cake audit_stash cleanup --table Sessions --force
+bin/cake audit_stash cleanup --table ApiRequests --force
+# Orders and Users are intentionally not cleaned
 ```
 
 **Warning**: Setting a table's retention to `0` will delete **all** logs for that table immediately - this is probably not what you want! Use `false` instead to keep logs forever.
@@ -77,7 +91,7 @@ bin/cake audit_stash cleanup
 bin/cake audit_stash cleanup --dry-run
 
 # Clean up logs for specific table only
-bin/cake audit_stash cleanup --table users
+bin/cake audit_stash cleanup --table Users
 
 # Skip confirmation prompt
 bin/cake audit_stash cleanup --force
