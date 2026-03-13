@@ -32,8 +32,9 @@ class JsonQueryHelper
         $expr = $query->expr();
 
         if ($driver === 'Mysql') {
-            // MySQL: JSON_CONTAINS_PATH(column, 'one', '$.key')
-            return $expr->add(
+            // MySQL: JSON_CONTAINS_PATH(column, 'one', '$.key') = 1
+            // Must compare to 1 explicitly because NULL columns return NULL, not 0
+            return $expr->eq(
                 new FunctionExpression(
                     'JSON_CONTAINS_PATH',
                     [
@@ -42,6 +43,8 @@ class JsonQueryHelper
                         '$.' . $key,
                     ],
                 ),
+                1,
+                'integer',
             );
         }
 
