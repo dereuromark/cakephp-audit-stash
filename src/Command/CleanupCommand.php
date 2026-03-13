@@ -71,6 +71,7 @@ class CleanupCommand extends Command
                 'help' => 'Only cleanup logs for a specific table/source (optional)',
             ])
             ->addOption('dry-run', [
+                'short' => 'd',
                 'boolean' => true,
                 'help' => 'Show what would be deleted without actually deleting',
                 'default' => false,
@@ -210,7 +211,7 @@ class CleanupCommand extends Command
             // Validate it's a non-negative integer (not float, not scientific notation)
             if (!preg_match('/^\d+$/', (string)$retention)) {
                 throw new InvalidArgumentException(
-                    'Retention period must be a non-negative integer.',
+                    'Retention period must be a non-negative integer',
                 );
             }
 
