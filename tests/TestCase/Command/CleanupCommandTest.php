@@ -256,6 +256,53 @@ class CleanupCommandTest extends TestCase
     }
 
     /**
+     * Test global cleanup warns when per-table retention is configured
+     *
+     * @return void
+     */
+    public function testGlobalCleanupWarnsAboutPerTableRetention(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create old logs for different tables
+        $oldLog1 = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'Users',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-100 days'),
+        ]);
+        $auditLogsTable->save($oldLog1);
+
+        $oldLog2 = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-2',
+            'type' => 'update',
+            'source' => 'Orders',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-100 days'),
+        ]);
+        $auditLogsTable->save($oldLog2);
+
+        Configure::write('AuditStash.retention', [
+            'default' => 30,
+            'tables' => [
+                'Users' => 365, // Would keep Users logs
+                'Orders' => 60, // Would delete Orders logs
+            ],
+        ]);
+
+        // Global cleanup uses default retention and warns about per-table settings
+        $this->exec('audit_stash cleanup --force');
+
+        $this->assertExitSuccess();
+        $this->assertOutputContains('Retention policy: 30 days');
+        $this->assertErrorContains('Per-table retention settings exist');
+        $this->assertErrorContains('will be ignored without --table flag');
+        // Both logs should be deleted using default 30 day retention
+        $this->assertOutputContains('Successfully deleted 2 audit log(s)');
+    }
+
+    /**
      * Test execute with disabled retention for specific table
      *
      * @return void

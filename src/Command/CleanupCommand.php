@@ -90,9 +90,9 @@ class CleanupCommand extends Command
      */
     public function execute(Arguments $args, ConsoleIo $io): int
     {
-        // Check persister type - only TablePersister is supported
+        // Check persister type - only TablePersister (or subclasses) are supported
         $persister = Configure::read('AuditStash.persister', 'AuditStash\Persister\TablePersister');
-        if (!str_contains($persister, 'TablePersister')) {
+        if (!is_a($persister, 'AuditStash\Persister\TablePersister', true)) {
             $io->error('This command only works with TablePersister.');
             $io->error('For Elasticsearch, use Index Lifecycle Management (ILM) policies instead.');
 
@@ -124,6 +124,13 @@ class CleanupCommand extends Command
 
         if ($table) {
             $io->out(sprintf('Filtering by table: %s', $table));
+        } else {
+            // Warn if per-table retention is configured but not using --table
+            $tables = Configure::read('AuditStash.retention.tables');
+            if (is_array($tables) && $tables) {
+                $io->warning('Per-table retention settings exist but will be ignored without --table flag.');
+                $io->warning('Run with --table for each table to apply table-specific retention.');
+            }
         }
 
         if ($dryRun) {
@@ -213,22 +220,34 @@ class CleanupCommand extends Command
         // Check for table-specific retention in config
         // Read entire tables array to handle dotted table names (e.g., 'MyPlugin.Users')
         if ($table) {
-            $tables = Configure::read('AuditStash.retention.tables') ?? [];
-            if (array_key_exists($table, $tables)) {
+            $tables = Configure::read('AuditStash.retention.tables');
+            if (is_array($tables) && array_key_exists($table, $tables)) {
                 $tableRetention = $tables[$table];
                 // false means retention is disabled for this table
                 if ($tableRetention === false) {
                     return null;
                 }
+                // Validate configured value is a positive integer
+                if (!is_int($tableRetention) || $tableRetention < 0) {
+                    throw new InvalidArgumentException(
+                        sprintf('Retention for table "%s" must be a non-negative integer or false', $table),
+                    );
+                }
 
-                return (int)$tableRetention;
+                return $tableRetention;
             }
         }
 
         // Fall back to default retention from config
         $defaultRetention = Configure::read('AuditStash.retention.default');
         if ($defaultRetention !== null) {
-            return (int)$defaultRetention;
+            if (!is_int($defaultRetention) || $defaultRetention < 0) {
+                throw new InvalidArgumentException(
+                    'Default retention must be a non-negative integer',
+                );
+            }
+
+            return $defaultRetention;
         }
 
         // Ultimate fallback
