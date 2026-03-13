@@ -255,6 +255,43 @@ class CleanupCommandTest extends TestCase
     }
 
     /**
+     * Test execute with disabled retention for specific table
+     *
+     * @return void
+     */
+    public function testExecuteWithDisabledRetention(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create old log for a table with disabled retention
+        $oldLog = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'compliance_logs',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-1000 days'),
+        ]);
+        $auditLogsTable->save($oldLog);
+
+        Configure::write('AuditStash.retention', [
+            'default' => 30,
+            'tables' => [
+                'compliance_logs' => false, // Never delete
+            ],
+        ]);
+
+        $this->exec('audit_stash cleanup --force --table compliance_logs');
+
+        $this->assertExitSuccess();
+        $this->assertOutputContains('Retention is disabled for table "compliance_logs"');
+        $this->assertOutputContains('No logs will be deleted');
+
+        // Verify log was NOT deleted
+        $count = $auditLogsTable->find()->count();
+        $this->assertSame(1, $count);
+    }
+
+    /**
      * Test that command fails with ElasticSearchPersister
      *
      * @return void

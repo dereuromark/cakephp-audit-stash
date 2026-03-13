@@ -29,6 +29,7 @@ use Cake\I18n\DateTime;
  *           'tables' => [
  *               'users' => 365,
  *               'orders' => 730,
+ *               'compliance_logs' => false, // Never delete
  *           ],
  *       ],
  *   ]
@@ -102,6 +103,13 @@ class CleanupCommand extends Command
         // Get retention period
         $retention = $this->getRetentionDays($args, $table);
 
+        // Check if retention is disabled for this table
+        if ($retention === null) {
+            $io->success(sprintf('Retention is disabled for table "%s". No logs will be deleted.', $table));
+
+            return self::CODE_SUCCESS;
+        }
+
         if (!$dryRun && !$force) {
             $io->error('You must specify --force to actually delete records, or use --dry-run to preview.');
 
@@ -174,22 +182,28 @@ class CleanupCommand extends Command
     /**
      * Get retention period in days from config or command option
      *
+     * Returns null if retention is disabled for the table (configured as false).
+     *
      * @param \Cake\Console\Arguments $args Command arguments
      * @param string|null $table Table name for table-specific retention
      *
-     * @return int Retention period in days
+     * @return int|null Retention period in days, or null if disabled
      */
-    protected function getRetentionDays(Arguments $args, ?string $table): int
+    protected function getRetentionDays(Arguments $args, ?string $table): ?int
     {
         // Command line option takes precedence
         $retention = $args->getOption('retention');
-        if ($retention !== null) {
+        if ($retention !== null && $retention !== false) {
             return (int)$retention;
         }
 
         // Check for table-specific retention in config
         if ($table) {
             $tableRetention = Configure::read('AuditStash.retention.tables.' . $table);
+            // false means retention is disabled for this table
+            if ($tableRetention === false) {
+                return null;
+            }
             if ($tableRetention !== null) {
                 return (int)$tableRetention;
             }
