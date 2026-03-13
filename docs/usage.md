@@ -278,6 +278,92 @@ public function beforeFilter(EventInterface $event)
 }
 ```
 
+## Tracking Request Source (Web, CLI, API)
+
+The `EnvironmentMetadata` listener automatically detects and records where changes originated from. This is useful for distinguishing between changes made via the web interface, CLI commands, API requests, or background jobs.
+
+### Basic Usage
+
+```php
+use AuditStash\Meta\EnvironmentMetadata;
+use Cake\Event\EventManager;
+
+// Auto-detect source (cli, web, or api)
+EventManager::instance()->on(new EnvironmentMetadata());
+```
+
+This adds a `request_source` field to the audit log metadata with one of:
+- `cli` - Command line (bin/cake commands)
+- `web` - Standard web request
+- `api` - API request (detected via Accept/Content-Type headers or `/api/` URL prefix)
+
+### Explicit Source Override
+
+For queue workers or other contexts where auto-detection won't work:
+
+```php
+// In your queue worker
+EventManager::instance()->on(new EnvironmentMetadata('queue'));
+```
+
+### With Extra Metadata
+
+```php
+EventManager::instance()->on(new EnvironmentMetadata(null, [
+    'deployment' => 'production',
+    'server' => gethostname(),
+    'version' => '1.2.3',
+]));
+```
+
+### API Detection with Request Object
+
+For more accurate API detection, pass the request object:
+
+```php
+// In AppController::beforeFilter()
+EventManager::instance()->on(new EnvironmentMetadata(
+    source: null, // auto-detect
+    extraData: [],
+    request: $this->getRequest(),
+));
+```
+
+API requests are detected by:
+- `Accept` header containing `application/json` or `application/xml`
+- `Content-Type` header containing `application/json` or `application/xml`
+- URL path starting with `/api/`
+- `Authorization` header with `Bearer` or `Basic` prefix
+
+### Combining with RequestMetadata
+
+You can use both listeners together:
+
+```php
+use AuditStash\Meta\EnvironmentMetadata;
+use AuditStash\Meta\RequestMetadata;
+use Cake\Event\EventManager;
+
+public function beforeFilter(EventInterface $event)
+{
+    parent::beforeFilter($event);
+
+    $identity = $this->getRequest()->getAttribute('identity');
+
+    // Track user and request info
+    EventManager::instance()->on(new RequestMetadata(
+        request: $this->getRequest(),
+        userId: $identity?->getIdentifier(),
+        userDisplay: $identity?->get('username'),
+    ));
+
+    // Track request source
+    EventManager::instance()->on(new EnvironmentMetadata(
+        request: $this->getRequest(),
+    ));
+}
+```
+
 ## Storing Extra Information In Logs
 
 `AuditStash` is also capable of storing arbitrary data for each of the logged events. You can use the `ApplicationMetadata` listener or
