@@ -20,33 +20,6 @@ Configure retention policies in your `config/app.php` or `config/app_local.php`:
 ],
 ```
 
-### How Retention Works
-
-- Tables listed in `tables` use their specific retention period
-- Tables **not** listed inherit the `default` retention period
-- If no `default` is configured, falls back to 90 days
-
-### Keeping Logs Forever (No Cleanup)
-
-To prevent cleanup for specific tables, run the cleanup command with `--table` to target only specific tables:
-
-```bash
-# Only cleanup session logs, leave everything else
-bin/cake audit_stash cleanup --table sessions --force
-```
-
-Or create a script that runs cleanup for each table you want cleaned:
-
-```bash
-#!/bin/bash
-# cleanup-audit-logs.sh
-bin/cake audit_stash cleanup --table sessions --force
-bin/cake audit_stash cleanup --table api_requests --force
-# orders and users are intentionally not cleaned
-```
-
-**Warning**: Setting a table's retention to `0` will delete **all** logs for that table immediately - this is probably not what you want!
-
 ## Running Cleanup
 
 The cleanup command provides several options:
