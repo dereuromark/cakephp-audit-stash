@@ -16,6 +16,20 @@ $routes->plugin(
 
         $builder->prefix('Admin', function (RouteBuilder $builder): void {
             $builder->connect('/', ['controller' => 'AuditLogs', 'action' => 'index']);
+
+            // Related changes route
+            $builder->connect(
+                '/audit-logs/related-changes/{source}/{primary_key}',
+                ['controller' => 'AuditLogs', 'action' => 'relatedChanges'],
+                ['pass' => ['source', 'primary_key']],
+            );
+
+            // Bulk changes route
+            $builder->connect(
+                '/audit-logs/bulk-changes',
+                ['controller' => 'AuditLogs', 'action' => 'bulkChanges'],
+            );
+
             $builder->fallbacks();
         });
 

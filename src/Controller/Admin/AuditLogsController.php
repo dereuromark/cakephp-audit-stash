@@ -80,6 +80,31 @@ class AuditLogsController extends AppController
             $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to')]);
         }
 
+        // Filter by changed field (field-level tracking)
+        $changedField = $this->request->getQuery('changed_field');
+        if ($changedField) {
+            $query = $this->AuditLogs->find('byChangedField', field: $changedField);
+            // Re-apply other filters after using finder
+            $this->applyBaseFilters($query);
+        }
+
+        // Filter by field name + value (value-based search)
+        $fieldName = $this->request->getQuery('field_name');
+        $fieldValue = $this->request->getQuery('field_value');
+        if ($fieldName && $fieldValue !== null && $fieldValue !== '') {
+            $query = $this->AuditLogs->find('byChangedFieldValue', field: $fieldName, value: $fieldValue);
+            // Re-apply other filters after using finder
+            $this->applyBaseFilters($query);
+        }
+
+        // Filter by bulk changes only
+        if ($this->request->getQuery('bulk_only')) {
+            $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
+            $query = $this->AuditLogs->find('bulkChanges', minRecords: $minRecords);
+            // Re-apply other filters after using finder
+            $this->applyBaseFilters($query);
+        }
+
         $query->orderBy(['AuditLogs.created' => 'DESC']);
 
         $auditLogs = $this->paginate($query);
@@ -93,7 +118,45 @@ class AuditLogsController extends AppController
 
         $eventTypes = ['create', 'update', 'delete'];
 
-        $this->set(compact('auditLogs', 'sources', 'eventTypes'));
+        // Get distinct changed fields for autocomplete
+        $changedFields = $this->AuditLogs->getDistinctChangedFields();
+        sort($changedFields);
+
+        $this->set(compact('auditLogs', 'sources', 'eventTypes', 'changedFields'));
+    }
+
+    /**
+     * Apply base filters to a query
+     *
+     * Used when a finder resets the query and we need to re-apply standard filters.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query to modify
+     *
+     * @return void
+     */
+    protected function applyBaseFilters($query): void
+    {
+        if ($this->request->getQuery('source')) {
+            $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
+        }
+        if ($this->request->getQuery('user_id')) {
+            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
+        }
+        if ($this->request->getQuery('type')) {
+            $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
+        }
+        if ($this->request->getQuery('transaction')) {
+            $query->where(['AuditLogs.transaction' => $this->request->getQuery('transaction')]);
+        }
+        if ($this->request->getQuery('primary_key')) {
+            $query->where(['AuditLogs.primary_key' => $this->request->getQuery('primary_key')]);
+        }
+        if ($this->request->getQuery('date_from')) {
+            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from')]);
+        }
+        if ($this->request->getQuery('date_to')) {
+            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to')]);
+        }
     }
 
     /**
@@ -267,6 +330,60 @@ class AuditLogsController extends AppController
             ->first();
 
         $this->set(compact('source', 'primaryKey', 'deleteLog'));
+    }
+
+    /**
+     * Related changes method - Show all changes for a record and its associations
+     *
+     * @param string|null $source Table/source name
+     * @param string|null $primaryKey Primary key value
+     *
+     * @return \Cake\Http\Response|null|void Renders view
+     */
+    public function relatedChanges(?string $source = null, ?string $primaryKey = null)
+    {
+        if ($source === null || $primaryKey === null) {
+            $this->Flash->error('Source and primary key are required.');
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $auditLogs = $this->AuditLogs->find('relatedChanges', source: $source, primaryKey: $primaryKey)
+            ->orderBy(['AuditLogs.created' => 'DESC'])
+            ->toArray();
+
+        // Group by transaction
+        $transactions = [];
+        foreach ($auditLogs as $log) {
+            $transactionId = $log->transaction;
+            if (!isset($transactions[$transactionId])) {
+                $transactions[$transactionId] = [
+                    'transaction' => $transactionId,
+                    'created' => $log->created,
+                    'user_id' => $log->user_id,
+                    'user_display' => $log->user_display,
+                    'logs' => [],
+                ];
+            }
+            $transactions[$transactionId]['logs'][] = $log;
+        }
+
+        $this->set(compact('source', 'primaryKey', 'transactions'));
+    }
+
+    /**
+     * Bulk changes method - Show transactions with many record changes
+     *
+     * @return \Cake\Http\Response|null|void Renders view
+     */
+    public function bulkChanges()
+    {
+        $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
+
+        $bulkStats = $this->AuditLogs->find('bulkChangeStats', minRecords: $minRecords)
+            ->toArray();
+
+        $this->set(compact('bulkStats', 'minRecords'));
     }
 
     /**
