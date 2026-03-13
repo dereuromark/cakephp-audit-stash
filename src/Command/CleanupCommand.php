@@ -94,7 +94,8 @@ class CleanupCommand extends Command
             return self::CODE_ERROR;
         }
 
-        $table = $args->getOption('table');
+        $tableOption = $args->getOption('table');
+        $table = is_string($tableOption) ? $tableOption : null;
         $dryRun = (bool)$args->getOption('dry-run');
         $force = (bool)$args->getOption('force');
 
@@ -156,7 +157,7 @@ class CleanupCommand extends Command
             $io->out('');
             $io->out('Summary by table:');
             foreach ($summary as $row) {
-                $io->out(sprintf('  %s: %d record(s)', $row->source, $row->count));
+                $io->out(sprintf('  %s: %d record(s)', $row['source'], $row['count']));
             }
 
             return self::CODE_SUCCESS;
