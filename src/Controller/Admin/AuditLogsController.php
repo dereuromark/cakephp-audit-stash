@@ -97,10 +97,16 @@ class AuditLogsController extends AppController
             $this->applyBaseFilters($query);
         }
 
-        // Filter by bulk changes only
-        if ($this->request->getQuery('bulk_only')) {
+        // Filter by bulk/non-bulk changes
+        $bulkFilter = $this->request->getQuery('bulk_filter');
+        if ($bulkFilter === 'yes') {
             $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
             $query = $this->AuditLogs->find('bulkChanges', minRecords: $minRecords);
+            // Re-apply other filters after using finder
+            $this->applyBaseFilters($query);
+        } elseif ($bulkFilter === 'no') {
+            $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
+            $query = $this->AuditLogs->find('nonBulkChanges', minRecords: $minRecords);
             // Re-apply other filters after using finder
             $this->applyBaseFilters($query);
         }

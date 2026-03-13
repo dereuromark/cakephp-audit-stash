@@ -249,6 +249,60 @@ class AuditLogsTableTest extends TestCase
     }
 
     /**
+     * Test findNonBulkChanges method
+     *
+     * @return void
+     */
+    public function testFindNonBulkChanges(): void
+    {
+        // Create a bulk transaction with many records
+        $bulkTxId = 'bulk-tx-non-123';
+        for ($i = 1; $i <= 10; $i++) {
+            $log = $this->getAuditLogsTable()->newEntity([
+                'transaction' => $bulkTxId,
+                'type' => 'create',
+                'source' => 'Articles',
+                'primary_key' => $i,
+                'changed' => ['title' => "Article $i"],
+                'created' => new DateTime(),
+            ]);
+            $this->getAuditLogsTable()->save($log);
+        }
+
+        // Create a small transaction with few records
+        $smallTxId = 'small-tx-non-456';
+        for ($i = 1; $i <= 2; $i++) {
+            $log = $this->getAuditLogsTable()->newEntity([
+                'transaction' => $smallTxId,
+                'type' => 'update',
+                'source' => 'Users',
+                'primary_key' => $i,
+                'changed' => ['name' => "User $i"],
+                'created' => new DateTime(),
+            ]);
+            $this->getAuditLogsTable()->save($log);
+        }
+
+        // Find non-bulk changes with default threshold (5) - should get small transaction
+        $results = $this->getAuditLogsTable()->find('nonBulkChanges')->toArray();
+
+        $this->assertCount(2, $results);
+        foreach ($results as $log) {
+            $this->assertEquals($smallTxId, $log->transaction);
+        }
+
+        // Find non-bulk changes with higher threshold (8) - should still get only small transaction
+        $results = $this->getAuditLogsTable()->find('nonBulkChanges', minRecords: 8)->toArray();
+
+        $this->assertCount(2, $results);
+
+        // Find non-bulk changes with threshold lower than small (2) - should get nothing
+        $results = $this->getAuditLogsTable()->find('nonBulkChanges', minRecords: 2)->toArray();
+
+        $this->assertCount(0, $results);
+    }
+
+    /**
      * Test findBulkChangeStats method
      *
      * @return void
