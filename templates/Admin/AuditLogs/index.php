@@ -12,10 +12,17 @@ $this->loadHelper('AuditStash.Audit');
 <div class="auditLogs index content">
     <h3><?= __('Audit Logs') ?></h3>
 
+    <?php
+    $hasAdvancedFilters = $this->request->getQuery('changed_field')
+        || $this->request->getQuery('field_name')
+        || $this->request->getQuery('field_value')
+        || $this->request->getQuery('bulk_only');
+    ?>
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
             <?= $this->Form->create(null, ['type' => 'get', 'valueSources' => ['query']]) ?>
+            <!-- Basic Filters -->
             <div class="row g-3">
                 <div class="col-md-3">
                     <?= $this->Form->control('source', [
@@ -42,10 +49,10 @@ $this->loadHelper('AuditStash.Audit');
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <?= $this->Form->control('transaction', [
+                    <?= $this->Form->control('primary_key', [
                         'type' => 'text',
-                        'label' => 'Transaction ID',
-                        'placeholder' => 'Transaction ID',
+                        'label' => 'Primary Key',
+                        'placeholder' => 'Record ID',
                         'class' => 'form-control',
                     ]) ?>
                 </div>
@@ -66,62 +73,80 @@ $this->loadHelper('AuditStash.Audit');
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <?= $this->Form->control('primary_key', [
+                    <?= $this->Form->control('transaction', [
                         'type' => 'text',
-                        'label' => 'Primary Key',
-                        'placeholder' => 'Record ID',
+                        'label' => 'Transaction ID',
+                        'placeholder' => 'Transaction ID',
                         'class' => 'form-control',
                     ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $this->Form->control('changed_field', [
-                        'type' => 'text',
-                        'label' => 'Changed Field',
-                        'placeholder' => 'Field name',
-                        'class' => 'form-control',
-                        'list' => 'changed-fields-list',
-                    ]) ?>
-                    <datalist id="changed-fields-list">
-                        <?php foreach ($changedFields as $field) { ?>
-                            <option value="<?= h($field) ?>">
-                        <?php } ?>
-                    </datalist>
-                </div>
-            </div>
-            <div class="row g-3 mt-2">
-                <div class="col-md-3">
-                    <?= $this->Form->control('field_name', [
-                        'type' => 'text',
-                        'label' => 'Field Name (Value Search)',
-                        'placeholder' => 'Field name',
-                        'class' => 'form-control',
-                        'list' => 'changed-fields-list',
-                    ]) ?>
-                </div>
-                <div class="col-md-3">
-                    <?= $this->Form->control('field_value', [
-                        'type' => 'text',
-                        'label' => 'Field Value',
-                        'placeholder' => 'Value to find',
-                        'class' => 'form-control',
-                    ]) ?>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <div class="form-check mb-3">
-                        <?= $this->Form->checkbox('bulk_only', [
-                            'class' => 'form-check-input',
-                            'id' => 'bulk-only',
-                        ]) ?>
-                        <label class="form-check-label" for="bulk-only">
-                            <?= __('Bulk Changes Only') ?>
-                        </label>
-                    </div>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <?= $this->Form->button(__('Filter'), ['class' => 'btn btn-primary me-2']) ?>
                     <?php if ($this->request->getQueryParams()) { ?>
                         <?= $this->Html->link(__('Clear'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
                     <?php } ?>
+                </div>
+            </div>
+
+            <!-- Advanced Filters (collapsible) -->
+            <div class="mt-3">
+                <a class="text-decoration-none" data-bs-toggle="collapse" href="#advancedFilters" role="button" aria-expanded="<?= $hasAdvancedFilters ? 'true' : 'false' ?>" aria-controls="advancedFilters">
+                    <small><?= __('Advanced Filters') ?> <span class="collapse-icon"><?= $hasAdvancedFilters ? '&#9660;' : '&#9654;' ?></span></small>
+                </a>
+                <div class="collapse<?= $hasAdvancedFilters ? ' show' : '' ?>" id="advancedFilters">
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <?= $this->Form->control('changed_field', [
+                                'type' => 'text',
+                                'label' => 'Changed Field',
+                                'placeholder' => 'Field name',
+                                'class' => 'form-control',
+                                'list' => 'changed-fields-list',
+                                'templateVars' => ['help' => __('Find records where this field was modified')],
+                            ]) ?>
+                            <datalist id="changed-fields-list">
+                                <?php foreach ($changedFields as $field) { ?>
+                                    <option value="<?= h($field) ?>">
+                                <?php } ?>
+                            </datalist>
+                            <small class="text-muted"><?= __('Find records where this field was modified') ?></small>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label"><?= __('Value Search') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __('Find records where a field changed to a specific value (both required)') ?></small>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <?= $this->Form->control('field_name', [
+                                        'type' => 'text',
+                                        'label' => false,
+                                        'placeholder' => 'Field name',
+                                        'class' => 'form-control',
+                                        'list' => 'changed-fields-list',
+                                    ]) ?>
+                                </div>
+                                <div class="col-6">
+                                    <?= $this->Form->control('field_value', [
+                                        'type' => 'text',
+                                        'label' => false,
+                                        'placeholder' => 'equals value',
+                                        'class' => 'form-control',
+                                    ]) ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check mb-3">
+                                <?= $this->Form->checkbox('bulk_only', [
+                                    'class' => 'form-check-input',
+                                    'id' => 'bulk-only',
+                                ]) ?>
+                                <label class="form-check-label" for="bulk-only">
+                                    <?= __('Bulk Changes Only') ?>
+                                    <small class="text-muted d-block"><?= __('Transactions with 5+ records') ?></small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <?= $this->Form->end() ?>
