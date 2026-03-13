@@ -102,7 +102,6 @@ $this->loadHelper('AuditStash.Audit');
                                 'placeholder' => 'Field name',
                                 'class' => 'form-control',
                                 'list' => 'changed-fields-list',
-                                'templateVars' => ['help' => __('Find records where this field was modified')],
                             ]) ?>
                             <datalist id="changed-fields-list">
                                 <?php foreach ($changedFields as $field) { ?>
