@@ -222,6 +222,29 @@ class AuditLogsTable extends Table
     }
 
     /**
+     * Find logs from transactions that are NOT bulk (fewer than minRecords)
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query to modify
+     * @param int $minRecords Transactions with this many or more records are considered bulk
+     *
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findNonBulkChanges(SelectQuery $query, int $minRecords = 5): SelectQuery
+    {
+        // Subquery to find transactions with many records (bulk)
+        $bulkSubquery = $this->find()
+            ->select(['transaction'])
+            ->groupBy(['transaction'])
+            ->having(function ($exp, $q) use ($minRecords) {
+                return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
+            });
+
+        return $query->where([
+            'AuditLogs.transaction NOT IN' => $bulkSubquery,
+        ]);
+    }
+
+    /**
      * Get aggregated statistics for bulk change transactions
      *
      * @param \Cake\ORM\Query\SelectQuery $query The query to modify

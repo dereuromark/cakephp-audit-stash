@@ -16,7 +16,7 @@ $this->loadHelper('AuditStash.Audit');
     $hasAdvancedFilters = $this->request->getQuery('changed_field')
         || $this->request->getQuery('field_name')
         || $this->request->getQuery('field_value')
-        || $this->request->getQuery('bulk_only');
+        || $this->request->getQuery('bulk_filter');
     ?>
     <!-- Filters -->
     <div class="card mb-4">
@@ -134,17 +134,19 @@ $this->loadHelper('AuditStash.Audit');
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <div class="form-check mb-3">
-                                <?= $this->Form->checkbox('bulk_only', [
-                                    'class' => 'form-check-input',
-                                    'id' => 'bulk-only',
-                                ]) ?>
-                                <label class="form-check-label" for="bulk-only">
-                                    <?= __('Bulk Changes Only') ?>
-                                    <small class="text-muted d-block"><?= __('Transactions with 5+ records') ?></small>
-                                </label>
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><?= __('Bulk Filter') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __('Filter by transaction size (5+ records = bulk)') ?></small>
+                            <?= $this->Form->control('bulk_filter', [
+                                'type' => 'select',
+                                'label' => false,
+                                'options' => [
+                                    '' => __('– All –'),
+                                    'yes' => __('Bulk only'),
+                                    'no' => __('Non-bulk only'),
+                                ],
+                                'class' => 'form-select',
+                            ]) ?>
                         </div>
                     </div>
                 </div>
