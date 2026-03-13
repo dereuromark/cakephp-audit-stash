@@ -51,6 +51,20 @@ bin/cake audit_stash cleanup --table financial_transactions --force
 # Output: Retention is disabled for table "financial_transactions". No logs will be deleted.
 ```
 
+### Alternative: Selective Cleanup via Script
+
+If you prefer not to use config-based retention, you can selectively cleanup specific tables using the `--table` flag:
+
+```bash
+#!/bin/bash
+# cleanup-audit-logs.sh
+bin/cake audit_stash cleanup --table sessions --force
+bin/cake audit_stash cleanup --table api_requests --force
+# orders and users are intentionally not cleaned
+```
+
+**Warning**: Setting a table's retention to `0` will delete **all** logs for that table immediately - this is probably not what you want! Use `false` instead to keep logs forever.
+
 ## Running Cleanup
 
 The cleanup command provides several options:
