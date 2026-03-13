@@ -142,15 +142,21 @@ class AuditHelper extends Helper
      *
      * Uses word-level side-by-side diff for long text fields.
      *
-     * @param string|null $originalJson JSON string of original values
-     * @param string|null $changedJson JSON string of changed values
+     * @param array<string, mixed>|string|null $original Original values (array or JSON string)
+     * @param array<string, mixed>|string|null $changed Changed values (array or JSON string)
      *
      * @return string HTML output
      */
-    public function diff(?string $originalJson, ?string $changedJson): string
+    public function diff(array|string|null $original, array|string|null $changed): string
     {
-        $original = $originalJson ? json_decode($originalJson, true) : [];
-        $changed = $changedJson ? json_decode($changedJson, true) : [];
+        if (is_string($original)) {
+            $original = json_decode($original, true) ?: [];
+        }
+        if (is_string($changed)) {
+            $changed = json_decode($changed, true) ?: [];
+        }
+        $original = $original ?: [];
+        $changed = $changed ?: [];
 
         if (!$original && !$changed) {
             return '<p class="text-muted">No changes</p>';
@@ -216,15 +222,21 @@ class AuditHelper extends Helper
      *
      * Uses word-level diff for long text fields.
      *
-     * @param string|null $originalJson JSON string of original values
-     * @param string|null $changedJson JSON string of changed values
+     * @param array<string, mixed>|string|null $original Original values (array or JSON string)
+     * @param array<string, mixed>|string|null $changed Changed values (array or JSON string)
      *
      * @return string HTML output
      */
-    public function diffInline(?string $originalJson, ?string $changedJson): string
+    public function diffInline(array|string|null $original, array|string|null $changed): string
     {
-        $original = $originalJson ? json_decode($originalJson, true) : [];
-        $changed = $changedJson ? json_decode($changedJson, true) : [];
+        if (is_string($original)) {
+            $original = json_decode($original, true) ?: [];
+        }
+        if (is_string($changed)) {
+            $changed = json_decode($changed, true) ?: [];
+        }
+        $original = $original ?: [];
+        $changed = $changed ?: [];
 
         if (!$original && !$changed) {
             return '<p class="text-muted">No changes</p>';
@@ -384,13 +396,16 @@ class AuditHelper extends Helper
     /**
      * Display a summary of changes
      *
-     * @param string|null $changedJson JSON string of changed values
+     * @param array<string, mixed>|string|null $changed Changed values (array or JSON string)
      *
      * @return string Summary text
      */
-    public function changeSummary(?string $changedJson): string
+    public function changeSummary(array|string|null $changed): string
     {
-        $changed = $changedJson ? json_decode($changedJson, true) : [];
+        if (is_string($changed)) {
+            $changed = json_decode($changed, true) ?: [];
+        }
+        $changed = $changed ?: [];
 
         if (!$changed) {
             return 'No changes';
@@ -623,17 +638,15 @@ class AuditHelper extends Helper
     /**
      * Render metadata table from JSON string.
      *
-     * @param string|null $metaJson JSON string of metadata
+     * @param array<string, mixed>|string|null $meta Metadata (array or JSON string)
      *
      * @return string HTML output
      */
-    public function metadata(?string $metaJson): string
+    public function metadata(array|string|null $meta): string
     {
-        if (!$metaJson) {
-            return '<p class="text-muted">' . __('No metadata available') . '</p>';
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true);
         }
-
-        $meta = json_decode($metaJson, true);
         if (!$meta || !is_array($meta)) {
             return '<p class="text-muted">' . __('No metadata available') . '</p>';
         }
@@ -650,22 +663,20 @@ class AuditHelper extends Helper
     }
 
     /**
-     * Render a table of field values from JSON string.
+     * Render a table of field values.
      *
      * Used for displaying created or deleted record data.
      *
-     * @param string|null $dataJson JSON string of field values
+     * @param array<string, mixed>|string|null $data Field values (array or JSON string)
      * @param string|null $title Optional title to display above the table
      *
      * @return string HTML output
      */
-    public function fieldValuesTable(?string $dataJson, ?string $title = null): string
+    public function fieldValuesTable(array|string|null $data, ?string $title = null): string
     {
-        if (!$dataJson) {
-            return '<p class="text-muted">' . __('No data available') . '</p>';
+        if (is_string($data)) {
+            $data = json_decode($data, true);
         }
-
-        $data = json_decode($dataJson, true);
         if (!$data || !is_array($data)) {
             return '<p class="text-muted">' . __('No data available') . '</p>';
         }
