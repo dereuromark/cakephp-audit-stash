@@ -212,8 +212,8 @@ class AuditLogsTable extends Table
         $subquery = $this->find()
             ->select(['transaction'])
             ->groupBy(['transaction'])
-            ->having(function ($exp) use ($minRecords) {
-                return $exp->gte($exp->count('*'), $minRecords, 'integer');
+            ->having(function ($exp, $q) use ($minRecords) {
+                return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
             });
 
         return $query->where([
@@ -236,15 +236,15 @@ class AuditLogsTable extends Table
                 'transaction' => 'AuditLogs.transaction',
                 'record_count' => $query->func()->count('*'),
                 'sources' => $query->func()->count(
-                    $query->newExpr()->add('DISTINCT AuditLogs.source'),
+                    $query->expr()->add('DISTINCT AuditLogs.source'),
                 ),
                 'user_id' => $query->func()->max('AuditLogs.user_id'),
                 'user_display' => $query->func()->max('AuditLogs.user_display'),
                 'created' => $query->func()->min('AuditLogs.created'),
             ])
             ->groupBy(['AuditLogs.transaction'])
-            ->having(function ($exp) use ($minRecords) {
-                return $exp->gte($exp->count('*'), $minRecords, 'integer');
+            ->having(function ($exp, $q) use ($minRecords) {
+                return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
             })
             ->orderBy(['created' => 'DESC']);
     }

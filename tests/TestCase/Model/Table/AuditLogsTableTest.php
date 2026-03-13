@@ -53,7 +53,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
-            'changed' => json_encode(['title' => 'New Title', 'body' => 'New Body']),
+            'changed' => ['title' => 'New Title', 'body' => 'New Body'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log1);
@@ -63,7 +63,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
-            'changed' => json_encode(['body' => 'Another Body']),
+            'changed' => ['body' => 'Another Body'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log2);
@@ -73,7 +73,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 3,
-            'changed' => json_encode(['status' => 'published']),
+            'changed' => ['status' => 'published'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log3);
@@ -103,7 +103,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
-            'changed' => json_encode(['status' => 'published']),
+            'changed' => ['status' => 'published'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log1);
@@ -113,7 +113,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
-            'changed' => json_encode(['status' => 'draft']),
+            'changed' => ['status' => 'draft'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log2);
@@ -123,7 +123,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 3,
-            'changed' => json_encode(['status' => 'published']),
+            'changed' => ['status' => 'published'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log3);
@@ -156,7 +156,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => 1,
-            'changed' => json_encode(['title' => 'Test Article']),
+            'changed' => ['title' => 'Test Article'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($mainLog);
@@ -168,7 +168,7 @@ class AuditLogsTableTest extends TestCase
             'source' => 'Comments',
             'primary_key' => 1,
             'parent_source' => 'Articles',
-            'changed' => json_encode(['article_id' => 1, 'body' => 'Test Comment']),
+            'changed' => ['article_id' => 1, 'body' => 'Test Comment'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($relatedLog);
@@ -179,7 +179,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'create',
             'source' => 'Users',
             'primary_key' => 1,
-            'changed' => json_encode(['name' => 'Test User']),
+            'changed' => ['name' => 'Test User'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($unrelatedLog);
@@ -209,7 +209,7 @@ class AuditLogsTableTest extends TestCase
                 'type' => 'create',
                 'source' => 'Articles',
                 'primary_key' => $i,
-                'changed' => json_encode(['title' => "Article $i"]),
+                'changed' => ['title' => "Article $i"],
                 'created' => new DateTime(),
             ]);
             $this->getAuditLogsTable()->save($log);
@@ -223,7 +223,7 @@ class AuditLogsTableTest extends TestCase
                 'type' => 'update',
                 'source' => 'Users',
                 'primary_key' => $i,
-                'changed' => json_encode(['name' => "User $i"]),
+                'changed' => ['name' => "User $i"],
                 'created' => new DateTime(),
             ]);
             $this->getAuditLogsTable()->save($log);
@@ -267,7 +267,7 @@ class AuditLogsTableTest extends TestCase
                 'primary_key' => $i,
                 'user_id' => 'user-1',
                 'user_display' => 'Test User',
-                'changed' => json_encode(['title' => "Article $i"]),
+                'changed' => ['title' => "Article $i"],
                 'created' => $now,
             ]);
             $this->getAuditLogsTable()->save($log);
@@ -281,7 +281,7 @@ class AuditLogsTableTest extends TestCase
                 'primary_key' => $i,
                 'user_id' => 'user-1',
                 'user_display' => 'Test User',
-                'changed' => json_encode(['body' => "Comment $i"]),
+                'changed' => ['body' => "Comment $i"],
                 'created' => $now,
             ]);
             $this->getAuditLogsTable()->save($log);
@@ -294,7 +294,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Users',
             'primary_key' => 1,
-            'changed' => json_encode(['name' => 'User 1']),
+            'changed' => ['name' => 'User 1'],
             'created' => $now,
         ]);
         $this->getAuditLogsTable()->save($log);
@@ -325,7 +325,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
-            'changed' => json_encode(['title' => 'New Title', 'body' => 'New Body']),
+            'changed' => ['title' => 'New Title', 'body' => 'New Body'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log1);
@@ -335,7 +335,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Users',
             'primary_key' => 1,
-            'changed' => json_encode(['name' => 'New Name', 'email' => 'new@email.com']),
+            'changed' => ['name' => 'New Name', 'email' => 'new@email.com'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log2);
@@ -345,7 +345,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
-            'changed' => json_encode(['title' => 'Another Title', 'status' => 'published']),
+            'changed' => ['title' => 'Another Title', 'status' => 'published'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($log3);
@@ -377,7 +377,7 @@ class AuditLogsTableTest extends TestCase
             'type' => 'create',
             'source' => 'UserProfiles',
             'primary_key' => 1,
-            'changed' => json_encode(['bio' => 'Test bio']),
+            'changed' => ['bio' => 'Test bio'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($mainLog);
@@ -389,7 +389,7 @@ class AuditLogsTableTest extends TestCase
             'source' => 'ProfilePhotos',
             'primary_key' => 1,
             'parent_source' => 'UserProfiles',
-            'changed' => json_encode(['user_profile_id' => 1, 'url' => 'photo.jpg']),
+            'changed' => ['user_profile_id' => 1, 'url' => 'photo.jpg'],
             'created' => new DateTime(),
         ]);
         $this->getAuditLogsTable()->save($relatedLog);
