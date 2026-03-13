@@ -44,6 +44,19 @@ class JsonQueryHelper
             );
         }
 
+        if ($driver === 'Sqlite') {
+            // SQLite: json_extract(column, '$.key') IS NOT NULL
+            return $expr->isNotNull(
+                new FunctionExpression(
+                    'json_extract',
+                    [
+                        new IdentifierExpression($column),
+                        '$.' . $key,
+                    ],
+                ),
+            );
+        }
+
         // PostgreSQL: column ? 'key' OR use jsonb_exists
         return $expr->add(
             new FunctionExpression(
@@ -84,6 +97,18 @@ class JsonQueryHelper
                             '$.' . $key,
                         ],
                     ),
+                ],
+            );
+        }
+
+        if ($driver === 'Sqlite') {
+            // SQLite: json_extract(column, '$.key')
+            // Note: SQLite json_extract returns the value without quotes for strings
+            return new FunctionExpression(
+                'json_extract',
+                [
+                    new IdentifierExpression($column),
+                    '$.' . $key,
                 ],
             );
         }
