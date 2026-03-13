@@ -9,6 +9,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Event\BaseEvent;
+use AuditStash\Filter\ChangeFilter;
 use AuditStash\Persister\TablePersister;
 use AuditStash\PersisterInterface;
 use Cake\Core\Configure;
@@ -35,6 +36,11 @@ class AuditLogBehavior extends Behavior
      * - `whitelist`: Fields to include in audit logging (if empty, all fields except blacklisted are included)
      * - `sensitive`: Fields to redact in audit logs (values shown as ****)
      * - `cascadeDeletes`: Whether to log cascade-deleted dependent records (default: false)
+     * - `ignoreEmpty`: Skip logging if no changes after filtering (default: true)
+     * - `ignoreTimestampOnly`: Skip logging if only timestamp fields changed (default: false)
+     * - `ignoreFields`: Skip logging if only these fields changed (default: [])
+     * - `ignoreWhitespace`: Ignore whitespace-only changes in strings (default: false)
+     * - `ignoreCase`: Ignore case-only changes in strings (default: false)
      *
      * @var array<string, mixed>
      */
@@ -45,6 +51,11 @@ class AuditLogBehavior extends Behavior
         'whitelist' => [],
         'sensitive' => [],
         'cascadeDeletes' => false,
+        'ignoreEmpty' => true,
+        'ignoreTimestampOnly' => false,
+        'ignoreFields' => [],
+        'ignoreWhitespace' => false,
+        'ignoreCase' => false,
     ];
 
     /**
@@ -262,6 +273,25 @@ class AuditLogBehavior extends Behavior
 
         if (!$changed || ($original === $changed && !$entity->isNew())) {
             return;
+        }
+
+        // Apply change filters for insignificant changes (skip for new entities)
+        if (!$entity->isNew()) {
+            $filterConfig = [
+                'ignoreEmpty' => $config['ignoreEmpty'] ?? true,
+                'ignoreTimestampOnly' => $config['ignoreTimestampOnly'] ?? false,
+                'ignoreFields' => $config['ignoreFields'] ?? [],
+                'ignoreWhitespace' => $config['ignoreWhitespace'] ?? false,
+                'ignoreCase' => $config['ignoreCase'] ?? false,
+            ];
+
+            $filtered = ChangeFilter::filter($changed, $original, $filterConfig);
+            if ($filtered === null) {
+                return;
+            }
+
+            $changed = $filtered['changed'];
+            $original = $filtered['original'];
         }
 
         $this->redactArray($changed);
