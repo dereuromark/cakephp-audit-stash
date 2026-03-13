@@ -8,6 +8,7 @@ use Cake\Console\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\Core\Configure;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
 
 /**
  * AuditStash\Command\CleanupCommand Test Case
@@ -255,6 +256,90 @@ class CleanupCommandTest extends TestCase
     }
 
     /**
+     * Test global cleanup warns when per-table retention is configured
+     *
+     * @return void
+     */
+    public function testGlobalCleanupWarnsAboutPerTableRetention(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create old logs for different tables
+        $oldLog1 = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'Users',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-100 days'),
+        ]);
+        $auditLogsTable->save($oldLog1);
+
+        $oldLog2 = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-2',
+            'type' => 'update',
+            'source' => 'Orders',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-100 days'),
+        ]);
+        $auditLogsTable->save($oldLog2);
+
+        Configure::write('AuditStash.retention', [
+            'default' => 30,
+            'tables' => [
+                'Users' => 365, // Would keep Users logs
+                'Orders' => 60, // Would delete Orders logs
+            ],
+        ]);
+
+        // Global cleanup uses default retention and warns about per-table settings
+        $this->exec('audit_stash cleanup --force');
+
+        $this->assertExitSuccess();
+        $this->assertOutputContains('Retention policy: 30 days');
+        $this->assertErrorContains('Per-table retention settings exist');
+        $this->assertErrorContains('will be ignored without --table flag');
+        // Both logs should be deleted using default 30 day retention
+        $this->assertOutputContains('Successfully deleted 2 audit log(s)');
+    }
+
+    /**
+     * Test execute with disabled retention for specific table
+     *
+     * @return void
+     */
+    public function testExecuteWithDisabledRetention(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create old log for a table with disabled retention
+        $oldLog = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'ComplianceLogs',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-1000 days'),
+        ]);
+        $auditLogsTable->save($oldLog);
+
+        Configure::write('AuditStash.retention', [
+            'default' => 30,
+            'tables' => [
+                'ComplianceLogs' => false, // Never delete
+            ],
+        ]);
+
+        $this->exec('audit_stash cleanup --force --table ComplianceLogs');
+
+        $this->assertExitSuccess();
+        $this->assertOutputContains('Retention is disabled for table "ComplianceLogs"');
+        $this->assertOutputContains('No logs will be deleted');
+
+        // Verify log was NOT deleted
+        $count = $auditLogsTable->find()->count();
+        $this->assertSame(1, $count);
+    }
+
+    /**
      * Test that command fails with ElasticSearchPersister
      *
      * @return void
@@ -267,5 +352,93 @@ class CleanupCommandTest extends TestCase
 
         $this->assertExitError();
         $this->assertErrorContains('This command only works with TablePersister');
+        $this->assertErrorContains('Index Lifecycle Management');
+    }
+
+    /**
+     * Test that command fails with non-TablePersister
+     *
+     * @return void
+     */
+    public function testExecuteFailsWithNonTablePersister(): void
+    {
+        Configure::write('AuditStash.persister', 'SomeCustomPersister');
+
+        $this->exec('audit_stash cleanup --force');
+
+        $this->assertExitError();
+        $this->assertErrorContains('This command only works with TablePersister');
+    }
+
+    /**
+     * Test that command fails with invalid retention value
+     *
+     * @return void
+     */
+    public function testExecuteFailsWithInvalidRetention(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retention period must be a non-negative integer');
+
+        $this->exec('audit_stash cleanup --force --retention abc');
+    }
+
+    /**
+     * Test that command fails with negative retention value
+     *
+     * @return void
+     */
+    public function testExecuteFailsWithNegativeRetention(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retention period must be a non-negative integer');
+
+        $this->exec('audit_stash cleanup --force --retention -5');
+    }
+
+    /**
+     * Test that command fails with float retention value
+     *
+     * @return void
+     */
+    public function testExecuteFailsWithFloatRetention(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retention period must be a non-negative integer');
+
+        $this->exec('audit_stash cleanup --force --retention 1.5');
+    }
+
+    /**
+     * Test execute with plugin-prefixed table name (dotted notation)
+     *
+     * @return void
+     */
+    public function testExecuteWithDottedTableName(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+
+        // Create old log for a plugin-prefixed table
+        $oldLog = $auditLogsTable->newEntity([
+            'transaction' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'MyPlugin.Users',
+            'primary_key' => 1,
+            'created' => (new DateTime())->modify('-100 days'),
+        ]);
+        $auditLogsTable->save($oldLog);
+
+        Configure::write('AuditStash.retention', [
+            'default' => 30,
+            'tables' => [
+                'MyPlugin.Users' => 365, // Dotted table name
+            ],
+        ]);
+
+        $this->exec('audit_stash cleanup --force --table MyPlugin.Users');
+
+        $this->assertExitSuccess();
+        $this->assertOutputContains('Retention policy: 365 days');
+        $this->assertOutputContains('No audit logs to delete');
     }
 }
