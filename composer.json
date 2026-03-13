@@ -2,6 +2,12 @@
     "name": "dereuromark/cakephp-audit-stash",
     "description": "Flexible and rock solid audit log tracking plugin for cakephp",
     "type": "cakephp-plugin",
+    "keywords": [
+        "cakephp",
+        "plugin",
+        "audit",
+        "admin-panel"
+    ],
     "license": "MIT",
     "require": {
         "php": ">=8.2",
