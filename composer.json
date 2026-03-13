@@ -6,7 +6,10 @@
         "cakephp",
         "plugin",
         "audit",
-        "admin-panel"
+        "admin-panel",
+        "logging",
+        "history",
+        "tracking"
     ],
     "license": "MIT",
     "require": {
