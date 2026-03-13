@@ -4,6 +4,7 @@
  * @var iterable<\AuditStash\Model\Entity\AuditLog> $auditLogs
  * @var array<string, string> $sources
  * @var array<string> $eventTypes
+ * @var array<string> $changedFields
  */
 
 $this->loadHelper('AuditStash.Audit');
@@ -72,6 +73,50 @@ $this->loadHelper('AuditStash.Audit');
                         'class' => 'form-control',
                     ]) ?>
                 </div>
+                <div class="col-md-3">
+                    <?= $this->Form->control('changed_field', [
+                        'type' => 'text',
+                        'label' => 'Changed Field',
+                        'placeholder' => 'Field name',
+                        'class' => 'form-control',
+                        'list' => 'changed-fields-list',
+                    ]) ?>
+                    <datalist id="changed-fields-list">
+                        <?php foreach ($changedFields as $field) { ?>
+                            <option value="<?= h($field) ?>">
+                        <?php } ?>
+                    </datalist>
+                </div>
+            </div>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    <?= $this->Form->control('field_name', [
+                        'type' => 'text',
+                        'label' => 'Field Name (Value Search)',
+                        'placeholder' => 'Field name',
+                        'class' => 'form-control',
+                        'list' => 'changed-fields-list',
+                    ]) ?>
+                </div>
+                <div class="col-md-3">
+                    <?= $this->Form->control('field_value', [
+                        'type' => 'text',
+                        'label' => 'Field Value',
+                        'placeholder' => 'Value to find',
+                        'class' => 'form-control',
+                    ]) ?>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check mb-3">
+                        <?= $this->Form->checkbox('bulk_only', [
+                            'class' => 'form-check-input',
+                            'id' => 'bulk-only',
+                        ]) ?>
+                        <label class="form-check-label" for="bulk-only">
+                            <?= __('Bulk Changes Only') ?>
+                        </label>
+                    </div>
+                </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <?= $this->Form->button(__('Filter'), ['class' => 'btn btn-primary me-2']) ?>
                     <?php if ($this->request->getQueryParams()) { ?>
@@ -83,7 +128,7 @@ $this->loadHelper('AuditStash.Audit');
         </div>
     </div>
 
-    <!-- Export buttons -->
+    <!-- Export buttons and quick links -->
     <div class="mb-3">
         <?php
         $queryParams = $this->request->getQueryParams();
@@ -97,6 +142,11 @@ $this->loadHelper('AuditStash.Audit');
             __('Export JSON'),
             ['action' => 'export', '_ext' => 'json', '?' => $queryParams],
             ['class' => 'btn btn-sm btn-outline-primary']
+        ) ?>
+        <?= $this->Html->link(
+            __('View Bulk Changes'),
+            ['action' => 'bulkChanges'],
+            ['class' => 'btn btn-sm btn-outline-secondary']
         ) ?>
     </div>
 
@@ -135,6 +185,11 @@ $this->loadHelper('AuditStash.Audit');
                             __('Timeline'),
                             ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
                             ['class' => 'btn btn-sm btn-outline-secondary']
+                        ) ?>
+                        <?= $this->Html->link(
+                            __('Related'),
+                            ['action' => 'relatedChanges', $auditLog->source, $auditLog->primary_key],
+                            ['class' => 'btn btn-sm btn-outline-info']
                         ) ?>
                     </td>
                 </tr>
