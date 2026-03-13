@@ -268,7 +268,7 @@ class CleanupCommandTest extends TestCase
         $oldLog = $auditLogsTable->newEntity([
             'transaction' => 'test-transaction-1',
             'type' => 'update',
-            'source' => 'compliance_logs',
+            'source' => 'ComplianceLogs',
             'primary_key' => 1,
             'created' => (new DateTime())->modify('-1000 days'),
         ]);
@@ -277,14 +277,14 @@ class CleanupCommandTest extends TestCase
         Configure::write('AuditStash.retention', [
             'default' => 30,
             'tables' => [
-                'compliance_logs' => false, // Never delete
+                'ComplianceLogs' => false, // Never delete
             ],
         ]);
 
-        $this->exec('audit_stash cleanup --force --table compliance_logs');
+        $this->exec('audit_stash cleanup --force --table ComplianceLogs');
 
         $this->assertExitSuccess();
-        $this->assertOutputContains('Retention is disabled for table "compliance_logs"');
+        $this->assertOutputContains('Retention is disabled for table "ComplianceLogs"');
         $this->assertOutputContains('No logs will be deleted');
 
         // Verify log was NOT deleted
@@ -347,6 +347,19 @@ class CleanupCommandTest extends TestCase
         $this->expectExceptionMessage('Retention period must be a non-negative integer');
 
         $this->exec('audit_stash cleanup --force --retention -5');
+    }
+
+    /**
+     * Test that command fails with float retention value
+     *
+     * @return void
+     */
+    public function testExecuteFailsWithFloatRetention(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retention period must be a non-negative integer');
+
+        $this->exec('audit_stash cleanup --force --retention 1.5');
     }
 
     /**

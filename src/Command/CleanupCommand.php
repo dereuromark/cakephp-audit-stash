@@ -200,7 +200,8 @@ class CleanupCommand extends Command
         // Command line option takes precedence
         $retention = $args->getOption('retention');
         if ($retention !== null && $retention !== false) {
-            if (!is_numeric($retention) || (int)$retention < 0) {
+            // Validate it's a non-negative integer (not float, not scientific notation)
+            if (!preg_match('/^\d+$/', (string)$retention)) {
                 throw new InvalidArgumentException(
                     'Retention period must be a non-negative integer.',
                 );

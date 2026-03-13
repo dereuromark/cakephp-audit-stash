@@ -84,17 +84,14 @@ bin/cake audit_stash cleanup --table ApiRequests --force
 The cleanup command provides several options:
 
 ```bash
-# Clean up logs older than configured retention period
-bin/cake audit_stash cleanup
-
-# Dry run to see what would be deleted
+# Preview what would be deleted (dry run)
 bin/cake audit_stash cleanup --dry-run
 
-# Clean up logs for specific table only
-bin/cake audit_stash cleanup --table Users
-
-# Skip confirmation prompt
+# Clean up logs older than configured retention period
 bin/cake audit_stash cleanup --force
+
+# Clean up logs for specific table only
+bin/cake audit_stash cleanup --table Users --force
 ```
 
 ## Automated Cleanup via Cron
