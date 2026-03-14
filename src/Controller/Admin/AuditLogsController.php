@@ -479,9 +479,9 @@ class AuditLogsController extends AppController
                 $log->display_value,
                 $log->user_id,
                 $log->user_display,
-                $log->original,
-                $log->changed,
-                $log->meta,
+                is_array($log->original) ? json_encode($log->original) : $log->original,
+                is_array($log->changed) ? json_encode($log->changed) : $log->changed,
+                is_array($log->meta) ? json_encode($log->meta) : $log->meta,
                 $log->created,
             ], escape: '\\');
         }
@@ -521,9 +521,9 @@ class AuditLogsController extends AppController
                 'display_value' => $log->display_value,
                 'user_id' => $log->user_id,
                 'user_display' => $log->user_display,
-                'original' => $log->original ? json_decode($log->original, true) : null,
-                'changed' => $log->changed ? json_decode($log->changed, true) : null,
-                'meta' => $log->meta ? json_decode($log->meta, true) : null,
+                'original' => is_array($log->original) ? $log->original : ($log->original ? json_decode($log->original, true) : null),
+                'changed' => is_array($log->changed) ? $log->changed : ($log->changed ? json_decode($log->changed, true) : null),
+                'meta' => is_array($log->meta) ? $log->meta : ($log->meta ? json_decode($log->meta, true) : null),
                 'created' => $log->created,
             ];
         }
