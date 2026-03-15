@@ -27,3 +27,4 @@ ehthumbs.db
 Thumbs.db
 /.phpunit.cache/
 /tools/
+.phpcs.cache
