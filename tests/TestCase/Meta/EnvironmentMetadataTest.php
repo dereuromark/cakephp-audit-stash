@@ -131,6 +131,51 @@ class EnvironmentMetadataTest extends TestCase
     }
 
     /**
+     * Test that Firefox form submission is not detected as API
+     *
+     * Firefox sends Accept header with application/xml but prefers text/html,
+     * which should NOT be treated as API request.
+     *
+     * @return void
+     */
+    public function testDoesNotDetectFirefoxFormAsApi(): void
+    {
+        $request = new ServerRequest([
+            'environment' => [
+                'HTTP_ACCEPT' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'REQUEST_URI' => '/users',
+            ],
+        ]);
+
+        $metadata = new EnvironmentMetadata(null, [], $request);
+        $reflection = new ReflectionClass($metadata);
+        $method = $reflection->getMethod('isApiRequest');
+
+        $this->assertFalse($method->invoke($metadata, $request));
+    }
+
+    /**
+     * Test that pure XML API request is still detected
+     *
+     * @return void
+     */
+    public function testDetectsXmlApiRequest(): void
+    {
+        $request = new ServerRequest([
+            'environment' => [
+                'HTTP_ACCEPT' => 'application/xml',
+                'REQUEST_URI' => '/users',
+            ],
+        ]);
+
+        $metadata = new EnvironmentMetadata(null, [], $request);
+        $reflection = new ReflectionClass($metadata);
+        $method = $reflection->getMethod('isApiRequest');
+
+        $this->assertTrue($method->invoke($metadata, $request));
+    }
+
+    /**
      * Test that metadata is added to audit logs
      *
      * @return void
