@@ -90,7 +90,7 @@ $this->loadHelper('AuditStash.Audit');
 
             <!-- Advanced Filters (collapsible) -->
             <div class="mt-3">
-                <a class="text-decoration-none" data-bs-toggle="collapse" href="#advancedFilters" role="button" aria-expanded="<?= $hasAdvancedFilters ? 'true' : 'false' ?>" aria-controls="advancedFilters">
+                <a class="text-decoration-none" data-toggle="collapse" data-bs-toggle="collapse" href="#advancedFilters" role="button" aria-expanded="<?= $hasAdvancedFilters ? 'true' : 'false' ?>" aria-controls="advancedFilters">
                     <small><?= __('Advanced Filters') ?> <span class="collapse-icon"><?= $hasAdvancedFilters ? '&#9660;' : '&#9654;' ?></span></small>
                 </a>
                 <div class="collapse<?= $hasAdvancedFilters ? ' show' : '' ?>" id="advancedFilters">
