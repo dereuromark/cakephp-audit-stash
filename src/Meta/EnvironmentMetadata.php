@@ -140,7 +140,16 @@ class EnvironmentMetadata implements EventListenerInterface
     {
         // Check Accept header for JSON/XML
         $accept = $request->getHeaderLine('Accept');
-        if (str_contains($accept, 'application/json') || str_contains($accept, 'application/xml')) {
+        if (str_contains($accept, 'application/json')) {
+            return true;
+        }
+        // Only consider XML an API request if browser HTML types are not present
+        // (browsers like Firefox send "text/html,...,application/xml;q=0.9" for normal form submissions)
+        if (
+            str_contains($accept, 'application/xml') &&
+            !str_contains($accept, 'text/html') &&
+            !str_contains($accept, 'application/xhtml+xml')
+        ) {
             return true;
         }
 
