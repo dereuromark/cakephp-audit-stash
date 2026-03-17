@@ -84,10 +84,10 @@ class GdprService
 
         $anonymizedUserId = $this->generateAnonymizedUserId($userId, $userIdStrategy);
 
-        $logs = $this->findByUser($userId)->toArray();
         $count = 0;
 
-        foreach ($logs as $log) {
+        // Iterate ResultSet directly to avoid loading all records into memory
+        foreach ($this->findByUser($userId) as $log) {
             // Anonymize user_id and user_display
             $log->user_id = $anonymizedUserId;
             $log->user_display = 'ANONYMIZED';
@@ -161,10 +161,11 @@ class GdprService
      */
     public function export(int|string $userId, string $format = 'json'): array|string
     {
-        $logs = $this->findByUser($userId)->toArray();
+        $data = [];
 
-        $data = array_map(function ($log) {
-            return [
+        // Iterate ResultSet directly to avoid loading all records into memory at once
+        foreach ($this->findByUser($userId) as $log) {
+            $data[] = [
                 'id' => $log->id,
                 'transaction' => $log->transaction,
                 'type' => $log->type->value ?? $log->type,
@@ -176,7 +177,7 @@ class GdprService
                 'meta' => is_string($log->meta) ? json_decode($log->meta, true) : $log->meta,
                 'created' => $log->created?->toIso8601String(),
             ];
-        }, $logs);
+        }
 
         if ($format === 'json') {
             return (string)json_encode([

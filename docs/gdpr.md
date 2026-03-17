@@ -46,9 +46,9 @@ User ID: 123
 Total records: 47
 
 By table:
-  - articles: 23
-  - comments: 15
-  - users: 9
+  - Articles: 23
+  - Comments: 15
+  - Users: 9
 
 By event type:
   - update: 30
@@ -117,7 +117,7 @@ Export format:
       "id": 1234,
       "transaction": "abc-123-def",
       "type": "update",
-      "source": "articles",
+      "source": "Articles",
       "primary_key": "42",
       "display_value": "My Article Title",
       "original": {"title": "Old Title"},
