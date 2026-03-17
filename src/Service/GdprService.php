@@ -258,11 +258,23 @@ class GdprService
     protected function generateAnonymizedUserId(int|string $userId, string $strategy): ?string
     {
         return match ($strategy) {
-            'hash' => 'anon_' . substr(hash('sha256', (string)$userId . Configure::read('Security.salt', '')), 0, 8),
+            'hash' => $this->hashUserId($userId),
             'null' => null,
             'placeholder' => 'DELETED_USER',
-            default => 'anon_' . substr(hash('sha256', (string)$userId), 0, 8),
+            default => $this->hashUserId($userId),
         };
+    }
+
+    /**
+     * Hash user ID with security salt.
+     *
+     * @param string|int $userId User ID to hash
+     *
+     * @return string
+     */
+    protected function hashUserId(int|string $userId): string
+    {
+        return 'anon_' . substr(hash('sha256', (string)$userId . Configure::read('Security.salt', '')), 0, 8);
     }
 
     /**
