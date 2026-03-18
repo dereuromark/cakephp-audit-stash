@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash;
 
 use AuditStash\Command\CleanupCommand;
+use AuditStash\Command\GdprCommand;
 use AuditStash\Monitor\AuditMonitor;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
@@ -122,6 +123,7 @@ class AuditStashPlugin extends BasePlugin
     public function console(CommandCollection $commands): CommandCollection
     {
         $commands->add('audit_stash cleanup', CleanupCommand::class);
+        $commands->add('audit_stash gdpr', GdprCommand::class);
 
         return $commands;
     }
