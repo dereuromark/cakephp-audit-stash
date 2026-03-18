@@ -87,39 +87,43 @@ class GdprService
         $count = 0;
 
         // Iterate ResultSet directly to avoid loading all records into memory
+        /** @var \AuditStash\Model\Entity\AuditLog $log */
         foreach ($this->findByUser($userId) as $log) {
             // Anonymize user_id and user_display
             $log->user_id = $anonymizedUserId;
             $log->user_display = 'ANONYMIZED';
 
             // Anonymize meta data
-            if ($log->meta) {
-                $meta = is_string($log->meta) ? json_decode($log->meta, true) : $log->meta;
+            if ($log->meta !== null) {
+                /** @var array<string, mixed>|null $meta */
+                $meta = json_decode($log->meta, true);
                 if (is_array($meta)) {
                     foreach ($anonymizeFields as $field => $replacement) {
                         if (array_key_exists($field, $meta)) {
                             $meta[$field] = $replacement;
                         }
                     }
-                    $log->meta = json_encode($meta, AuditStashPlugin::JSON_FLAGS);
+                    $log->meta = (string)json_encode($meta, AuditStashPlugin::JSON_FLAGS);
                 }
             }
 
             // Anonymize PII in original data
-            if ($log->original) {
-                $original = is_string($log->original) ? json_decode($log->original, true) : $log->original;
+            if ($log->original !== null) {
+                /** @var array<string, mixed>|null $original */
+                $original = json_decode($log->original, true);
                 if (is_array($original)) {
                     $original = $this->redactPiiFields($original, $piiFields);
-                    $log->original = json_encode($original, AuditStashPlugin::JSON_FLAGS);
+                    $log->original = (string)json_encode($original, AuditStashPlugin::JSON_FLAGS);
                 }
             }
 
             // Anonymize PII in changed data
-            if ($log->changed) {
-                $changed = is_string($log->changed) ? json_decode($log->changed, true) : $log->changed;
+            if ($log->changed !== null) {
+                /** @var array<string, mixed>|null $changed */
+                $changed = json_decode($log->changed, true);
                 if (is_array($changed)) {
                     $changed = $this->redactPiiFields($changed, $piiFields);
-                    $log->changed = json_encode($changed, AuditStashPlugin::JSON_FLAGS);
+                    $log->changed = (string)json_encode($changed, AuditStashPlugin::JSON_FLAGS);
                 }
             }
 
@@ -164,6 +168,7 @@ class GdprService
         $data = [];
 
         // Iterate ResultSet directly to avoid loading all records into memory at once
+        /** @var \AuditStash\Model\Entity\AuditLog $log */
         foreach ($this->findByUser($userId) as $log) {
             $data[] = [
                 'id' => $log->id,
