@@ -4,8 +4,6 @@
  * @var array<array{transaction: string, record_count: int, sources: int, user_id: string|null, user_display: string|null, created: \Cake\I18n\DateTime|null}> $bulkStats
  * @var int $minRecords
  */
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs bulk-changes content">
     <h3><?= __('Bulk Change Transactions') ?></h3>

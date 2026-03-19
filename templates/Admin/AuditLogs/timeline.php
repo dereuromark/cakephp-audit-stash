@@ -7,8 +7,6 @@
  */
 
 use AuditStash\AuditLogType;
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs timeline content">
     <div class="d-flex justify-content-between align-items-center mb-4">

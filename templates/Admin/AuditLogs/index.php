@@ -6,8 +6,6 @@
  * @var array<string> $eventTypes
  * @var array<string> $changedFields
  */
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs index content">
     <h3><?= __('Audit Logs') ?></h3>

@@ -24,7 +24,8 @@
         "php-collective/code-sniffer": "dev-master as 0.4.6",
         "cakephp/migrations": "^5.0.0",
         "cakephp/elastic-search": "^4.0.0 || ^5.0.0",
-        "friendsofcake/crud": "^7.0.0"
+        "friendsofcake/crud": "^7.0.0",
+        "dereuromark/cakephp-templating": "^0.2.7"
     },
     "suggest": {
         "cakephp/elastic-search": "The default persister engine for audit-stash is elastic search and requires this plugin",

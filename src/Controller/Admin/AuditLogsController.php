@@ -8,6 +8,7 @@ use App\Controller\AppController;
 use AuditStash\AuditLogType;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
+use Cake\Core\Configure;
 use Cake\Http\Response;
 use InvalidArgumentException;
 use RuntimeException;
@@ -21,6 +22,8 @@ use RuntimeException;
  */
 class AuditLogsController extends AppController
 {
+    use LoadHelperTrait;
+
     /**
      * The default model class to use.
      *
@@ -36,6 +39,19 @@ class AuditLogsController extends AppController
         parent::initialize();
 
         $this->loadComponent('Flash');
+        $this->loadHelpers();
+
+        // Configure layout
+        $adminLayout = Configure::read('AuditStash.adminLayout');
+        if ($adminLayout === false) {
+            // Disable plugin layout, use app's default
+        } elseif ($adminLayout === null) {
+            // Use plugin's isolated Bootstrap 5 layout
+            $this->viewBuilder()->setLayout('AuditStash.audit_stash');
+        } else {
+            // Use custom layout
+            $this->viewBuilder()->setLayout($adminLayout);
+        }
     }
 
     /**

@@ -6,8 +6,6 @@
  * @var array $targetState
  * @var array $diff
  */
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs revert content">
     <div class="d-flex justify-content-between align-items-center mb-4">
