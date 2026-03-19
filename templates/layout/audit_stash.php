@@ -214,7 +214,8 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
 
         /* Pagination */
         .pagination {
-            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
         }
 
         .pagination .page-link {
@@ -300,19 +301,34 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         .diff-wrapper .new { background-color: #e6ffec; }
 
         /* Timeline styles */
-        .timeline-item { position: relative; }
-        .timeline-marker { display: flex; justify-content: center; align-items: flex-start; padding-top: 0.75rem; }
+        .timeline-item .row { display: flex; }
+        .timeline-item .col-md-1 { display: flex; flex-direction: column; }
+        .timeline-marker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            padding-top: 1rem;
+        }
         .marker {
-            width: 16px;
-            height: 16px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
+            flex-shrink: 0;
+            z-index: 1;
         }
         .marker-success { background: var(--audit-success); }
         .marker-primary { background: var(--audit-primary); }
         .marker-warning { background: var(--audit-warning); }
         .marker-danger { background: var(--audit-danger); }
-        .timeline-line { display: none; }
-        .timeline-date { padding-top: 0.5rem; }
+        .timeline-line {
+            width: 2px;
+            flex: 1;
+            background: #dee2e6;
+            margin-top: 4px;
+            min-height: 20px;
+        }
+        .timeline-date { padding-top: 0.75rem; }
     </style>
     <?= $this->fetch('css') ?>
 </head>
