@@ -67,7 +67,7 @@ $this->loadHelper('AuditStash.Audit');
                                                 <?= $this->Audit->changeSummary($auditLog->changed) ?>
                                             <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
                                                 <?php
-                                                $meta = json_decode($auditLog->meta, true);
+                                                $meta = is_string($auditLog->meta) ? json_decode($auditLog->meta, true) : $auditLog->meta;
                                                 $revertType = $meta['revert_type'] ?? 'unknown';
                                                 ?>
                                                 Record reverted (<?= h($revertType) ?>)
@@ -108,7 +108,7 @@ $this->loadHelper('AuditStash.Audit');
                                         <div class="changes-preview">
                                             <strong>Initial values:</strong>
                                             <?php
-                                            $changed = json_decode($auditLog->changed, true);
+                                            $changed = is_string($auditLog->changed) ? json_decode($auditLog->changed, true) : $auditLog->changed;
                                             if ($changed && is_array($changed)) {
                                                 echo '<ul class="mb-0">';
                                                 $count = 0;
@@ -139,7 +139,7 @@ $this->loadHelper('AuditStash.Audit');
                                     <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
                                         <div class="alert alert-warning mb-2">
                                             <?php
-                                            $meta = json_decode($auditLog->meta, true);
+                                            $meta = is_string($auditLog->meta) ? json_decode($auditLog->meta, true) : $auditLog->meta;
                                             $revertType = $meta['revert_type'] ?? 'unknown';
                                             $revertToId = $meta['revert_to_audit_id'] ?? null;
                                             ?>
