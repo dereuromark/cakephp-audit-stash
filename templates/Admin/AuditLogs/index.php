@@ -58,16 +58,18 @@
             <div class="row g-3 mt-2">
                 <div class="col-md-3">
                     <?= $this->Form->control('date_from', [
-                        'type' => 'date',
+                        'type' => 'text',
                         'label' => 'Date From',
-                        'class' => 'form-control',
+                        'class' => 'form-control datepicker',
+                        'placeholder' => 'YYYY-MM-DD',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
                     <?= $this->Form->control('date_to', [
-                        'type' => 'date',
+                        'type' => 'text',
                         'label' => 'Date To',
-                        'class' => 'form-control',
+                        'class' => 'form-control datepicker',
+                        'placeholder' => 'YYYY-MM-DD',
                     ]) ?>
                 </div>
                 <div class="col-md-3">

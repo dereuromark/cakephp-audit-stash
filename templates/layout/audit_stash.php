@@ -389,7 +389,7 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         });
 
         // Initialize Flatpickr on date inputs
-        document.querySelectorAll('input[type="date"]').forEach(function(input) {
+        document.querySelectorAll('.datepicker').forEach(function(input) {
             flatpickr(input, {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
