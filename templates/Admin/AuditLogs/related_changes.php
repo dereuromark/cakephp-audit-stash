@@ -5,8 +5,6 @@
  * @var string $primaryKey
  * @var array<string, array{transaction: string, created: \Cake\I18n\DateTime|null, user_id: string|null, user_display: string|null, logs: array<\AuditStash\Model\Entity\AuditLog>}> $transactions
  */
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs related-changes content">
     <h3><?= __('Related Changes') ?></h3>

@@ -6,8 +6,6 @@
  * @var array<string> $eventTypes
  * @var array<string> $changedFields
  */
-
-$this->loadHelper('AuditStash.Audit');
 ?>
 <div class="auditLogs index content">
     <h3><?= __('Audit Logs') ?></h3>
@@ -60,16 +58,20 @@ $this->loadHelper('AuditStash.Audit');
             <div class="row g-3 mt-2">
                 <div class="col-md-3">
                     <?= $this->Form->control('date_from', [
-                        'type' => 'date',
+                        'type' => 'text',
                         'label' => 'Date From',
-                        'class' => 'form-control',
+                        'class' => 'form-control datepicker',
+                        'placeholder' => 'YYYY-MM-DD',
+                        'autocomplete' => 'off',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
                     <?= $this->Form->control('date_to', [
-                        'type' => 'date',
+                        'type' => 'text',
                         'label' => 'Date To',
-                        'class' => 'form-control',
+                        'class' => 'form-control datepicker',
+                        'placeholder' => 'YYYY-MM-DD',
+                        'autocomplete' => 'off',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
