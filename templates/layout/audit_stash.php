@@ -300,32 +300,33 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         /* Timeline styles */
         .timeline-container { position: relative; }
         .timeline-item { position: relative; }
-        .timeline-marker { position: relative; display: flex; justify-content: center; align-items: flex-start; padding-top: 0.25rem; }
-        .timeline-marker::before {
-            content: '';
-            position: absolute;
-            top: 1.5rem;
-            bottom: -2rem;
-            left: 50%;
-            width: 2px;
-            background: #dee2e6;
-            transform: translateX(-50%);
+        .timeline-item .row { align-items: flex-start; }
+        .timeline-marker {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 0.85rem;
         }
-        .timeline-item:last-child .timeline-marker::before { display: none; }
         .marker {
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 2px currentColor;
+            flex-shrink: 0;
             z-index: 1;
-            background: #fff;
         }
-        .marker-success { color: var(--audit-success); background: var(--audit-success); }
-        .marker-primary { color: var(--audit-primary); background: var(--audit-primary); }
-        .marker-warning { color: var(--audit-warning); background: var(--audit-warning); }
-        .marker-danger { color: var(--audit-danger); background: var(--audit-danger); }
-        .timeline-date { padding-right: 1rem; }
+        .marker-success { background: var(--audit-success); }
+        .marker-primary { background: var(--audit-primary); }
+        .marker-warning { background: var(--audit-warning); }
+        .marker-danger { background: var(--audit-danger); }
+        .timeline-line {
+            width: 2px;
+            flex-grow: 1;
+            min-height: 2rem;
+            background: #dee2e6;
+            margin-top: 0.25rem;
+        }
+        .timeline-date { padding-right: 1rem; padding-top: 0.5rem; }
     </style>
     <?= $this->fetch('css') ?>
 </head>
