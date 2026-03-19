@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Service;
 
 use AuditStash\AuditLogType;
+use AuditStash\Model\Entity\AuditLog;
 use Cake\ORM\Locator\LocatorAwareTrait;
 
 /**
@@ -38,10 +39,11 @@ class StateReconstructorService
         $state = [];
 
         // Apply changes sequentially up to target
+        /** @var AuditLog $log */
         foreach ($logs as $log) {
-            if ($log->type === AuditLogType::Create) {
+            if ($log->type === AuditLogType::Create && $log->changed !== null) {
                 $state = json_decode($log->changed, true) ?: [];
-            } elseif ($log->type === AuditLogType::Update) {
+            } elseif ($log->type === AuditLogType::Update && $log->changed !== null) {
                 $changed = json_decode($log->changed, true) ?: [];
                 $state = array_merge($state, $changed);
             }

@@ -6,6 +6,7 @@ namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
 use AuditStash\AuditLogType;
+use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Response;
@@ -360,6 +361,7 @@ class AuditLogsController extends AppController
 
         // Group by transaction
         $transactions = [];
+        /** @var AuditLog $log */
         foreach ($auditLogs as $log) {
             $transactionId = $log->transaction;
             if (!isset($transactions[$transactionId])) {

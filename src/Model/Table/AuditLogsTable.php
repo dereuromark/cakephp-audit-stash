@@ -6,6 +6,7 @@ namespace AuditStash\Model\Table;
 
 use AuditStash\AuditLogType;
 use AuditStash\Database\JsonQueryHelper;
+use AuditStash\Model\Entity\AuditLog;
 use Cake\Database\Type\EnumType;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
@@ -286,11 +287,10 @@ class AuditLogsTable extends Table
             ->toArray();
 
         $fields = [];
+        /** @var AuditLog $log */
         foreach ($logs as $log) {
             if ($log->changed) {
-                $changedData = is_string($log->changed)
-                    ? json_decode($log->changed, true)
-                    : $log->changed;
+                $changedData = json_decode($log->changed, true);
                 if (is_array($changedData)) {
                     $fields = array_merge($fields, array_keys($changedData));
                 }
