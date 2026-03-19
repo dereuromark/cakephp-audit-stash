@@ -18,9 +18,9 @@ use Cake\ORM\Entity;
  * @property string|null $parent_source
  * @property string|null $user_id
  * @property string|null $user_display
- * @property string|null $original
- * @property string|null $changed
- * @property string|null $meta
+ * @property string|array|null $original
+ * @property string|array|null $changed
+ * @property string|array|null $meta
  * @property \Cake\I18n\DateTime|null $created
  */
 class AuditLog extends Entity

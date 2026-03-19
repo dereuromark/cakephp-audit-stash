@@ -289,7 +289,9 @@ class AuditLogsTable extends Table
         $fields = [];
         foreach ($logs as $log) {
             if ($log->changed) {
-                $changedData = json_decode($log->changed, true);
+                $changedData = is_string($log->changed)
+                    ? json_decode($log->changed, true)
+                    : $log->changed;
                 if (is_array($changedData)) {
                     $fields = array_merge($fields, array_keys($changedData));
                 }

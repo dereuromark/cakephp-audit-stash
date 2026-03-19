@@ -95,8 +95,7 @@ class GdprService
 
             // Anonymize meta data
             if ($log->meta !== null) {
-                /** @var array<string, mixed>|null $meta */
-                $meta = json_decode($log->meta, true);
+                $meta = is_string($log->meta) ? json_decode($log->meta, true) : $log->meta;
                 if (is_array($meta)) {
                     foreach ($anonymizeFields as $field => $replacement) {
                         if (array_key_exists($field, $meta)) {
@@ -109,8 +108,7 @@ class GdprService
 
             // Anonymize PII in original data
             if ($log->original !== null) {
-                /** @var array<string, mixed>|null $original */
-                $original = json_decode($log->original, true);
+                $original = is_string($log->original) ? json_decode($log->original, true) : $log->original;
                 if (is_array($original)) {
                     $original = $this->redactPiiFields($original, $piiFields);
                     $log->original = (string)json_encode($original, AuditStashPlugin::JSON_FLAGS);
@@ -119,8 +117,7 @@ class GdprService
 
             // Anonymize PII in changed data
             if ($log->changed !== null) {
-                /** @var array<string, mixed>|null $changed */
-                $changed = json_decode($log->changed, true);
+                $changed = is_string($log->changed) ? json_decode($log->changed, true) : $log->changed;
                 if (is_array($changed)) {
                     $changed = $this->redactPiiFields($changed, $piiFields);
                     $log->changed = (string)json_encode($changed, AuditStashPlugin::JSON_FLAGS);

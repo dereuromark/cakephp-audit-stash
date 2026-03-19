@@ -74,7 +74,9 @@ class UnusualTimeActivityRule extends AbstractRule
      */
     public function getContext(AuditLog $auditLog): array
     {
-        $meta = $auditLog->meta ? json_decode($auditLog->meta, true) : [];
+        $meta = $auditLog->meta
+            ? (is_string($auditLog->meta) ? json_decode($auditLog->meta, true) : $auditLog->meta)
+            : [];
         $created = $auditLog->created ?? DateTime::now();
 
         return [
