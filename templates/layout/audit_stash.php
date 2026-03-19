@@ -296,6 +296,36 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         .diff-wrapper del { background: #f09494; text-decoration: none; padding: 1px 2px; font-weight: bold; }
         .diff-wrapper .old { background-color: #ffebe9; }
         .diff-wrapper .new { background-color: #e6ffec; }
+
+        /* Timeline styles */
+        .timeline-container { position: relative; }
+        .timeline-item { position: relative; }
+        .timeline-marker { position: relative; display: flex; justify-content: center; align-items: flex-start; padding-top: 0.25rem; }
+        .timeline-marker::before {
+            content: '';
+            position: absolute;
+            top: 1.5rem;
+            bottom: -2rem;
+            left: 50%;
+            width: 2px;
+            background: #dee2e6;
+            transform: translateX(-50%);
+        }
+        .timeline-item:last-child .timeline-marker::before { display: none; }
+        .marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px currentColor;
+            z-index: 1;
+            background: #fff;
+        }
+        .marker-success { color: var(--audit-success); background: var(--audit-success); }
+        .marker-primary { color: var(--audit-primary); background: var(--audit-primary); }
+        .marker-warning { color: var(--audit-warning); background: var(--audit-warning); }
+        .marker-danger { color: var(--audit-danger); background: var(--audit-danger); }
+        .timeline-date { padding-right: 1rem; }
     </style>
     <?= $this->fetch('css') ?>
 </head>
