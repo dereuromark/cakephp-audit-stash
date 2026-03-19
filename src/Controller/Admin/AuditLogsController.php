@@ -6,7 +6,6 @@ namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
 use AuditStash\AuditLogType;
-use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Response;
@@ -355,13 +354,13 @@ class AuditLogsController extends AppController
             return $this->redirect(['action' => 'index']);
         }
 
+        /** @var array<\AuditStash\Model\Entity\AuditLog> $auditLogs */
         $auditLogs = $this->AuditLogs->find('relatedChanges', source: $source, primaryKey: $primaryKey)
             ->orderBy(['AuditLogs.created' => 'DESC'])
             ->toArray();
 
         // Group by transaction
         $transactions = [];
-        /** @var AuditLog $log */
         foreach ($auditLogs as $log) {
             $transactionId = $log->transaction;
             if (!isset($transactions[$transactionId])) {

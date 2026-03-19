@@ -6,7 +6,6 @@ namespace AuditStash\Model\Table;
 
 use AuditStash\AuditLogType;
 use AuditStash\Database\JsonQueryHelper;
-use AuditStash\Model\Entity\AuditLog;
 use Cake\Database\Type\EnumType;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
@@ -280,6 +279,7 @@ class AuditLogsTable extends Table
      */
     public function getDistinctChangedFields(): array
     {
+        /** @var array<\AuditStash\Model\Entity\AuditLog> $logs */
         $logs = $this->find()
             ->select(['changed'])
             ->where(['changed IS NOT' => null])
@@ -287,7 +287,6 @@ class AuditLogsTable extends Table
             ->toArray();
 
         $fields = [];
-        /** @var AuditLog $log */
         foreach ($logs as $log) {
             if ($log->changed) {
                 $changedData = json_decode($log->changed, true);
