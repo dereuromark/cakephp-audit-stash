@@ -74,10 +74,10 @@ class AuditLogsController extends AppController
 
         // Filter by date range
         if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from')]);
+            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
         }
         if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to')]);
+            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
         }
 
         // Filter by changed field (field-level tracking)
@@ -158,10 +158,10 @@ class AuditLogsController extends AppController
             $query->where(['AuditLogs.primary_key' => $this->request->getQuery('primary_key')]);
         }
         if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from')]);
+            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
         }
         if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to')]);
+            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
         }
     }
 
@@ -414,10 +414,10 @@ class AuditLogsController extends AppController
             $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
         }
         if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from')]);
+            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
         }
         if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to')]);
+            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
         }
 
         $query->orderBy(['AuditLogs.created' => 'DESC'])->limit(10000);
