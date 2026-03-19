@@ -31,6 +31,8 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Flatpickr Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <style>
         :root {
@@ -298,35 +300,19 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         .diff-wrapper .new { background-color: #e6ffec; }
 
         /* Timeline styles */
-        .timeline-container { position: relative; }
         .timeline-item { position: relative; }
-        .timeline-item .row { align-items: flex-start; }
-        .timeline-marker {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 0.85rem;
-        }
+        .timeline-marker { display: flex; justify-content: center; align-items: flex-start; padding-top: 0.75rem; }
         .marker {
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            flex-shrink: 0;
-            z-index: 1;
         }
         .marker-success { background: var(--audit-success); }
         .marker-primary { background: var(--audit-primary); }
         .marker-warning { background: var(--audit-warning); }
         .marker-danger { background: var(--audit-danger); }
-        .timeline-line {
-            width: 2px;
-            flex-grow: 1;
-            min-height: 2rem;
-            background: #dee2e6;
-            margin-top: 0.25rem;
-        }
-        .timeline-date { padding-right: 1rem; padding-top: 0.5rem; }
+        .timeline-line { display: none; }
+        .timeline-date { padding-top: 0.5rem; }
     </style>
     <?= $this->fetch('css') ?>
 </head>
@@ -375,6 +361,8 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <!-- Flatpickr Date Picker -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -382,6 +370,14 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize Flatpickr on date inputs
+        document.querySelectorAll('input[type="date"]').forEach(function(input) {
+            flatpickr(input, {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+            });
         });
 
         // Form confirmation
