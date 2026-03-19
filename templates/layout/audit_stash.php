@@ -9,8 +9,10 @@
  */
 
 use Cake\Core\Configure;
+use Cake\Core\Plugin;
 
 $dashboardAutoRefresh = (int)Configure::read('AuditStash.dashboardAutoRefresh');
+$hasBouncerPlugin = Plugin::isLoaded('Bouncer');
 $controller = $this->getRequest()->getParam('controller');
 $action = $this->getRequest()->getParam('action');
 $isIndex = $controller === 'AuditLogs' && $action === 'index';
@@ -307,6 +309,12 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>
+        <?php if ($hasBouncerPlugin) { ?>
+        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => 'Admin', 'controller' => 'Bouncer', 'action' => 'index']) ?>">
+            <i class="fas fa-shield-alt me-1"></i>
+            Bouncer
+        </a>
+        <?php } ?>
     </header>
 
     <!-- Sidebar -->
