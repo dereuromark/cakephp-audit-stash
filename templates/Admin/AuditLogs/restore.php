@@ -44,7 +44,7 @@ $this->loadHelper('AuditStash.Audit');
 
     <?php if ($deleteLog) { ?>
         <?php
-        $data = json_decode($deleteLog->original, true);
+        $data = is_string($deleteLog->original) ? json_decode($deleteLog->original, true) : $deleteLog->original;
         ?>
         <?php if ($data && is_array($data)) { ?>
             <div class="card mb-4">

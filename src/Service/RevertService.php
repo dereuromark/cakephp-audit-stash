@@ -140,7 +140,8 @@ class RevertService
             }
 
             // Get state before deletion
-            $state = json_decode($deleteLog->original, true) ?: [];
+            $state = is_string($deleteLog->original) ? json_decode($deleteLog->original, true) : $deleteLog->original;
+            $state = $state ?: [];
 
             // Create new entity
             $table = $this->fetchTable($source);
