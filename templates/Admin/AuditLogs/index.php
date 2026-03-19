@@ -62,6 +62,7 @@
                         'label' => 'Date From',
                         'class' => 'form-control datepicker',
                         'placeholder' => 'YYYY-MM-DD',
+                        'autocomplete' => 'off',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
@@ -70,6 +71,7 @@
                         'label' => 'Date To',
                         'class' => 'form-control datepicker',
                         'placeholder' => 'YYYY-MM-DD',
+                        'autocomplete' => 'off',
                     ]) ?>
                 </div>
                 <div class="col-md-3">
