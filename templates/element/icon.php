@@ -2,29 +2,21 @@
 /**
  * Icon element with fallbacks
  *
- * Supports Templating plugin's IconHelper when available,
- * falls back to Font Awesome HTML.
+ * Uses Font Awesome icons (loaded via CDN in the plugin layout).
+ * The Templating plugin's Icon helper uses different icon sets (Bootstrap Icons, etc.)
+ * which may not have Font Awesome icon names, so we use Font Awesome directly.
  *
  * @var \Cake\View\View $this
  * @var string $name Icon name
  * @var string|null $fallback Font Awesome class fallback (e.g., 'fas fa-list')
- * @var array $options Additional options for IconHelper
  * @var array $attributes HTML attributes
  */
 
 $name = $name ?? '';
 $fallback = $fallback ?? null;
-$options = $options ?? [];
 $attributes = $attributes ?? [];
 
-// Try Templating plugin's Icon helper
-if ($this->helpers()->has('Icon')) {
-    echo $this->Icon->render($name, $options, $attributes);
-
-    return;
-}
-
-// Font Awesome fallback mapping
+// Font Awesome icon mapping
 $fontAwesomeMap = [
     'list' => 'fas fa-list',
     'layer-group' => 'fas fa-layer-group',

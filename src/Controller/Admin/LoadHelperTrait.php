@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Controller\Admin;
 
-use Cake\Core\Configure;
 use Cake\Core\Plugin;
-use Templating\View\Helper\IconHelper;
 use Templating\View\Helper\IconSnippetHelper;
 use Templating\View\Helper\TemplatingHelper;
 
@@ -16,7 +14,10 @@ use Templating\View\Helper\TemplatingHelper;
  * Detects available plugins and loads appropriate helpers:
  * - Tools plugin: Time, Text, Format helpers
  * - Shim plugin: Configure helper
- * - Templating plugin: Icon, IconSnippet, Templating helpers
+ * - Templating plugin: IconSnippet, Templating helpers (for yes_no badges etc.)
+ *
+ * Note: The Icon helper is NOT loaded because the plugin layout uses Font Awesome
+ * via CDN, and the Templating Icon helper uses different icon sets.
  */
 trait LoadHelperTrait
 {
@@ -44,10 +45,8 @@ trait LoadHelperTrait
             $helpers[] = 'Shim.Configure';
         }
 
-        // Templating plugin helpers
-        if (Configure::read('Icon.sets') && class_exists(IconHelper::class)) {
-            $helpers[] = 'Templating.Icon';
-        }
+        // Templating plugin helpers (for yes_no badges, etc.)
+        // Note: Icon helper is not loaded - we use Font Awesome via CDN instead
         if (class_exists(IconSnippetHelper::class)) {
             $helpers[] = 'Templating.IconSnippet';
         }
