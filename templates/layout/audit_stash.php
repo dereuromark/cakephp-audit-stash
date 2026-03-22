@@ -15,6 +15,8 @@ $dashboardAutoRefresh = (int)Configure::read('AuditStash.dashboardAutoRefresh');
 $hasBouncerPlugin = Plugin::isLoaded('Bouncer');
 $controller = $this->getRequest()->getParam('controller');
 $action = $this->getRequest()->getParam('action');
+$plugin = $this->getRequest()->getParam('plugin');
+$prefix = $this->getRequest()->getParam('prefix');
 $isIndex = $controller === 'AuditLogs' && $action === 'index';
 ?>
 <!DOCTYPE html>
@@ -338,12 +340,12 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         <button class="mobile-nav-toggle me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#auditMobileNav">
             <i class="fas fa-bars"></i>
         </button>
-        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => 'AuditStash', 'prefix' => 'Admin', 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
+        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>
         <?php if ($hasBouncerPlugin) { ?>
-        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => 'Admin', 'controller' => 'Bouncer', 'action' => 'index']) ?>">
+        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => $prefix, 'controller' => 'Bouncer', 'action' => 'index']) ?>">
             <i class="fas fa-shield-alt me-1"></i>
             Bouncer
         </a>
