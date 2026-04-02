@@ -287,7 +287,7 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
         /* Diff styles */
         .audit-diff, .audit-diff-inline { font-size: 0.9rem; }
         .audit-diff td, .audit-diff-inline td { vertical-align: top; }
-        pre { background-color: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; }
+        pre { background-color: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; max-width: 100%; }
         .diff-wrapper { width: 100%; border-collapse: collapse; font-family: monospace; font-size: 13px; }
         .diff-wrapper th, .diff-wrapper td { padding: 4px 8px; border: 1px solid #dee2e6; vertical-align: top; }
         .diff-wrapper .line-num { width: 40px; background: #f8f9fa; color: #6c757d; text-align: right; user-select: none; }
