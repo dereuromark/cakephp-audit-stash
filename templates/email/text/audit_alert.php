@@ -28,7 +28,7 @@ Table: <?= $auditLog->source ?>
 
 Primary Key: <?= $auditLog->primary_key ?>
 
-Transaction: <?= $auditLog->transaction ?>
+Transaction: <?= $auditLog->transaction_key ?>
 
 Timestamp: <?= $auditLog->created ? $auditLog->created->format('Y-m-d H:i:s') : 'N/A' ?>
 

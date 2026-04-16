@@ -75,7 +75,7 @@
                     ]) ?>
                 </div>
                 <div class="col-md-3">
-                    <?= $this->Form->control('transaction', [
+                    <?= $this->Form->control('transaction_key', [
                         'type' => 'text',
                         'label' => 'Transaction ID',
                         'placeholder' => 'Transaction ID',

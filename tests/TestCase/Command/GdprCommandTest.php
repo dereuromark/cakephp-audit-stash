@@ -80,7 +80,7 @@ class GdprCommandTest extends TestCase
 
         // Create logs for user
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
@@ -91,7 +91,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -118,7 +118,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -154,7 +154,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -202,7 +202,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -232,7 +232,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -263,7 +263,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -292,7 +292,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -322,7 +322,7 @@ class GdprCommandTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -415,7 +415,7 @@ class GdprCommandTest extends TestCase
 
         // Create logs for user 123
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -427,7 +427,7 @@ class GdprCommandTest extends TestCase
 
         // Create logs for user 456
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 2,

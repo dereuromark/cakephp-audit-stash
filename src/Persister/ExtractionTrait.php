@@ -26,7 +26,7 @@ trait ExtractionTrait
     protected function extractBasicFields(EventInterface $event, bool $serialize = true): array
     {
         $fields = [
-            'transaction' => $event->getTransactionId(),
+            'transaction_key' => $event->getTransactionId(),
             'type' => $event->getEventType(),
             'source' => $event->getSourceName(),
             'parent_source' => null,

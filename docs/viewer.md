@@ -256,7 +256,7 @@ The `formatRecord()` helper method is used in the built-in audit log templates. 
 
 The audit log viewer provides:
 
-- **Browse & Search**: Filter audit logs by table, user, event type, transaction ID, date range, and primary key
+- **Browse & Search**: Filter audit logs by table, user, event type, transaction key, date range, and primary key
 - **Detailed View**: View full details of any audit log entry with before/after comparison
 - **Timeline View**: See the complete history of changes for a specific record in chronological order
 - **Diff Display**: Human-readable before/after comparison with two display modes:

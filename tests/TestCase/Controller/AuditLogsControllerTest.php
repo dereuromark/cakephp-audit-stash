@@ -51,7 +51,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create test logs
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
@@ -61,7 +61,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 2,
@@ -114,7 +114,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
@@ -146,7 +146,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -184,7 +184,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create multiple logs for same record
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
@@ -194,7 +194,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -246,7 +246,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -281,7 +281,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -308,7 +308,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertIsArray($data);
         $this->assertNotEmpty($data);
         $this->assertArrayHasKey('id', $data[0]);
-        $this->assertArrayHasKey('transaction', $data[0]);
+        $this->assertArrayHasKey('transaction_key', $data[0]);
         $this->assertArrayHasKey('type', $data[0]);
     }
 
@@ -322,7 +322,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 1,
@@ -331,7 +331,7 @@ class AuditLogsControllerTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'create',
             'source' => 'users',
             'primary_key' => 2,
@@ -397,7 +397,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create audit log
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => '1',
@@ -430,7 +430,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create delete audit log
         $deleteLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-delete',
+            'transaction_key' => 'test-transaction-delete',
             'type' => 'delete',
             'source' => 'Articles',
             'primary_key' => '99',
@@ -480,7 +480,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create audit log
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '10',
@@ -530,7 +530,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create audit log
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '11',
@@ -571,7 +571,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create a revert audit log
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-revert',
+            'transaction_key' => 'test-transaction-revert',
             'type' => 'revert',
             'source' => 'Articles',
             'primary_key' => '1',
@@ -609,7 +609,7 @@ class AuditLogsControllerTest extends TestCase
         // Create various log types for the same record
         $logs = [
             [
-                'transaction' => 'test-transaction-1',
+                'transaction_key' => 'test-transaction-1',
                 'type' => 'create',
                 'source' => 'Articles',
                 'primary_key' => '5',
@@ -617,7 +617,7 @@ class AuditLogsControllerTest extends TestCase
                 'created' => new DateTime('-3 days'),
             ],
             [
-                'transaction' => 'test-transaction-2',
+                'transaction_key' => 'test-transaction-2',
                 'type' => 'update',
                 'source' => 'Articles',
                 'primary_key' => '5',
@@ -626,7 +626,7 @@ class AuditLogsControllerTest extends TestCase
                 'created' => new DateTime('-2 days'),
             ],
             [
-                'transaction' => 'test-transaction-3',
+                'transaction_key' => 'test-transaction-3',
                 'type' => 'revert',
                 'source' => 'Articles',
                 'primary_key' => '5',
@@ -639,7 +639,7 @@ class AuditLogsControllerTest extends TestCase
                 'created' => new DateTime('-1 day'),
             ],
             [
-                'transaction' => 'test-transaction-4',
+                'transaction_key' => 'test-transaction-4',
                 'type' => 'delete',
                 'source' => 'Articles',
                 'primary_key' => '5',
@@ -693,7 +693,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create audit log with same state
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '20',
@@ -737,7 +737,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create audit log with different state
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '21',
@@ -798,7 +798,7 @@ class AuditLogsControllerTest extends TestCase
 
         // Create delete audit log
         $deleteLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-delete',
+            'transaction_key' => 'test-transaction-delete',
             'type' => 'delete',
             'source' => 'Articles',
             'primary_key' => '98',

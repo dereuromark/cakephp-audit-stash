@@ -72,7 +72,7 @@ That's it! Your application is now tracking all creates, updates, and deletes.
 
 ### Audit Log Viewer
 Browse and search audit logs through a built-in web interface at `/admin/audit-logs`:
-- Filter by table, user, event type, date range, transaction ID
+- Filter by table, user, event type, date range, transaction key
 - View detailed before/after comparisons with inline or side-by-side diff
 - Timeline view showing complete history for specific records
 - Export to CSV or JSON

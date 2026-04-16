@@ -41,7 +41,7 @@ class StateReconstructorServiceTest extends TestCase
 
         // Create initial state
         $log1 = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => '1',
@@ -52,7 +52,7 @@ class StateReconstructorServiceTest extends TestCase
 
         // Update 1
         $log2 = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => '1',
@@ -63,7 +63,7 @@ class StateReconstructorServiceTest extends TestCase
 
         // Update 2
         $log3 = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-3',
+            'transaction_key' => 'test-transaction-3',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => '1',

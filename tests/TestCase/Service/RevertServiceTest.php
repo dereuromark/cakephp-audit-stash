@@ -55,7 +55,7 @@ class RevertServiceTest extends TestCase
 
         // Create audit log (original state)
         $createLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '1',
@@ -66,7 +66,7 @@ class RevertServiceTest extends TestCase
 
         // Update audit log
         $updateLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => '1',
@@ -116,7 +116,7 @@ class RevertServiceTest extends TestCase
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 
         $createLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '2',
@@ -153,7 +153,7 @@ class RevertServiceTest extends TestCase
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 
         $deleteLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-delete',
+            'transaction_key' => 'test-transaction-delete',
             'type' => 'delete',
             'source' => 'Articles',
             'primary_key' => '99',
@@ -211,7 +211,7 @@ class RevertServiceTest extends TestCase
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 
         $createLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '999',
@@ -245,7 +245,7 @@ class RevertServiceTest extends TestCase
         // Create delete audit log for same ID
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
         $deleteLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-delete',
+            'transaction_key' => 'test-transaction-delete',
             'type' => 'delete',
             'source' => 'Articles',
             'primary_key' => '50',
@@ -284,7 +284,7 @@ class RevertServiceTest extends TestCase
         // Create audit log
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
         $createLog = $auditLogs->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => '3',

@@ -119,7 +119,7 @@ class TablePersisterTest extends TestCase
         $event->setMetaInfo([]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -159,7 +159,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -206,7 +206,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -249,7 +249,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -291,7 +291,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -334,7 +334,7 @@ class TablePersisterTest extends TestCase
             ->getMock();
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -404,7 +404,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', [1, 2, 3], 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -438,7 +438,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -473,7 +473,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', [1, 2, 3], 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -510,7 +510,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -545,7 +545,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', [1, 2, 3], 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -582,7 +582,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 'pk', 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -619,7 +619,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', [1, 2, 3], 'source', [], [], new Entity());
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -659,7 +659,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -705,7 +705,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -742,7 +742,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
@@ -778,7 +778,7 @@ class TablePersisterTest extends TestCase
         ]);
 
         $entity = new Entity([
-            'transaction' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
+            'transaction_key' => '62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96',
             'type' => 'create',
             'source' => 'source',
             'parent_source' => null,
