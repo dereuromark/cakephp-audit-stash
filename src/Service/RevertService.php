@@ -205,7 +205,7 @@ class RevertService
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 
         $auditLog = $auditLogs->newEntity([
-            'transaction' => Text::uuid(),
+            'transaction_key' => Text::uuid(),
             'type' => AuditLogType::Revert,
             'source' => $source,
             'primary_key' => (string)$primaryKey,

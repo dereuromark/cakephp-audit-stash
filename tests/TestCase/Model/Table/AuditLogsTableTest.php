@@ -49,7 +49,7 @@ class AuditLogsTableTest extends TestCase
     {
         // Create test logs with different changed fields
         $log1 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
@@ -59,7 +59,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log1);
 
         $log2 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-2',
+            'transaction_key' => 'test-tx-2',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
@@ -69,7 +69,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log2);
 
         $log3 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-3',
+            'transaction_key' => 'test-tx-3',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 3,
@@ -99,7 +99,7 @@ class AuditLogsTableTest extends TestCase
     {
         // Create test logs with different field values
         $log1 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
@@ -109,7 +109,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log1);
 
         $log2 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-2',
+            'transaction_key' => 'test-tx-2',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
@@ -119,7 +119,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log2);
 
         $log3 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-3',
+            'transaction_key' => 'test-tx-3',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 3,
@@ -152,7 +152,7 @@ class AuditLogsTableTest extends TestCase
     {
         // Create a main record log
         $mainLog = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'create',
             'source' => 'Articles',
             'primary_key' => 1,
@@ -163,7 +163,7 @@ class AuditLogsTableTest extends TestCase
 
         // Create a related record log (comment on the article)
         $relatedLog = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'create',
             'source' => 'Comments',
             'primary_key' => 1,
@@ -175,7 +175,7 @@ class AuditLogsTableTest extends TestCase
 
         // Create an unrelated log
         $unrelatedLog = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-2',
+            'transaction_key' => 'test-tx-2',
             'type' => 'create',
             'source' => 'Users',
             'primary_key' => 1,
@@ -205,7 +205,7 @@ class AuditLogsTableTest extends TestCase
         $bulkTxId = 'bulk-tx-123';
         for ($i = 1; $i <= 10; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $bulkTxId,
+                'transaction_key' => $bulkTxId,
                 'type' => 'create',
                 'source' => 'Articles',
                 'primary_key' => $i,
@@ -219,7 +219,7 @@ class AuditLogsTableTest extends TestCase
         $smallTxId = 'small-tx-456';
         for ($i = 1; $i <= 2; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $smallTxId,
+                'transaction_key' => $smallTxId,
                 'type' => 'update',
                 'source' => 'Users',
                 'primary_key' => $i,
@@ -234,7 +234,7 @@ class AuditLogsTableTest extends TestCase
 
         $this->assertCount(10, $results);
         foreach ($results as $log) {
-            $this->assertEquals($bulkTxId, $log->transaction);
+            $this->assertEquals($bulkTxId, $log->transaction_key);
         }
 
         // Find bulk changes with higher threshold (8)
@@ -259,7 +259,7 @@ class AuditLogsTableTest extends TestCase
         $bulkTxId = 'bulk-tx-non-123';
         for ($i = 1; $i <= 10; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $bulkTxId,
+                'transaction_key' => $bulkTxId,
                 'type' => 'create',
                 'source' => 'Articles',
                 'primary_key' => $i,
@@ -273,7 +273,7 @@ class AuditLogsTableTest extends TestCase
         $smallTxId = 'small-tx-non-456';
         for ($i = 1; $i <= 2; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $smallTxId,
+                'transaction_key' => $smallTxId,
                 'type' => 'update',
                 'source' => 'Users',
                 'primary_key' => $i,
@@ -288,7 +288,7 @@ class AuditLogsTableTest extends TestCase
 
         $this->assertCount(2, $results);
         foreach ($results as $log) {
-            $this->assertEquals($smallTxId, $log->transaction);
+            $this->assertEquals($smallTxId, $log->transaction_key);
         }
 
         // Find non-bulk changes with higher threshold (8) - should still get only small transaction
@@ -315,7 +315,7 @@ class AuditLogsTableTest extends TestCase
 
         for ($i = 1; $i <= 5; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $bulkTxId,
+                'transaction_key' => $bulkTxId,
                 'type' => 'create',
                 'source' => 'Articles',
                 'primary_key' => $i,
@@ -329,7 +329,7 @@ class AuditLogsTableTest extends TestCase
 
         for ($i = 1; $i <= 3; $i++) {
             $log = $this->getAuditLogsTable()->newEntity([
-                'transaction' => $bulkTxId,
+                'transaction_key' => $bulkTxId,
                 'type' => 'create',
                 'source' => 'Comments',
                 'primary_key' => $i,
@@ -344,7 +344,7 @@ class AuditLogsTableTest extends TestCase
         // Create a small transaction (should not appear in results)
         $smallTxId = 'small-tx-111';
         $log = $this->getAuditLogsTable()->newEntity([
-            'transaction' => $smallTxId,
+            'transaction_key' => $smallTxId,
             'type' => 'update',
             'source' => 'Users',
             'primary_key' => 1,
@@ -359,7 +359,7 @@ class AuditLogsTableTest extends TestCase
         $this->assertCount(1, $results);
         $stat = $results[0];
 
-        $this->assertEquals($bulkTxId, $stat['transaction']);
+        $this->assertEquals($bulkTxId, $stat['transaction_key']);
         $this->assertEquals(8, (int)$stat['record_count']);
         $this->assertEquals(2, (int)$stat['sources']);
         // user_id and user_display are included via MAX aggregate
@@ -377,7 +377,7 @@ class AuditLogsTableTest extends TestCase
     {
         // Create logs with various fields
         $log1 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 1,
@@ -387,7 +387,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log1);
 
         $log2 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-2',
+            'transaction_key' => 'test-tx-2',
             'type' => 'update',
             'source' => 'Users',
             'primary_key' => 1,
@@ -397,7 +397,7 @@ class AuditLogsTableTest extends TestCase
         $this->getAuditLogsTable()->save($log2);
 
         $log3 = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-3',
+            'transaction_key' => 'test-tx-3',
             'type' => 'update',
             'source' => 'Articles',
             'primary_key' => 2,
@@ -429,7 +429,7 @@ class AuditLogsTableTest extends TestCase
     {
         // Create a main record with PascalCase source name
         $mainLog = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'create',
             'source' => 'UserProfiles',
             'primary_key' => 1,
@@ -440,7 +440,7 @@ class AuditLogsTableTest extends TestCase
 
         // Create a related record with snake_case foreign key
         $relatedLog = $this->getAuditLogsTable()->newEntity([
-            'transaction' => 'test-tx-1',
+            'transaction_key' => 'test-tx-1',
             'type' => 'create',
             'source' => 'ProfilePhotos',
             'primary_key' => 1,

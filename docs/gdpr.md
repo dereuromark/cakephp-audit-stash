@@ -115,7 +115,7 @@ Export format:
   "audit_logs": [
     {
       "id": 1234,
-      "transaction": "abc-123-def",
+      "transaction_key": "abc-123-def",
       "type": "update",
       "source": "Articles",
       "primary_key": "42",

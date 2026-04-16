@@ -97,7 +97,7 @@ use AuditStash\AuditLogType;
                                         <div class="col-md-6 text-end">
                                             <small class="text-muted">
                                                 <strong>Transaction:</strong>
-                                                <?= $this->Audit->transactionId($auditLog->transaction) ?>
+                                                <?= $this->Audit->transactionId($auditLog->transaction_key) ?>
                                             </small>
                                         </div>
                                     </div>

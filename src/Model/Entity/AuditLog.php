@@ -10,7 +10,7 @@ use Cake\ORM\Entity;
  * AuditLog Entity
  *
  * @property int $id
- * @property string $transaction
+ * @property string $transaction_key
  * @property \AuditStash\AuditLogType $type
  * @property int|string|null $primary_key
  * @property string|null $display_value
@@ -31,7 +31,7 @@ class AuditLog extends Entity
      * @var array<string, bool>
      */
     protected array $_accessible = [
-        'transaction' => true,
+        'transaction_key' => true,
         'type' => true,
         'primary_key' => true,
         'display_value' => true,

@@ -7,7 +7,7 @@ return [
         'mapping' => [
             'id' => ['type' => 'integer'],
             '@timestamp' => ['type' => 'date'],
-            'transaction' => ['type' => 'text', 'index' => false],
+            'transaction_key' => ['type' => 'text', 'index' => false],
             'type' => ['type' => 'text', 'index' => false],
             'primary_key' => ['type' => 'integer'],
             'source' => ['type' => 'text', 'index' => false],
@@ -39,7 +39,7 @@ return [
         'mapping' => [
             'id' => ['type' => 'integer'],
             '@timestamp' => ['type' => 'date'],
-            'transaction' => ['type' => 'text', 'index' => false],
+            'transaction_key' => ['type' => 'text', 'index' => false],
             'type' => ['type' => 'text', 'index' => false],
             'primary_key' => ['type' => 'integer'],
             'source' => ['type' => 'text', 'index' => false],
@@ -63,7 +63,7 @@ return [
         'mapping' => [
             'id' => ['type' => 'integer'],
             '@timestamp' => ['type' => 'date'],
-            'transaction' => ['type' => 'text', 'index' => false],
+            'transaction_key' => ['type' => 'text', 'index' => false],
             'type' => ['type' => 'text', 'index' => false],
             'primary_key' => ['type' => 'integer'],
             'source' => ['type' => 'text', 'index' => false],
@@ -87,7 +87,7 @@ return [
         'mapping' => [
             'id' => ['type' => 'integer'],
             '@timestamp' => ['type' => 'date'],
-            'transaction' => ['type' => 'text', 'index' => false],
+            'transaction_key' => ['type' => 'text', 'index' => false],
             'type' => ['type' => 'text', 'index' => false],
             'primary_key' => ['type' => 'integer'],
             'source' => ['type' => 'text', 'index' => false],

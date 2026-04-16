@@ -79,8 +79,8 @@ class AuditLogsController extends AppController
         }
 
         // Filter by transaction ID
-        if ($this->request->getQuery('transaction')) {
-            $query->where(['AuditLogs.transaction' => $this->request->getQuery('transaction')]);
+        if ($this->request->getQuery('transaction_key')) {
+            $query->where(['AuditLogs.transaction_key' => $this->request->getQuery('transaction_key')]);
         }
 
         // Filter by primary key
@@ -167,8 +167,8 @@ class AuditLogsController extends AppController
         if ($this->request->getQuery('type')) {
             $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
         }
-        if ($this->request->getQuery('transaction')) {
-            $query->where(['AuditLogs.transaction' => $this->request->getQuery('transaction')]);
+        if ($this->request->getQuery('transaction_key')) {
+            $query->where(['AuditLogs.transaction_key' => $this->request->getQuery('transaction_key')]);
         }
         if ($this->request->getQuery('primary_key')) {
             $query->where(['AuditLogs.primary_key' => $this->request->getQuery('primary_key')]);
@@ -378,10 +378,10 @@ class AuditLogsController extends AppController
         // Group by transaction
         $transactions = [];
         foreach ($auditLogs as $log) {
-            $transactionId = $log->transaction;
+            $transactionId = $log->transaction_key;
             if (!isset($transactions[$transactionId])) {
                 $transactions[$transactionId] = [
-                    'transaction' => $transactionId,
+                    'transaction_key' => $transactionId,
                     'created' => $log->created,
                     'user_id' => $log->user_id,
                     'user_display' => $log->user_display,
@@ -489,7 +489,7 @@ class AuditLogsController extends AppController
         foreach ($auditLogs as $log) {
             fputcsv($output, [
                 $log->id,
-                $log->transaction,
+                $log->transaction_key,
                 $log->type->value,
                 $log->source,
                 $log->primary_key,
@@ -531,7 +531,7 @@ class AuditLogsController extends AppController
         foreach ($auditLogs as $log) {
             $data[] = [
                 'id' => $log->id,
-                'transaction' => $log->transaction,
+                'transaction_key' => $log->transaction_key,
                 'type' => $log->type->value,
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,

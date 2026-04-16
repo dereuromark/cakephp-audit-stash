@@ -51,7 +51,7 @@ use AuditStash\AuditLogType;
                         </tr>
                         <tr>
                             <th><?= __('Transaction ID') ?></th>
-                            <td><?= $this->Audit->transactionId($auditLog->transaction, true) ?></td>
+                            <td><?= $this->Audit->transactionId($auditLog->transaction_key, true) ?></td>
                         </tr>
                         <tr>
                             <th><?= __('User') ?></th>

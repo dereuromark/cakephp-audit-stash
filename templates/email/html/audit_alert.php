@@ -113,7 +113,7 @@ $severityColor = $severityColors[$alert->getSeverity()] ?? '#6c757d';
                     </tr>
                     <tr>
                         <td>Transaction</td>
-                        <td><code><?= h($auditLog->transaction) ?></code></td>
+                        <td><code><?= h($auditLog->transaction_key) ?></code></td>
                     </tr>
                     <tr>
                         <td>Timestamp</td>

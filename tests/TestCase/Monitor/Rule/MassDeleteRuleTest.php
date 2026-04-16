@@ -41,7 +41,7 @@ class MassDeleteRuleTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             $auditLogsTable->save($auditLogsTable->newEntity([
                 'type' => AuditLogType::Delete,
-                'transaction' => 'test-' . $i,
+                'transaction_key' => 'test-' . $i,
                 'source' => 'users',
                 'primary_key' => $i + 1,
             ]));
@@ -49,7 +49,7 @@ class MassDeleteRuleTest extends TestCase
 
         $testLog = $auditLogsTable->newEntity([
             'type' => AuditLogType::Delete,
-            'transaction' => 'test',
+            'transaction_key' => 'test',
             'source' => 'users',
             'primary_key' => 999,
         ]);
@@ -145,7 +145,7 @@ class MassDeleteRuleTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $auditLogsTable->save($auditLogsTable->newEntity([
                 'type' => AuditLogType::Delete,
-                'transaction' => 'test-' . $i,
+                'transaction_key' => 'test-' . $i,
                 'source' => 'posts',
                 'primary_key' => $i + 1,
             ]));

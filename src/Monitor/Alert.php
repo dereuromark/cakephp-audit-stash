@@ -93,7 +93,7 @@ class Alert
                 'type' => $this->auditLog->type->value,
                 'source' => $this->auditLog->source,
                 'primary_key' => $this->auditLog->primary_key,
-                'transaction' => $this->auditLog->transaction,
+                'transaction_key' => $this->auditLog->transaction_key,
                 'created' => $this->auditLog->created?->toIso8601String(),
             ],
             'context' => $this->context,

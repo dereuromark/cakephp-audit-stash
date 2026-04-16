@@ -134,7 +134,7 @@ Posts alert data to an external URL as JSON.
         "type": "delete",
         "source": "users",
         "primary_key": 456,
-        "transaction": "550e8400-e29b-41d4-a716-446655440000",
+        "transaction_key": "550e8400-e29b-41d4-a716-446655440000",
         "created": "2024-03-15T14:30:00+00:00"
     },
     "context": {

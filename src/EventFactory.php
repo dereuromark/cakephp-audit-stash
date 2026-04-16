@@ -32,7 +32,7 @@ class EventFactory
             $parentSource = $data['parent_source'] ?? null;
             $original = array_key_exists('original', $data) ? $data['original'] : [];
             $event = new AuditDeleteEvent(
-                $data['transaction'],
+                $data['transaction_key'],
                 $data['primary_key'],
                 $data['source'],
                 $parentSource,
@@ -41,7 +41,7 @@ class EventFactory
             );
         } elseif ($data['type'] === 'create') {
             $event = new AuditCreateEvent(
-                $data['transaction'],
+                $data['transaction_key'],
                 $data['primary_key'],
                 $data['source'],
                 array_key_exists('changed', $data) ? $data['changed'] : [],
@@ -51,7 +51,7 @@ class EventFactory
             );
         } else {
             $event = new AuditUpdateEvent(
-                $data['transaction'],
+                $data['transaction_key'],
                 $data['primary_key'],
                 $data['source'],
                 array_key_exists('changed', $data) ? $data['changed'] : [],

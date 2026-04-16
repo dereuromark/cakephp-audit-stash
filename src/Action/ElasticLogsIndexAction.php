@@ -48,8 +48,8 @@ class ElasticLogsIndexAction extends IndexAction
             $query->where(['primary_key' => $request->getQuery('primary_key')]);
         }
 
-        if ($request->getQuery('transaction')) {
-            $query->where(['transaction' => $request->getQuery('transaction')]);
+        if ($request->getQuery('transaction_key')) {
+            $query->where(['transaction_key' => $request->getQuery('transaction_key')]);
         }
 
         if ($request->getQuery('user')) {

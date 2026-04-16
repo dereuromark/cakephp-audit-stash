@@ -126,7 +126,7 @@ class ElasticSearchPersister implements PersisterInterface
 
             $data = [
                 '@timestamp' => $log->getTimestamp(),
-                'transaction' => $log->getTransactionId(),
+                'transaction_key' => $log->getTransactionId(),
                 'type' => $eventType,
                 'primary_key' => $primary,
                 'source' => $log->getSourceName(),
