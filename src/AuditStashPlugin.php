@@ -6,6 +6,7 @@ namespace AuditStash;
 
 use AuditStash\Command\CleanupCommand;
 use AuditStash\Command\GdprCommand;
+use AuditStash\Command\VerifyChainCommand;
 use AuditStash\Monitor\AuditMonitor;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
@@ -124,6 +125,7 @@ class AuditStashPlugin extends BasePlugin
     {
         $commands->add('audit_stash cleanup', CleanupCommand::class);
         $commands->add('audit_stash gdpr', GdprCommand::class);
+        $commands->add('audit_stash verify_chain', VerifyChainCommand::class);
 
         return $commands;
     }

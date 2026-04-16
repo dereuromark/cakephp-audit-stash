@@ -66,6 +66,7 @@ class TablePersisterTest extends TestCase
             'serializeFields' => true,
             'table' => 'AuditStash.AuditLogs',
             'unsetExtractedMetaFields' => true,
+            'hashChain' => false,
         ];
         $this->assertEquals($expected, $this->TablePersister->getConfig());
     }

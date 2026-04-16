@@ -29,6 +29,8 @@ class AuditLogsFixture extends TestFixture
         'original' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
         'changed' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
         'meta' => ['type' => 'text', 'length' => 16777215, 'null' => true, 'default' => null],
+        'prev_hash' => ['type' => 'string', 'length' => 64, 'null' => true, 'default' => null],
+        'hash' => ['type' => 'string', 'length' => 64, 'null' => true, 'default' => null],
         'created' => ['type' => 'datetime', 'length' => null, 'null' => true, 'default' => null],
         '_constraints' => [
             'primary' => ['type' => 'primary', 'columns' => ['id']],

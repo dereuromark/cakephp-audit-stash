@@ -25,6 +25,8 @@ class AuditLogsTable extends Table
             'original' => 'string',
             'changed' => 'string',
             'meta' => 'string',
+            'prev_hash' => 'string',
+            'hash' => 'string',
             'created' => 'datetime',
         ]);
     }

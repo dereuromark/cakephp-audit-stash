@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace AuditStash\Persister;
 
 use AuditStash\PersisterInterface;
+use AuditStash\Service\HashChain;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Event\EventDispatcherTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * A persister that uses the ORM API to persist audit logs.
@@ -122,6 +124,7 @@ class TablePersister implements PersisterInterface
         'serializeFields' => true,
         'table' => 'AuditStash.AuditLogs',
         'unsetExtractedMetaFields' => true,
+        'hashChain' => false,
     ];
 
     /**
@@ -189,6 +192,7 @@ class TablePersister implements PersisterInterface
         $extractMetaFields = $this->getConfig('extractMetaFields');
         $unsetExtractedMetaFields = $this->getConfig('unsetExtractedMetaFields');
         $logErrors = $this->getConfig('logErrors');
+        $hashChain = (bool)$this->getConfig('hashChain');
 
         // Auto-detect JSON columns to avoid double-encoding
         // When columns are native JSON type, CakePHP handles encoding automatically
@@ -196,24 +200,117 @@ class TablePersister implements PersisterInterface
             $serializeFields = false;
         }
 
-        foreach ($auditLogs as $log) {
-            $fields = $this->extractBasicFields($log, $serializeFields);
-            $fields += $this->extractPrimaryKeyFields($log, $primaryKeyExtractionStrategy);
-            $fields += $this->extractMetaFields(
-                $log,
-                $extractMetaFields,
-                $unsetExtractedMetaFields,
-                $serializeFields,
-            );
+        $persist = function () use (
+            $auditLogs,
+            $persisterTable,
+            $serializeFields,
+            $primaryKeyExtractionStrategy,
+            $extractMetaFields,
+            $unsetExtractedMetaFields,
+            $logErrors,
+            $hashChain,
+        ): void {
+            $prevHash = $hashChain ? $this->loadLastHashForUpdate($persisterTable) : null;
 
-            $persisterEntity = $persisterTable->newEntity($fields);
+            foreach ($auditLogs as $log) {
+                $fields = $this->extractBasicFields($log, $serializeFields);
+                $fields += $this->extractPrimaryKeyFields($log, $primaryKeyExtractionStrategy);
+                $fields += $this->extractMetaFields(
+                    $log,
+                    $extractMetaFields,
+                    $unsetExtractedMetaFields,
+                    $serializeFields,
+                );
 
-            if ($persisterTable->save($persisterEntity)) {
-                $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
-            } elseif ($logErrors) {
-                $this->log($this->toErrorLog($persisterEntity));
+                if ($hashChain) {
+                    // Only hash fields the target schema actually owns, and
+                    // stay consistent with ChainVerifier which excludes
+                    // prev_hash from the hash input (it contributes via the
+                    // chain-link argument instead).
+                    $schemaColumns = $persisterTable->getSchema()->columns();
+                    $hashInput = array_intersect_key($fields, array_flip($schemaColumns));
+                    unset($hashInput['prev_hash'], $hashInput['hash']);
+                    $hash = HashChain::hash($prevHash, $hashInput);
+                    $fields['prev_hash'] = $prevHash;
+                    $fields['hash'] = $hash;
+                }
+
+                $persisterEntity = $persisterTable->newEntity($fields);
+
+                if ($persisterTable->save($persisterEntity)) {
+                    if ($hashChain) {
+                        $prevHash = $persisterEntity->get('hash');
+                    }
+                    $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
+
+                    continue;
+                }
+
+                if ($hashChain) {
+                    // Break the chain immediately rather than silently drop rows.
+                    throw new RuntimeException(
+                        'Failed to persist an audit log row while the hash chain was enabled. '
+                        . 'Aborting the batch to preserve chain integrity.',
+                    );
+                }
+
+                if ($logErrors) {
+                    $this->log($this->toErrorLog($persisterEntity));
+                }
             }
+        };
+
+        if ($hashChain) {
+            $persisterTable->getConnection()->transactional($persist);
+
+            return;
         }
+
+        $persist();
+    }
+
+    /**
+     * Load the hash of the last (highest-id) row, locking the table against
+     * concurrent chain writers for the remainder of the transaction.
+     *
+     * Only called when `hashChain` is enabled and therefore guaranteed to
+     * run inside a transaction. Returns `null` for an empty table.
+     *
+     * @param \Cake\ORM\Table $table
+     *
+     * @return string|null
+     */
+    protected function loadLastHashForUpdate(Table $table): ?string
+    {
+        $primaryKey = (array)$table->getPrimaryKey();
+        $pkField = $primaryKey[0] ?? 'id';
+
+        $query = $table->find()
+            ->select(['hash'])
+            ->orderByDesc($table->aliasField($pkField))
+            ->limit(1);
+
+        // Row-level locking syntax is driver-specific. MySQL and Postgres both
+        // honour `SELECT ... FOR UPDATE`. SQLite serializes transactions at
+        // the database level so no additional hint is needed, and SQL Server
+        // uses a different hint syntax (WITH (UPDLOCK)) that we don't emit
+        // here — callers on SQL Server should wrap logEvents() in a
+        // SERIALIZABLE transaction if they need the same guarantee.
+        $driver = $table->getConnection()->getDriver();
+        $driverClass = $driver::class;
+        if (str_contains($driverClass, 'Mysql') || str_contains($driverClass, 'Postgres')) {
+            $query->epilog('FOR UPDATE');
+        }
+
+        /** @var \Cake\Datasource\EntityInterface|null $row */
+        $row = $query->first();
+        if ($row === null) {
+            return null;
+        }
+
+        $hash = $row->get('hash');
+
+        return is_string($hash) ? $hash : null;
     }
 
     /**

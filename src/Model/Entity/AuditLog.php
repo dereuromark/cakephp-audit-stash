@@ -21,6 +21,8 @@ use Cake\ORM\Entity;
  * @property string|array|null $original
  * @property string|array|null $changed
  * @property string|array|null $meta
+ * @property string|null $prev_hash
+ * @property string|null $hash
  * @property \Cake\I18n\DateTime|null $created
  */
 class AuditLog extends Entity
@@ -42,6 +44,8 @@ class AuditLog extends Entity
         'original' => true,
         'changed' => true,
         'meta' => true,
+        'prev_hash' => true,
+        'hash' => true,
         'created' => true,
     ];
 }
