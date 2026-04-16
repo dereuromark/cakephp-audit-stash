@@ -33,6 +33,8 @@ class ChainVerifier
      * @param \Cake\ORM\Table $table Audit log table to verify.
      * @param int $chunkSize How many rows to stream per query.
      *
+     * @throws \InvalidArgumentException
+     *
      * @return \AuditStash\Service\ChainVerificationResult
      */
     public function verify(Table $table, int $chunkSize = 500): ChainVerificationResult
