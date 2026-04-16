@@ -37,6 +37,12 @@ class ChainVerifier
      */
     public function verify(Table $table, int $chunkSize = 500): ChainVerificationResult
     {
+        if ($chunkSize < 1) {
+            throw new InvalidArgumentException(
+                sprintf('ChainVerifier chunk size must be >= 1, got %d.', $chunkSize),
+            );
+        }
+
         $primaryKey = $this->validatePrimaryKey($table);
         $orderField = $table->aliasField($primaryKey);
         $payloadColumns = array_values(array_diff($table->getSchema()->columns(), self::IGNORED_FIELDS));

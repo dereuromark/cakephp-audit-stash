@@ -398,9 +398,20 @@ class TablePersister implements PersisterInterface
 
         if (str_contains($driverClass, 'Postgres')) {
             [$key1, $key2] = $this->advisoryLockKeys($lockName);
-            $connection->execute('SELECT pg_advisory_lock(?, ?)', [$key1, $key2]);
+            $deadline = microtime(true) + 10.0;
 
-            return $lockName;
+            do {
+                $result = $connection
+                    ->execute('SELECT pg_try_advisory_lock(?, ?) AS acquired', [$key1, $key2])
+                    ->fetch('assoc');
+                if ((bool)($result['acquired'] ?? false)) {
+                    return $lockName;
+                }
+
+                usleep(100000);
+            } while (microtime(true) < $deadline);
+
+            throw new RuntimeException(sprintf('Failed to acquire hash-chain write lock for `%s`.', $table->getTable()));
         }
 
         return null;
