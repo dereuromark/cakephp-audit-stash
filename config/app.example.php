@@ -59,16 +59,10 @@ return [
         'linkRecord' => null,
 
         /**
-         * Persister Configuration
-         *
-         * The persister class to use for storing audit logs.
-         * Default is TablePersister (database). Alternatively use
-         * ElasticSearchPersister for high-volume applications.
-         */
-        'persister' => \AuditStash\Persister\TablePersister::class,
-
-        /**
          * Persister-specific options passed to the persister's setConfig().
+         *
+         * The default persister is TablePersister (database).
+         * For Elasticsearch, set 'persister' => ElasticSearchPersister::class.
          */
         'persisterConfig' => [
             /**
