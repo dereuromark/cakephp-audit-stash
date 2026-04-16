@@ -245,7 +245,7 @@ class ElasticImportCommand extends Command
     {
         $data = [
             '@timestamp' => $audit['created'],
-            'transaction' => $audit['id'],
+            'transaction_key' => $audit['id'],
             'type' => $audit['event'] === 'EDIT' ? 'update' : strtolower($audit['event']),
             'primary_key' => $audit['entity_id'],
             'original' => $audit['original'],

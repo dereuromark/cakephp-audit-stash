@@ -77,10 +77,10 @@ class AuditLogsTable extends Table
             ->allowEmptyString('id', null, 'create');
 
         $validator
-            ->scalar('transaction')
-            ->maxLength('transaction', 36)
-            ->requirePresence('transaction', 'create')
-            ->notEmptyString('transaction');
+            ->scalar('transaction_key')
+            ->maxLength('transaction_key', 36)
+            ->requirePresence('transaction_key', 'create')
+            ->notEmptyString('transaction_key');
 
         $validator
             ->requirePresence('type', 'create')
@@ -210,14 +210,14 @@ class AuditLogsTable extends Table
     {
         // Subquery to find transactions with many records
         $subquery = $this->find()
-            ->select(['transaction'])
-            ->groupBy(['transaction'])
+            ->select(['transaction_key'])
+            ->groupBy(['transaction_key'])
             ->having(function ($exp, $q) use ($minRecords) {
                 return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
             });
 
         return $query->where([
-            'AuditLogs.transaction IN' => $subquery,
+            'AuditLogs.transaction_key IN' => $subquery,
         ]);
     }
 
@@ -233,14 +233,14 @@ class AuditLogsTable extends Table
     {
         // Subquery to find transactions with many records (bulk)
         $bulkSubquery = $this->find()
-            ->select(['transaction'])
-            ->groupBy(['transaction'])
+            ->select(['transaction_key'])
+            ->groupBy(['transaction_key'])
             ->having(function ($exp, $q) use ($minRecords) {
                 return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
             });
 
         return $query->where([
-            'AuditLogs.transaction NOT IN' => $bulkSubquery,
+            'AuditLogs.transaction_key NOT IN' => $bulkSubquery,
         ]);
     }
 
@@ -256,7 +256,7 @@ class AuditLogsTable extends Table
     {
         return $query
             ->select([
-                'transaction' => 'AuditLogs.transaction',
+                'transaction_key' => 'AuditLogs.transaction_key',
                 'record_count' => $query->func()->count('*'),
                 'sources' => $query->func()->count(
                     $query->expr()->add('DISTINCT AuditLogs.source'),
@@ -265,7 +265,7 @@ class AuditLogsTable extends Table
                 'user_display' => $query->func()->max('AuditLogs.user_display'),
                 'created' => $query->func()->min('AuditLogs.created'),
             ])
-            ->groupBy(['AuditLogs.transaction'])
+            ->groupBy(['AuditLogs.transaction_key'])
             ->having(function ($exp, $q) use ($minRecords) {
                 return $exp->gte($q->func()->count('*'), $minRecords, 'integer');
             })

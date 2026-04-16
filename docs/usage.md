@@ -153,7 +153,7 @@ The following audit events will be created:
 2. **ArticlesTags** - For each new tag association (create event)
 3. **ArticlesTags** - For each removed tag association (delete event, if using `replace` strategy)
 
-All events in a single save operation share the same `transaction` ID, making it easy to see all related changes.
+All events in a single save operation share the same `transaction_key` ID, making it easy to see all related changes.
 
 ### Logging Cascade-Deleted Records
 
@@ -640,7 +640,7 @@ class MyPersister implements PersisterInterface
             $eventType = $log->getEventType();
             $data = [
                 'timestamp' => $log->getTimestamp(),
-                'transaction' => $log->getTransactionId(),
+                'transaction_key' => $log->getTransactionId(),
                 'type' => $log->getEventType(),
                 'primary_key' => $log->getId(),
                 'source' => $log->getSourceName(),

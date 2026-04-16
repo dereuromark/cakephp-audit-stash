@@ -83,7 +83,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old audit log
         $oldLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -116,7 +116,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old audit log
         $oldLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -147,7 +147,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old logs for different tables
         $oldLog1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -156,7 +156,7 @@ class CleanupCommandTest extends TestCase
         $auditLogsTable->save($oldLog1);
 
         $oldLog2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -191,7 +191,7 @@ class CleanupCommandTest extends TestCase
 
         // Create logs of different ages
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -200,7 +200,7 @@ class CleanupCommandTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 2,
@@ -233,7 +233,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old log
         $oldLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -266,7 +266,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old logs for different tables
         $oldLog1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'Users',
             'primary_key' => 1,
@@ -275,7 +275,7 @@ class CleanupCommandTest extends TestCase
         $auditLogsTable->save($oldLog1);
 
         $oldLog2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-2',
+            'transaction_key' => 'test-transaction-2',
             'type' => 'update',
             'source' => 'Orders',
             'primary_key' => 1,
@@ -313,7 +313,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old log for a table with disabled retention
         $oldLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'ComplianceLogs',
             'primary_key' => 1,
@@ -420,7 +420,7 @@ class CleanupCommandTest extends TestCase
 
         // Create old log for a plugin-prefixed table
         $oldLog = $auditLogsTable->newEntity([
-            'transaction' => 'test-transaction-1',
+            'transaction_key' => 'test-transaction-1',
             'type' => 'update',
             'source' => 'MyPlugin.Users',
             'primary_key' => 1,

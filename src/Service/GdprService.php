@@ -169,7 +169,7 @@ class GdprService
         foreach ($this->findByUser($userId) as $log) {
             $data[] = [
                 'id' => $log->id,
-                'transaction' => $log->transaction,
+                'transaction_key' => $log->transaction_key,
                 'type' => $log->type->value ?? $log->type,
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,

@@ -68,7 +68,7 @@ trait SerializableEventTrait
     {
         return [
             'type' => $this->getEventType(),
-            'transaction' => $this->transactionId,
+            'transaction_key' => $this->transactionId,
             'primary_key' => $this->id,
             'source' => $this->source,
             'parent_source' => $this->parentSource,

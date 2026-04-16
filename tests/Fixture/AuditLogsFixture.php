@@ -18,7 +18,7 @@ class AuditLogsFixture extends TestFixture
      */
     public array $fields = [
         'id' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => false, 'default' => null, 'autoIncrement' => true],
-        'transaction' => ['type' => 'string', 'length' => 36, 'null' => false, 'default' => null],
+        'transaction_key' => ['type' => 'string', 'length' => 36, 'null' => false, 'default' => null],
         'type' => ['type' => 'string', 'length' => 7, 'null' => false, 'default' => null],
         'primary_key' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => true, 'default' => null],
         'display_value' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
@@ -36,7 +36,7 @@ class AuditLogsFixture extends TestFixture
             'primary' => ['type' => 'primary', 'columns' => ['id']],
         ],
         '_indexes' => [
-            'idx_transaction' => ['type' => 'index', 'columns' => ['transaction']],
+            'idx_transaction_key' => ['type' => 'index', 'columns' => ['transaction_key']],
             'idx_type' => ['type' => 'index', 'columns' => ['type']],
             'idx_primary_key' => ['type' => 'index', 'columns' => ['primary_key']],
             'idx_display_value' => ['type' => 'index', 'columns' => ['display_value']],

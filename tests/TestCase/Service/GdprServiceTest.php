@@ -49,7 +49,7 @@ class GdprServiceTest extends TestCase
 
         // Create logs for different users
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -59,7 +59,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-2',
+            'transaction_key' => 'test-2',
             'type' => 'create',
             'source' => 'comments',
             'primary_key' => 1,
@@ -69,7 +69,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log2);
 
         $log3 = $auditLogsTable->newEntity([
-            'transaction' => 'test-3',
+            'transaction_key' => 'test-3',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 2,
@@ -94,7 +94,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -104,7 +104,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-2',
+            'transaction_key' => 'test-2',
             'type' => 'create',
             'source' => 'articles',
             'primary_key' => 2,
@@ -114,7 +114,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log2);
 
         $log3 = $auditLogsTable->newEntity([
-            'transaction' => 'test-3',
+            'transaction_key' => 'test-3',
             'type' => 'delete',
             'source' => 'comments',
             'primary_key' => 1,
@@ -156,7 +156,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -208,7 +208,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -235,7 +235,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -262,7 +262,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -297,7 +297,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log1 = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 1,
@@ -307,7 +307,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log1);
 
         $log2 = $auditLogsTable->newEntity([
-            'transaction' => 'test-2',
+            'transaction_key' => 'test-2',
             'type' => 'create',
             'source' => 'comments',
             'primary_key' => 1,
@@ -317,7 +317,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable->save($log2);
 
         $log3 = $auditLogsTable->newEntity([
-            'transaction' => 'test-3',
+            'transaction_key' => 'test-3',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 2,
@@ -348,7 +348,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 42,
@@ -382,7 +382,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'articles',
             'primary_key' => 42,
@@ -411,7 +411,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,
@@ -442,7 +442,7 @@ class GdprServiceTest extends TestCase
         $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
 
         $log = $auditLogsTable->newEntity([
-            'transaction' => 'test-1',
+            'transaction_key' => 'test-1',
             'type' => 'update',
             'source' => 'users',
             'primary_key' => 1,

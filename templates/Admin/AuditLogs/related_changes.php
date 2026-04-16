@@ -3,7 +3,7 @@
  * @var \App\View\AppView $this
  * @var string $source
  * @var string $primaryKey
- * @var array<string, array{transaction: string, created: \Cake\I18n\DateTime|null, user_id: string|null, user_display: string|null, logs: array<\AuditStash\Model\Entity\AuditLog>}> $transactions
+ * @var array<string, array{transaction_key: string, created: \Cake\I18n\DateTime|null, user_id: string|null, user_display: string|null, logs: array<\AuditStash\Model\Entity\AuditLog>}> $transactions
  */
 ?>
 <div class="auditLogs related-changes content">
@@ -41,7 +41,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong><?= __('Transaction:') ?></strong>
-                            <code class="small"><?= h($transaction['transaction']) ?></code>
+                            <code class="small"><?= h($transaction['transaction_key']) ?></code>
                         </div>
                         <div class="text-muted small">
                             <?= h($transaction['created']) ?>

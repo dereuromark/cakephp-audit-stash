@@ -62,7 +62,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         );
 
         $expected = [
-            'transaction' => '1234',
+            'transaction_key' => '1234',
             'type' => 'create',
             'primary_key' => 50,
             'source' => 'articles',
@@ -119,7 +119,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             new DateTime($articles[0]->get('@timestamp')),
         );
         $expected = [
-            'transaction' => '1234',
+            'transaction_key' => '1234',
             'type' => 'update',
             'primary_key' => 50,
             'source' => 'articles',
@@ -158,7 +158,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         );
 
         $expected = [
-            'transaction' => '1234',
+            'transaction_key' => '1234',
             'type' => 'delete',
             'primary_key' => 50,
             'source' => 'articles',
@@ -250,7 +250,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         );
 
         $expected = [
-            'transaction' => '1234',
+            'transaction_key' => '1234',
             'type' => 'update',
             'primary_key' => 50,
             'source' => 'articles',

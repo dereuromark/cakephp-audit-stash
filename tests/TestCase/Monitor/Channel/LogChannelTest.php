@@ -60,7 +60,7 @@ class LogChannelTest extends TestCase
             'type' => AuditLogType::Delete,
             'source' => 'users',
             'primary_key' => 123,
-            'transaction' => 'abc-123',
+            'transaction_key' => 'abc-123',
             'created' => DateTime::now(),
         ]);
 
@@ -102,7 +102,7 @@ class LogChannelTest extends TestCase
                 'type' => AuditLogType::Delete,
                 'source' => 'test',
                 'primary_key' => 1,
-                'transaction' => 'test',
+                'transaction_key' => 'test',
             ]);
 
             $alert = new Alert(

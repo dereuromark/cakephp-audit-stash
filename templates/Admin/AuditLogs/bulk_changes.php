@@ -1,7 +1,7 @@
 <?php
 /**
  * @var \App\View\AppView $this
- * @var array<array{transaction: string, record_count: int, sources: int, user_id: string|null, user_display: string|null, created: \Cake\I18n\DateTime|null}> $bulkStats
+ * @var array<array{transaction_key: string, record_count: int, sources: int, user_id: string|null, user_display: string|null, created: \Cake\I18n\DateTime|null}> $bulkStats
  * @var int $minRecords
  */
 ?>
@@ -66,7 +66,7 @@
                     <?php foreach ($bulkStats as $stat) { ?>
                         <tr>
                             <td>
-                                <code class="small"><?= h($stat['transaction']) ?></code>
+                                <code class="small"><?= h($stat['transaction_key']) ?></code>
                             </td>
                             <td>
                                 <span class="badge bg-<?= $stat['record_count'] >= 100 ? 'danger' : ($stat['record_count'] >= 20 ? 'warning' : 'info') ?>">
@@ -81,7 +81,7 @@
                             <td>
                                 <?= $this->Html->link(
                                     __('View All'),
-                                    ['action' => 'index', '?' => ['transaction' => $stat['transaction']]],
+                                    ['action' => 'index', '?' => ['transaction_key' => $stat['transaction_key']]],
                                     ['class' => 'btn btn-sm btn-outline-primary']
                                 ) ?>
                             </td>
