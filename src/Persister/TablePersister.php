@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace AuditStash\Persister;
 
 use AuditStash\PersisterInterface;
+use AuditStash\Service\HashChain;
 use Cake\Core\InstanceConfigTrait;
 use Cake\Event\EventDispatcherTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * A persister that uses the ORM API to persist audit logs.
@@ -122,6 +124,7 @@ class TablePersister implements PersisterInterface
         'serializeFields' => true,
         'table' => 'AuditStash.AuditLogs',
         'unsetExtractedMetaFields' => true,
+        'hashChain' => false,
     ];
 
     /**
@@ -189,6 +192,7 @@ class TablePersister implements PersisterInterface
         $extractMetaFields = $this->getConfig('extractMetaFields');
         $unsetExtractedMetaFields = $this->getConfig('unsetExtractedMetaFields');
         $logErrors = $this->getConfig('logErrors');
+        $hashChain = (bool)$this->getConfig('hashChain');
 
         // Auto-detect JSON columns to avoid double-encoding
         // When columns are native JSON type, CakePHP handles encoding automatically
@@ -196,24 +200,275 @@ class TablePersister implements PersisterInterface
             $serializeFields = false;
         }
 
-        foreach ($auditLogs as $log) {
-            $fields = $this->extractBasicFields($log, $serializeFields);
-            $fields += $this->extractPrimaryKeyFields($log, $primaryKeyExtractionStrategy);
-            $fields += $this->extractMetaFields(
-                $log,
-                $extractMetaFields,
-                $unsetExtractedMetaFields,
-                $serializeFields,
-            );
-
-            $persisterEntity = $persisterTable->newEntity($fields);
-
-            if ($persisterTable->save($persisterEntity)) {
-                $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
-            } elseif ($logErrors) {
-                $this->log($this->toErrorLog($persisterEntity));
-            }
+        $hashPayloadColumns = [];
+        if ($hashChain) {
+            $hashPayloadColumns = $this->assertHashChainReady($persisterTable);
         }
+
+        $persist = function () use (
+            $auditLogs,
+            $persisterTable,
+            $serializeFields,
+            $primaryKeyExtractionStrategy,
+            $extractMetaFields,
+            $unsetExtractedMetaFields,
+            $logErrors,
+            $hashChain,
+            $hashPayloadColumns,
+        ): void {
+            $prevHash = $hashChain ? $this->loadLastHashForUpdate($persisterTable) : null;
+
+            foreach ($auditLogs as $log) {
+                $fields = $this->extractBasicFields($log, $serializeFields);
+                $fields += $this->extractPrimaryKeyFields($log, $primaryKeyExtractionStrategy);
+                $fields += $this->extractMetaFields(
+                    $log,
+                    $extractMetaFields,
+                    $unsetExtractedMetaFields,
+                    $serializeFields,
+                );
+
+                if ($hashChain) {
+                    // Only hash fields the target schema actually owns, and
+                    // stay consistent with ChainVerifier which excludes
+                    // prev_hash from the hash input (it contributes via the
+                    // chain-link argument instead).
+                    $hash = HashChain::hash($prevHash, $this->buildHashPayload($fields, $hashPayloadColumns));
+                    $fields['prev_hash'] = $prevHash;
+                    $fields['hash'] = $hash;
+                }
+
+                $persisterEntity = $persisterTable->newEntity($fields);
+
+                if ($persisterTable->save($persisterEntity)) {
+                    if ($hashChain) {
+                        $prevHash = $persisterEntity->get('hash');
+                    }
+                    $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
+
+                    continue;
+                }
+
+                if ($hashChain) {
+                    // Break the chain immediately rather than silently drop rows.
+                    throw new RuntimeException(
+                        'Failed to persist an audit log row while the hash chain was enabled. '
+                        . 'Aborting the batch to preserve chain integrity.',
+                    );
+                }
+
+                if ($logErrors) {
+                    $this->log($this->toErrorLog($persisterEntity));
+                }
+            }
+        };
+
+        if ($hashChain) {
+            $lockHandle = $this->acquireChainWriteLock($persisterTable);
+            try {
+                $persisterTable->getConnection()->transactional($persist);
+            } finally {
+                $this->releaseChainWriteLock($persisterTable, $lockHandle);
+            }
+
+            return;
+        }
+
+        $persist();
+    }
+
+    /**
+     * Load the hash of the last (highest-id) row, locking the table against
+     * concurrent chain writers for the remainder of the transaction.
+     *
+     * Only called when `hashChain` is enabled and therefore guaranteed to
+     * run inside a transaction. Returns `null` for an empty table.
+     *
+     * @param \Cake\ORM\Table $table
+     *
+     * @return string|null
+     */
+    protected function loadLastHashForUpdate(Table $table): ?string
+    {
+        $primaryKey = (array)$table->getPrimaryKey();
+        $pkField = $primaryKey[0] ?? 'id';
+
+        $query = $table->find()
+            ->select(['hash'])
+            ->orderByDesc($table->aliasField($pkField))
+            ->limit(1);
+
+        // Row-level locking syntax is driver-specific. MySQL and Postgres both
+        // honour `SELECT ... FOR UPDATE`. SQLite serializes transactions at
+        // the database level so no additional hint is needed, and SQL Server
+        // uses a different hint syntax (WITH (UPDLOCK)) that we don't emit
+        // here — callers on SQL Server should wrap logEvents() in a
+        // SERIALIZABLE transaction if they need the same guarantee.
+        $driver = $table->getConnection()->getDriver();
+        $driverClass = $driver::class;
+        if (str_contains($driverClass, 'Mysql') || str_contains($driverClass, 'Postgres')) {
+            $query->epilog('FOR UPDATE');
+        }
+
+        /** @var \Cake\Datasource\EntityInterface|null $row */
+        $row = $query->first();
+        if ($row === null) {
+            return null;
+        }
+
+        $hash = $row->get('hash');
+
+        return is_string($hash) ? $hash : null;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return array<string>
+     */
+    protected function assertHashChainReady(Table $table): array
+    {
+        $schema = $table->getSchema();
+        $schemaColumns = $schema->columns();
+        if (!in_array('prev_hash', $schemaColumns, true) || !in_array('hash', $schemaColumns, true)) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires `prev_hash` and `hash` columns on the target table. '
+                . 'Run the AuditStash migration before enabling `persisterConfig.hashChain`.',
+            );
+        }
+
+        $primaryKey = (array)$table->getPrimaryKey();
+        if (count($primaryKey) !== 1) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires a single-column numeric primary key on the target table.',
+            );
+        }
+
+        $primaryKeyType = $schema->getColumnType($primaryKey[0]);
+        if (!in_array($primaryKeyType, ['integer', 'biginteger', 'smallinteger', 'tinyinteger'], true)) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires a single-column numeric primary key on the target table.',
+            );
+        }
+
+        return array_values(array_diff($schemaColumns, ['id', 'prev_hash', 'hash']));
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     * @param array<string> $hashPayloadColumns
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildHashPayload(array $fields, array $hashPayloadColumns): array
+    {
+        $payload = [];
+        foreach ($hashPayloadColumns as $column) {
+            $payload[$column] = $fields[$column] ?? null;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     *
+     * @throws \RuntimeException
+     *
+     * @return string|null
+     */
+    protected function acquireChainWriteLock(Table $table): ?string
+    {
+        $connection = $table->getConnection();
+        $driverClass = $connection->getDriver()::class;
+        $lockName = 'audit_stash_hash_chain:' . $table->getTable();
+
+        if (str_contains($driverClass, 'Mysql')) {
+            $result = $connection
+                ->execute('SELECT GET_LOCK(?, 10) AS acquired', [$lockName])
+                ->fetch('assoc');
+            if ((int)($result['acquired'] ?? 0) !== 1) {
+                throw new RuntimeException(sprintf('Failed to acquire hash-chain write lock for `%s`.', $table->getTable()));
+            }
+
+            return $lockName;
+        }
+
+        if (str_contains($driverClass, 'Postgres')) {
+            [$key1, $key2] = $this->advisoryLockKeys($lockName);
+            $deadline = microtime(true) + 10.0;
+
+            do {
+                $result = $connection
+                    ->execute('SELECT pg_try_advisory_lock(?, ?) AS acquired', [$key1, $key2])
+                    ->fetch('assoc');
+                if ((bool)($result['acquired'] ?? false)) {
+                    return $lockName;
+                }
+
+                usleep(100000);
+            } while (microtime(true) < $deadline);
+
+            throw new RuntimeException(sprintf('Failed to acquire hash-chain write lock for `%s`.', $table->getTable()));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     * @param string|null $lockHandle
+     *
+     * @return void
+     */
+    protected function releaseChainWriteLock(Table $table, ?string $lockHandle): void
+    {
+        if ($lockHandle === null) {
+            return;
+        }
+
+        $connection = $table->getConnection();
+        $driverClass = $connection->getDriver()::class;
+
+        if (str_contains($driverClass, 'Mysql')) {
+            $connection->execute('SELECT RELEASE_LOCK(?)', [$lockHandle]);
+
+            return;
+        }
+
+        if (str_contains($driverClass, 'Postgres')) {
+            [$key1, $key2] = $this->advisoryLockKeys($lockHandle);
+            $connection->execute('SELECT pg_advisory_unlock(?, ?)', [$key1, $key2]);
+        }
+    }
+
+    /**
+     * @param string $lockName
+     *
+     * @return array{int, int}
+     */
+    protected function advisoryLockKeys(string $lockName): array
+    {
+        return [
+            $this->toSignedInt32(crc32('audit_stash')),
+            $this->toSignedInt32(crc32($lockName)),
+        ];
+    }
+
+    /**
+     * @param int $value
+     *
+     * @return int
+     */
+    protected function toSignedInt32(int $value): int
+    {
+        if ($value <= 0x7fffffff) {
+            return $value;
+        }
+
+        return $value - 0x100000000;
     }
 
     /**

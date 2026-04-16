@@ -59,6 +59,26 @@ return [
         'linkRecord' => null,
 
         /**
+         * Persister-specific options passed to the persister's setConfig().
+         *
+         * The default persister is TablePersister (database).
+         * For Elasticsearch, set 'persister' => ElasticSearchPersister::class.
+         */
+        'persisterConfig' => [
+            /**
+             * Tamper-Evidence Hash Chain
+             *
+             * When enabled, every audit row is linked into a SHA-256 hash chain,
+             * making it possible to detect any later modification or deletion of
+             * historic rows. Requires the AddHashChainToAuditLogs migration.
+             * Only supported by TablePersister.
+             *
+             * See docs/tamper-evidence.md for rationale and verification workflow.
+             */
+            'hashChain' => false,
+        ],
+
+        /**
          * Revert & Restore Configuration
          */
         'revert' => [

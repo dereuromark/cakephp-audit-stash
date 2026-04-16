@@ -96,6 +96,17 @@ Automated cleanup with configurable retention policies:
 
 See [Retention Documentation](docs/retention.md) for configuration.
 
+### Tamper-Evidence (Hash Chain)
+Optional SHA-256 hash chain over audit rows for GoBD / SOX / HIPAA-grade
+integrity guarantees:
+- Each row linked to the previous via `prev_hash` + `hash` columns
+- Transparent concurrency via row-level locks — no orphaned links
+- `bin/cake audit_stash verify_chain` to verify end-to-end
+- Off by default, opt-in per persister config
+
+See [Tamper-Evidence Documentation](docs/tamper-evidence.md) for rationale,
+configuration, verification, and anchoring strategies.
+
 ### Flexible Storage
 - **Database (default)**: Simple, fast, works out-of-the-box
 - **Elasticsearch**: Optional for high-volume applications
@@ -110,6 +121,7 @@ See [Configuration Documentation](docs/configuration.md) for storage options.
 - **[Viewer](docs/viewer.md)** - Web UI for browsing and searching audit logs
 - **[Retention](docs/retention.md)** - Automated log cleanup and retention policies
 - **[Monitoring](docs/monitoring.md)** - Real-time alerting for suspicious activities
+- **[Tamper-Evidence](docs/tamper-evidence.md)** - Optional SHA-256 hash chain for GoBD / SOX / HIPAA integrity
 
 ## Demo
 
