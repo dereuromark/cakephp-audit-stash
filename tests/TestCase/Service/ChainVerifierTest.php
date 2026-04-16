@@ -122,7 +122,7 @@ class ChainVerifierTest extends TestCase
     {
         $table = $this->getTableLocator()->get('AuditLogs');
         $table->getConnection()->execute(
-            'INSERT INTO audit_logs ("transaction", "type", "source", "primary_key") VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
+            'INSERT INTO audit_logs ("transaction_key", "type", "source", "primary_key") VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
             ['legacy-1', 'create', 'Articles', 10, 'legacy-2', 'create', 'Articles', 11],
         );
 
@@ -142,7 +142,7 @@ class ChainVerifierTest extends TestCase
         $table = $this->getTableLocator()->get('AuditLogs');
         $anchor = hash('sha256', 'external-anchor');
         $table->getConnection()->execute(
-            'INSERT INTO audit_logs ("transaction", "type", "source", "primary_key", "parent_source", "display_value", "original", "changed", "meta", "prev_hash", "hash", "created") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO audit_logs ("transaction_key", "type", "source", "primary_key", "parent_source", "display_value", "original", "changed", "meta", "prev_hash", "hash", "created") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 'anchored-1',
                 'create',
