@@ -200,6 +200,11 @@ class TablePersister implements PersisterInterface
             $serializeFields = false;
         }
 
+        $hashPayloadColumns = [];
+        if ($hashChain) {
+            $hashPayloadColumns = $this->assertHashChainReady($persisterTable);
+        }
+
         $persist = function () use (
             $auditLogs,
             $persisterTable,
@@ -209,6 +214,7 @@ class TablePersister implements PersisterInterface
             $unsetExtractedMetaFields,
             $logErrors,
             $hashChain,
+            $hashPayloadColumns,
         ): void {
             $prevHash = $hashChain ? $this->loadLastHashForUpdate($persisterTable) : null;
 
@@ -227,10 +233,7 @@ class TablePersister implements PersisterInterface
                     // stay consistent with ChainVerifier which excludes
                     // prev_hash from the hash input (it contributes via the
                     // chain-link argument instead).
-                    $schemaColumns = $persisterTable->getSchema()->columns();
-                    $hashInput = array_intersect_key($fields, array_flip($schemaColumns));
-                    unset($hashInput['prev_hash'], $hashInput['hash']);
-                    $hash = HashChain::hash($prevHash, $hashInput);
+                    $hash = HashChain::hash($prevHash, $this->buildHashPayload($fields, $hashPayloadColumns));
                     $fields['prev_hash'] = $prevHash;
                     $fields['hash'] = $hash;
                 }
@@ -261,7 +264,12 @@ class TablePersister implements PersisterInterface
         };
 
         if ($hashChain) {
-            $persisterTable->getConnection()->transactional($persist);
+            $lockHandle = $this->acquireChainWriteLock($persisterTable);
+            try {
+                $persisterTable->getConnection()->transactional($persist);
+            } finally {
+                $this->releaseChainWriteLock($persisterTable, $lockHandle);
+            }
 
             return;
         }
@@ -311,6 +319,145 @@ class TablePersister implements PersisterInterface
         $hash = $row->get('hash');
 
         return is_string($hash) ? $hash : null;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return array<string>
+     */
+    protected function assertHashChainReady(Table $table): array
+    {
+        $schema = $table->getSchema();
+        $schemaColumns = $schema->columns();
+        if (!in_array('prev_hash', $schemaColumns, true) || !in_array('hash', $schemaColumns, true)) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires `prev_hash` and `hash` columns on the target table. '
+                . 'Run the AuditStash migration before enabling `persisterConfig.hashChain`.',
+            );
+        }
+
+        $primaryKey = (array)$table->getPrimaryKey();
+        if (count($primaryKey) !== 1) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires a single-column numeric primary key on the target table.',
+            );
+        }
+
+        $primaryKeyType = $schema->getColumnType($primaryKey[0]);
+        if (!in_array($primaryKeyType, ['integer', 'biginteger', 'smallinteger', 'tinyinteger'], true)) {
+            throw new InvalidArgumentException(
+                'Hash chaining requires a single-column numeric primary key on the target table.',
+            );
+        }
+
+        return array_values(array_diff($schemaColumns, ['id', 'prev_hash', 'hash']));
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     * @param array<string> $hashPayloadColumns
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildHashPayload(array $fields, array $hashPayloadColumns): array
+    {
+        $payload = [];
+        foreach ($hashPayloadColumns as $column) {
+            $payload[$column] = $fields[$column] ?? null;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     *
+     * @throws \RuntimeException
+     *
+     * @return string|null
+     */
+    protected function acquireChainWriteLock(Table $table): ?string
+    {
+        $connection = $table->getConnection();
+        $driverClass = $connection->getDriver()::class;
+        $lockName = 'audit_stash_hash_chain:' . $table->getTable();
+
+        if (str_contains($driverClass, 'Mysql')) {
+            $result = $connection
+                ->execute('SELECT GET_LOCK(?, 10) AS acquired', [$lockName])
+                ->fetch('assoc');
+            if ((int)($result['acquired'] ?? 0) !== 1) {
+                throw new RuntimeException(sprintf('Failed to acquire hash-chain write lock for `%s`.', $table->getTable()));
+            }
+
+            return $lockName;
+        }
+
+        if (str_contains($driverClass, 'Postgres')) {
+            [$key1, $key2] = $this->advisoryLockKeys($lockName);
+            $connection->execute('SELECT pg_advisory_lock(?, ?)', [$key1, $key2]);
+
+            return $lockName;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table
+     * @param string|null $lockHandle
+     *
+     * @return void
+     */
+    protected function releaseChainWriteLock(Table $table, ?string $lockHandle): void
+    {
+        if ($lockHandle === null) {
+            return;
+        }
+
+        $connection = $table->getConnection();
+        $driverClass = $connection->getDriver()::class;
+
+        if (str_contains($driverClass, 'Mysql')) {
+            $connection->execute('SELECT RELEASE_LOCK(?)', [$lockHandle]);
+
+            return;
+        }
+
+        if (str_contains($driverClass, 'Postgres')) {
+            [$key1, $key2] = $this->advisoryLockKeys($lockHandle);
+            $connection->execute('SELECT pg_advisory_unlock(?, ?)', [$key1, $key2]);
+        }
+    }
+
+    /**
+     * @param string $lockName
+     *
+     * @return array{int, int}
+     */
+    protected function advisoryLockKeys(string $lockName): array
+    {
+        return [
+            $this->toSignedInt32(crc32('audit_stash')),
+            $this->toSignedInt32(crc32($lockName)),
+        ];
+    }
+
+    /**
+     * @param int $value
+     *
+     * @return int
+     */
+    protected function toSignedInt32(int $value): int
+    {
+        if ($value <= 0x7fffffff) {
+            return $value;
+        }
+
+        return $value - 0x100000000;
     }
 
     /**

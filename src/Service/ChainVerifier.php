@@ -6,6 +6,7 @@ namespace AuditStash\Service;
 
 use Cake\Datasource\EntityInterface;
 use Cake\ORM\Table;
+use InvalidArgumentException;
 
 /**
  * Walks an audit-log table row by row and reports the first chain break.
@@ -36,11 +37,13 @@ class ChainVerifier
      */
     public function verify(Table $table, int $chunkSize = 500): ChainVerificationResult
     {
-        $primaryKey = (array)$table->getPrimaryKey();
-        $orderField = $table->aliasField($primaryKey[0]);
+        $primaryKey = $this->validatePrimaryKey($table);
+        $orderField = $table->aliasField($primaryKey);
+        $payloadColumns = array_values(array_diff($table->getSchema()->columns(), self::IGNORED_FIELDS));
 
         $total = 0;
         $expectedPrev = null;
+        $started = false;
         $lastId = 0;
 
         while (true) {
@@ -56,17 +59,37 @@ class ChainVerifier
                     continue;
                 }
                 $count++;
-                $total++;
                 $fields = $row->toArray();
-                $id = (int)($fields[$primaryKey[0]] ?? 0);
-                $storedHash = (string)($fields['hash'] ?? '');
+                $id = (int)($fields[$primaryKey] ?? 0);
+                $storedHash = $fields['hash'] ?? null;
                 $storedPrev = $fields['prev_hash'] ?? null;
-                $payload = $fields;
-                foreach (self::IGNORED_FIELDS as $ignore) {
-                    unset($payload[$ignore]);
+
+                if (!$started && $storedHash === null) {
+                    if ($storedPrev !== null) {
+                        return ChainVerificationResult::broken(
+                            $id,
+                            $total + 1,
+                            'Encountered prev_hash before the chain started.',
+                        );
+                    }
+
+                    $lastId = $id;
+
+                    continue;
                 }
 
-                if ($storedPrev !== $expectedPrev) {
+                if (!is_string($storedHash) || $storedHash === '') {
+                    return ChainVerificationResult::broken(
+                        $id,
+                        $total + 1,
+                        'Encountered a row with an empty hash after the chain started.',
+                    );
+                }
+
+                $total++;
+                $payload = $this->buildPayload($fields, $payloadColumns);
+
+                if ($started && $storedPrev !== $expectedPrev) {
                     return ChainVerificationResult::broken(
                         $id,
                         $total,
@@ -95,6 +118,7 @@ class ChainVerifier
                     );
                 }
 
+                $started = true;
                 $expectedPrev = $storedHash;
                 $lastId = $id;
             }
@@ -105,5 +129,48 @@ class ChainVerifier
         }
 
         return ChainVerificationResult::intact($total);
+    }
+
+    /**
+     * @param \Cake\ORM\Table $table Audit log table to verify.
+     *
+     * @throws \InvalidArgumentException
+     *
+     * @return string
+     */
+    protected function validatePrimaryKey(Table $table): string
+    {
+        $primaryKey = (array)$table->getPrimaryKey();
+        if (count($primaryKey) !== 1) {
+            throw new InvalidArgumentException(
+                'Chain verification requires a single-column numeric primary key.',
+            );
+        }
+
+        $primaryKeyField = $primaryKey[0];
+        $primaryKeyType = $table->getSchema()->getColumnType($primaryKeyField);
+        if (!in_array($primaryKeyType, ['integer', 'biginteger', 'smallinteger', 'tinyinteger'], true)) {
+            throw new InvalidArgumentException(
+                'Chain verification requires a single-column numeric primary key.',
+            );
+        }
+
+        return $primaryKeyField;
+    }
+
+    /**
+     * @param array<string, mixed> $fields
+     * @param array<string> $payloadColumns
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildPayload(array $fields, array $payloadColumns): array
+    {
+        $payload = [];
+        foreach ($payloadColumns as $column) {
+            $payload[$column] = $fields[$column] ?? null;
+        }
+
+        return $payload;
     }
 }

@@ -896,6 +896,80 @@ class TablePersisterTest extends TestCase
         $this->TablePersister->logEvents([$event]);
     }
 
+    public function testHashChainRequiresHashColumns(): void
+    {
+        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
+        $event->setMetaInfo([]);
+
+        $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
+        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema->method('columns')->willReturn([
+            'id',
+            'transaction',
+            'type',
+            'source',
+            'primary_key',
+            'created',
+        ]);
+        $schema->method('getColumnType')
+            ->willReturnCallback(function (string $column): string {
+                if (in_array($column, ['original', 'changed', 'meta'], true)) {
+                    return 'text';
+                }
+
+                return $column === 'id' ? 'integer' : 'string';
+            });
+
+        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->method('getPrimaryKey')->willReturn('id');
+
+        $this->TablePersister->setTable($AuditLogsTable);
+        $this->TablePersister->setConfig('hashChain', true);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Hash chaining requires `prev_hash` and `hash` columns');
+
+        $this->TablePersister->logEvents([$event]);
+    }
+
+    public function testHashChainRequiresNumericPrimaryKey(): void
+    {
+        $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
+        $event->setMetaInfo([]);
+
+        $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
+        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema->method('columns')->willReturn([
+            'id',
+            'transaction',
+            'type',
+            'source',
+            'primary_key',
+            'prev_hash',
+            'hash',
+            'created',
+        ]);
+        $schema->method('getColumnType')
+            ->willReturnCallback(function (string $column): string {
+                if (in_array($column, ['original', 'changed', 'meta'], true)) {
+                    return 'text';
+                }
+
+                return $column === 'id' ? 'uuid' : 'string';
+            });
+
+        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->method('getPrimaryKey')->willReturn('id');
+
+        $this->TablePersister->setTable($AuditLogsTable);
+        $this->TablePersister->setConfig('hashChain', true);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('single-column numeric primary key');
+
+        $this->TablePersister->logEvents([$event]);
+    }
+
     /**
      * Get a mock for a model.
      *

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace AuditStash\Service;
 
+use BackedEnum;
 use DateTimeInterface;
+use UnitEnum;
 
 /**
  * Tamper-evident hash chain over audit log rows.
@@ -114,6 +116,14 @@ class HashChain
         // string-backed SQLite columns.
         if ($value instanceof DateTimeInterface) {
             return $value->format('Y-m-d H:i:s');
+        }
+
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
         }
 
         if (!is_array($value)) {

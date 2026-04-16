@@ -7,9 +7,13 @@ namespace AuditStash\Test\TestCase\Service;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Persister\TablePersister;
 use AuditStash\Service\ChainVerifier;
+use AuditStash\Service\HashChain;
 use AuditStash\Test\AuditLogsTable;
+use Cake\Database\Schema\TableSchema;
 use Cake\ORM\Entity;
+use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
 
 /**
  * Integration test: drives TablePersister in hashChain mode against a
@@ -112,6 +116,83 @@ class ChainVerifierTest extends TestCase
 
         $result = (new ChainVerifier())->verify($table);
         $this->assertTrue($result->intact);
+    }
+
+    public function testVerifierSkipsLegacyRowsUntilFirstHashedRow(): void
+    {
+        $table = $this->getTableLocator()->get('AuditLogs');
+        $table->getConnection()->execute(
+            'INSERT INTO audit_logs ("transaction", "type", "source", "primary_key") VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
+            ['legacy-1', 'create', 'Articles', 10, 'legacy-2', 'create', 'Articles', 11],
+        );
+
+        $this->persister->logEvents([
+            $this->buildEvent(12, ['title' => 'A']),
+            $this->buildEvent(13, ['title' => 'B']),
+        ]);
+
+        $result = (new ChainVerifier())->verify($table);
+
+        $this->assertTrue($result->intact, (string)$result->reason);
+        $this->assertSame(2, $result->rowsChecked);
+    }
+
+    public function testVerifierAllowsAnchoredFirstHashedRow(): void
+    {
+        $table = $this->getTableLocator()->get('AuditLogs');
+        $anchor = hash('sha256', 'external-anchor');
+        $table->getConnection()->execute(
+            'INSERT INTO audit_logs ("transaction", "type", "source", "primary_key", "parent_source", "display_value", "original", "changed", "meta", "prev_hash", "hash", "created") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                'anchored-1',
+                'create',
+                'Articles',
+                42,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+            ],
+        );
+        $row = $table->find()->orderByDesc('id')->firstOrFail();
+        $payload = $row->toArray();
+        unset($payload['id'], $payload['prev_hash'], $payload['hash']);
+        $hash = HashChain::hash($anchor, $payload);
+
+        $table->updateQuery()
+            ->set([
+                'prev_hash' => $anchor,
+                'hash' => $hash,
+            ])
+            ->where(['id' => $row->get('id')])
+            ->execute();
+
+        $result = (new ChainVerifier())->verify($table);
+
+        $this->assertTrue($result->intact, (string)$result->reason);
+        $this->assertSame(1, $result->rowsChecked);
+    }
+
+    public function testVerifierRejectsNonNumericPrimaryKeys(): void
+    {
+        $table = $this->getMockBuilder(Table::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getPrimaryKey', 'getSchema'])
+            ->getMock();
+        $schema = new TableSchema('audit_logs');
+        $schema->addColumn('id', ['type' => 'uuid']);
+
+        $table->method('getPrimaryKey')->willReturn('id');
+        $table->method('getSchema')->willReturn($schema);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('single-column numeric primary key');
+
+        (new ChainVerifier())->verify($table);
     }
 
     private function buildEvent(int $primaryKey, array $changed): AuditCreateEvent

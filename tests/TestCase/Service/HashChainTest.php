@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Service;
 
+use AuditStash\AuditLogType;
 use AuditStash\Service\HashChain;
 use PHPUnit\Framework\TestCase;
 
@@ -57,6 +58,14 @@ class HashChainTest extends TestCase
     {
         $a = HashChain::hash(null, ['meta' => ['user' => ['id' => 1, 'name' => 'x']]]);
         $b = HashChain::hash(null, ['meta' => ['user' => ['name' => 'x', 'id' => 1]]]);
+
+        $this->assertSame($a, $b);
+    }
+
+    public function testBackedEnumsAreCanonicalizedToTheirValue(): void
+    {
+        $a = HashChain::hash(null, ['type' => AuditLogType::Create]);
+        $b = HashChain::hash(null, ['type' => AuditLogType::Create->value]);
 
         $this->assertSame($a, $b);
     }

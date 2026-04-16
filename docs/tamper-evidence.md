@@ -30,8 +30,9 @@ bin/cake migrations migrate -p AuditStash
 ```
 
 This adds two nullable columns — `prev_hash` and `hash` — and an index on
-`hash`. Rows written before the migration will have `NULL` in both columns
-and are skipped gracefully by the verifier (see _Backfilling_ below).
+`hash`. Rows written before the migration will have `NULL` in both columns.
+The verifier skips those legacy rows until it reaches the first row with a
+stored `hash` (see _Backfilling_ below).
 
 ### 2. Turn on `hashChain` on the persister
 
@@ -63,11 +64,15 @@ Where:
 - `payload` is all row fields **except** `id`, `hash`, and `prev_hash`.
   `prev_hash` contributes via the separate chain-link argument rather
   than as a payload field so both writer and verifier agree on the input.
+  Schema-owned fields missing from the event payload are normalized to
+  `null`, so nullable columns still hash consistently after a DB round-trip.
 - `canonical_json` sorts associative-array keys recursively before JSON-
   encoding with `JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES`. List
   arrays keep their order because order is semantically meaningful
   there. `DateTimeInterface` values are normalized to second-precision
-  strings so the hash round-trips cleanly across column-type precision.
+  strings, and PHP enums are normalized to their scalar value/name, so
+  the hash round-trips cleanly across column-type precision and ORM
+  type conversion.
 
 Canonicalization makes the hash **deterministic across PHP versions,
 machines and insertion orders** — two semantically equivalent rows always
@@ -78,18 +83,19 @@ produce the same hash. This matters for cross-environment verifiability
 
 Concurrent writers are a classic trap for naive hash chains: two
 requests both read the same "last hash" and one of them produces an
-orphaned link. AuditStash handles this by running the full `logEvents()`
-batch inside a single transaction and reading the last chain link with
-`SELECT ... FOR UPDATE`:
+orphaned link. AuditStash handles this by serializing chain writers per
+table on MySQL/Postgres and then running the full `logEvents()` batch
+inside a single transaction. Within that transaction it still reads the
+last chain link with `SELECT ... FOR UPDATE`:
 
 ```sql
 SELECT hash FROM audit_logs ORDER BY id DESC LIMIT 1 FOR UPDATE;
 ```
 
-That row-level lock serializes concurrent writers on the tail of the
-chain without blocking unrelated queries. A second writer waits until
-the first writer's transaction commits, then reads the freshly-written
-tail.
+On MySQL/Postgres, the advisory lock closes the empty-table bootstrap
+race where there is no tail row yet to lock. A second writer waits until
+the first writer commits, then reads the freshly-written tail. SQLite
+serializes writes at the database level already.
 
 > [!IMPORTANT]
 > `hashChain` is currently only supported by `TablePersister`. The
@@ -169,8 +175,9 @@ append-only hash chain. Mitigations:
 Rows written before enabling the chain have `NULL` in `prev_hash` and
 `hash`. You have three options:
 
-1. **Leave them as-is.** The verifier starts at the first row with a
-   non-null `hash`. Historic rows are not protected, but new rows are.
+1. **Leave them as-is.** The verifier skips legacy rows with `NULL`
+   hashes and starts at the first row with a non-null `hash`. Historic
+   rows are not protected, but new rows are.
 2. **Seed the chain at the current tail.** Write a single synthetic row
    before enabling `hashChain` with a hand-picked `prev_hash` (typically
    the SHA-256 of a signed statement from the data controller: *"as of

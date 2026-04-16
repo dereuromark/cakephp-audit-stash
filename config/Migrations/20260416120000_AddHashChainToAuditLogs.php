@@ -7,10 +7,11 @@ use Migrations\BaseMigration;
 /**
  * Adds optional hash chain columns for tamper-evidence.
  *
- * When enabled via `AuditStash.hashChain => true`, each row gets a SHA-256
- * hash linked to the previous row's hash. Any later edit of historic data
- * invalidates the chain from that row onwards. Disabled by default — the
- * columns are nullable and existing installs can ignore them.
+ * When enabled via `persisterConfig['hashChain'] => true` for
+ * `TablePersister`, each row gets a SHA-256 hash linked to the previous
+ * row's hash. Any later edit of historic data invalidates the chain from
+ * that row onwards. Disabled by default — the columns are nullable and
+ * existing installs can ignore them.
  *
  * See docs/tamper-evidence.md for context, concurrency semantics, and the
  * verification workflow.
