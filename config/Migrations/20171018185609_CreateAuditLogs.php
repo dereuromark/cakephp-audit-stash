@@ -22,7 +22,7 @@ class CreateAuditLogs extends BaseMigration
                 'signed' => false,
             ])
             ->addPrimaryKey(['id'])
-            ->addColumn('transaction_key', 'binaryuuid', [
+            ->addColumn('transaction', 'binaryuuid', [
                 'default' => null,
                 'limit' => null,
                 'null' => false,
@@ -78,7 +78,7 @@ class CreateAuditLogs extends BaseMigration
                 'limit' => null,
                 'null' => true,
             ])
-            ->addIndex(['transaction_key'])
+            ->addIndex(['transaction'])
             ->addIndex(['type'])
             ->addIndex(['primary_key'])
             ->addIndex(['display_value'])
