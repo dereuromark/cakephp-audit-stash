@@ -8,15 +8,17 @@ class RenameTransactionToTransactionKey extends BaseMigration
 {
     public function up(): void
     {
-        $this->table('audit_logs')
-            ->renameColumn('transaction', 'transaction_key')
-            ->update();
+        $table = $this->table('audit_logs');
+        if ($table->hasColumn('transaction')) {
+            $table->renameColumn('transaction', 'transaction_key')->update();
+        }
     }
 
     public function down(): void
     {
-        $this->table('audit_logs')
-            ->renameColumn('transaction_key', 'transaction')
-            ->update();
+        $table = $this->table('audit_logs');
+        if ($table->hasColumn('transaction_key') && !$table->hasColumn('transaction')) {
+            $table->renameColumn('transaction_key', 'transaction')->update();
+        }
     }
-}
+}s
