@@ -18,6 +18,7 @@ $action = $this->getRequest()->getParam('action');
 $plugin = $this->getRequest()->getParam('plugin');
 $prefix = $this->getRequest()->getParam('prefix');
 $isIndex = $controller === 'AuditLogs' && $action === 'index';
+$cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -379,7 +380,7 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
     <!-- Flatpickr Date Picker -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    <script>
+    <script<?= $cspNonce !== '' ? ' nonce="' . h($cspNonce) . '"' : '' ?>>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -395,10 +396,10 @@ $isIndex = $controller === 'AuditLogs' && $action === 'index';
             });
         });
 
-        // Form confirmation
-        document.querySelectorAll('form[data-confirm]').forEach(function(form) {
+        // Confirmation dialogs for postButton forms (CSP-safe replacement for postLink + confirm)
+        document.querySelectorAll('form[data-confirm-message]').forEach(function(form) {
             form.addEventListener('submit', function(e) {
-                if (!confirm(form.dataset.confirm)) {
+                if (!confirm(form.dataset.confirmMessage)) {
                     e.preventDefault();
                 }
             });

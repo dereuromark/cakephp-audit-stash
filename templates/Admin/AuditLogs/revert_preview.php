@@ -6,6 +6,7 @@
  * @var array $targetState
  * @var array $diff
  */
+$cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 ?>
 <div class="auditLogs revert content">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -44,7 +45,10 @@
             <?= __('No differences found. Record is already in this state.') ?>
         </div>
     <?php } else { ?>
-        <?= $this->Form->create(null, ['url' => ['action' => 'revert', $auditLog->id]]) ?>
+        <?= $this->Form->create(null, [
+            'url' => ['action' => 'revert', $auditLog->id],
+            'data-confirm-message' => __('Are you sure you want to revert the selected fields?'),
+        ]) ?>
 
         <div class="card">
             <div class="card-header">
@@ -91,7 +95,6 @@
                 <div>
                     <?= $this->Form->button(__('Revert Selected'), [
                         'class' => 'btn btn-primary',
-                        'confirm' => __('Are you sure you want to revert the selected fields?'),
                     ]) ?>
                 </div>
             </div>
@@ -101,7 +104,7 @@
     <?php } ?>
 </div>
 
-<script>
+<script<?= $cspNonce !== '' ? ' nonce="' . h($cspNonce) . '"' : '' ?>>
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('input[name="fields[]"]');
     const btnSelectAll = document.getElementById('btn-select-all');
