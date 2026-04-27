@@ -37,6 +37,37 @@ This means you don't need to change any configuration - it just works.
 
 **Note:** This requires MySQL 5.7.8+, MariaDB 10.2.7+, or PostgreSQL 9.2+. SQLite does not support native JSON columns.
 
+### Sub-Second Timestamp Precision
+
+Audit events are captured with microsecond precision (ISO 8601 with timezone offset, e.g.
+`2026-04-27T12:34:56.123456+00:00`), but the bundled migration creates the `created` column as a plain
+`DATETIME`, which MySQL stores at second precision. To actually persist the extra precision, copy the
+migration to your app and widen the column:
+
+```bash
+cp vendor/dereuromark/cakephp-audit-stash/config/Migrations/20171018185609_CreateAuditLogs.php config/Migrations/
+```
+
+Then change the `created` column to use a fractional seconds precision (`3` for milliseconds, `6` for
+microseconds):
+
+```php
+->addColumn('created', 'datetime', [
+    'default' => null,
+    'null' => false,
+    'precision' => 6,
+])
+```
+
+Notes:
+
+- PostgreSQL's `TIMESTAMP` already stores microseconds, so no migration change is needed.
+- SQLite stores datetimes as text and preserves whatever precision is written.
+- Elasticsearch's `date` mapping accepts the extended ISO string but truncates to milliseconds; use
+  `date_nanos` if you need full microsecond precision in the index.
+- If you want to access the timestamp as a `DateTime` object (e.g. in a custom persister) without
+  re-parsing the string, use `BaseEvent::getTimestampObject()`.
+
 ### UUID Primary Keys
 
 The default migration creates the `primary_key` column as an integer. If your application uses UUID primary keys,
