@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Event;
 
 use Cake\Datasource\EntityInterface;
+use Cake\I18n\DateTime;
 
 /**
  * Implements most of the methods of the EventInterface.
@@ -126,11 +127,28 @@ trait BaseEventTrait
     /**
      * Returns the time string in which this change happened.
      *
+     * The string is ISO 8601 with microsecond precision and timezone offset
+     * (e.g. `2026-04-27T12:34:56.123456+00:00`).
+     *
      * @return string
      */
     public function getTimestamp(): string
     {
         return $this->timestamp;
+    }
+
+    /**
+     * Returns the time at which this change happened as a DateTime object,
+     * preserving the microsecond precision captured at event creation.
+     *
+     * Persisters can use this to skip the parse round-trip from the
+     * timestamp string.
+     *
+     * @return \Cake\I18n\DateTime
+     */
+    public function getTimestampObject(): DateTime
+    {
+        return new DateTime($this->timestamp);
     }
 
     /**

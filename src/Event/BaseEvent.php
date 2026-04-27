@@ -6,7 +6,7 @@ namespace AuditStash\Event;
 
 use AuditStash\EventInterface;
 use Cake\Datasource\EntityInterface;
-use DateTime;
+use Cake\I18n\DateTime;
 use ReturnTypeWillChange;
 
 /**
@@ -57,7 +57,7 @@ abstract class BaseEvent implements EventInterface
         $this->source = $source;
         $this->changed = $changed;
         $this->original = $original;
-        $this->timestamp = (new DateTime())->format(DateTime::ATOM);
+        $this->timestamp = (new DateTime())->format('Y-m-d\TH:i:s.uP');
         $this->entity = $entity;
         $this->displayValue = $displayValue;
     }
