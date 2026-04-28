@@ -7,6 +7,7 @@
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892BF.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-audit-stash/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
+[![Coding Standards](https://img.shields.io/badge/cs-PhpCollective-purple.svg?style=flat-square)](https://github.com/php-collective/code-sniffer)
 
 This plugin implements an "audit trail" for any of your Table classes in your application, that is,
 the ability of recording any creation, modification or delete of the entities of any particular table.
