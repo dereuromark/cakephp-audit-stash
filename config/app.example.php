@@ -29,6 +29,26 @@ return [
         'standalone' => false,
 
         /**
+         * Admin access gate (optional, defense-in-depth).
+         *
+         * Unset = no-op; the host AppController's auth is the only gate.
+         * Set to a Closure that receives the current request and returns
+         * literal true to grant access; anything else (non-Closure, returns
+         * false, returns a truthy non-bool, or throws) yields a 403.
+         *
+         * Particularly relevant here because audit logs commonly contain
+         * sensitive who-did-what records — PII, IP addresses, before/after
+         * field values for every change.
+         *
+         * Example — restrict to super_admin role on the cakephp/authentication
+         * identity:
+         */
+        // 'accessCheck' => function (\Cake\Http\ServerRequest $request): bool {
+        //     $identity = $request->getAttribute('identity');
+        //     return $identity !== null && $identity->role === 'super_admin';
+        // },
+
+        /**
          * Dashboard Auto-Refresh
          *
          * Auto-refresh interval in seconds for the index page.
