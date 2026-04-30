@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Controller;
 
+use Cake\Core\Configure;
+use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
+use RuntimeException;
 
 /**
  * AuditStash\Controller\Admin\AuditLogsController Test Case
@@ -26,6 +29,97 @@ class AuditLogsControllerTest extends TestCase
         'plugin.AuditStash.AuditLogs',
         'plugin.AuditStash.Articles',
     ];
+
+    /**
+     * @return void
+     */
+    protected function tearDown(): void
+    {
+        Configure::delete('AuditStash.accessCheck');
+        parent::tearDown();
+    }
+
+    public function testAccessCheckUnsetIsNoOp(): void
+    {
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+    }
+
+    public function testAccessCheckNonClosureRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.accessCheck', 'not a closure');
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testAccessCheckClosureFalseRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.accessCheck', fn () => false);
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testAccessCheckRequiresStrictTrue(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.accessCheck', fn () => 1);
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testAccessCheckClosureTrueAllows(): void
+    {
+        Configure::write('AuditStash.accessCheck', fn () => true);
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+    }
+
+    public function testAccessCheckThrowingYields403(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.accessCheck', function (): bool {
+            throw new RuntimeException('oops');
+        });
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testAccessCheckExplicitForbiddenIsRespected(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.accessCheck', function (): bool {
+            throw new ForbiddenException('custom denial reason');
+        });
+
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('custom denial reason');
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testAccessCheckReceivesRequest(): void
+    {
+        $received = null;
+        Configure::write('AuditStash.accessCheck', function ($request) use (&$received): bool {
+            $received = $request;
+
+            return true;
+        });
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertNotNull($received);
+        $this->assertStringContainsString('audit', $received->getPath());
+    }
 
     /**
      * Test index method

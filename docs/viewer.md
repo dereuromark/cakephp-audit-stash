@@ -270,6 +270,22 @@ The audit log viewer provides:
 
 The audit log viewer is in the Admin prefix by default, which provides a layer of security. However, you should ensure your Admin prefix is properly secured with authentication/authorization. Here are some additional approaches:
 
+### Option 0 (recommended): `AuditStash.accessCheck`
+
+Set a `Closure` that receives the current request and returns literal `true` to grant access. Anything else (returns `false`, returns a truthy non-bool, throws) yields a `403`. Defense-in-depth on top of the host's existing admin gating; particularly relevant here because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, what fields changed).
+
+```php
+use Cake\Core\Configure;
+use Cake\Http\ServerRequest;
+
+Configure::write('AuditStash.accessCheck', function (ServerRequest $request): bool {
+    $identity = $request->getAttribute('identity');
+    return $identity !== null && $identity->role === 'super_admin';
+});
+```
+
+Unset = no-op (host auth alone applies). The gate is checked in `beforeFilter` and calls `Authorization::skipAuthorization()` when the cakephp/authorization component is loaded, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
+
 ### Option 1: Use Authorization Plugin
 
 ```php
