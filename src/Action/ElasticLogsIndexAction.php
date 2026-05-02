@@ -8,12 +8,14 @@ use Cake\Database\Expression\QueryExpression;
 use Cake\ElasticSearch\Index;
 use Cake\ElasticSearch\Query;
 use Cake\ElasticSearch\QueryBuilder;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Cake\I18n\DateTime;
 use Crud\Action\IndexAction;
 use Elastica\Query\BoolQuery;
 use Elastica\Query\QueryString;
+use Elastica\Util;
 use Exception;
 
 /**
@@ -23,6 +25,15 @@ use Exception;
 class ElasticLogsIndexAction extends IndexAction
 {
     use IndexConfigTrait;
+
+    /**
+     * Pattern that the `type` query parameter must match before being passed
+     * to `Index::setName()`. Prevents an attacker pointing the search at
+     * arbitrary indexes.
+     *
+     * @var string
+     */
+    protected const TYPE_PATTERN = '/^[A-Za-z0-9_-]{1,64}$/';
 
     /**
      * Renders the index action by searching all documents matching the URL conditions.
@@ -41,7 +52,14 @@ class ElasticLogsIndexAction extends IndexAction
         $query->searchOptions(['ignore_unavailable' => true]);
 
         if ($request->getQuery('type')) {
-            $repository->setName($request->getQuery('type'));
+            $type = (string)$request->getQuery('type');
+            if (preg_match(self::TYPE_PATTERN, $type) !== 1) {
+                throw new BadRequestException(sprintf(
+                    'Invalid type filter: must match %s',
+                    self::TYPE_PATTERN,
+                ));
+            }
+            $repository->setName($type);
         }
 
         if ($request->getQuery('primary_key')) {
@@ -67,8 +85,13 @@ class ElasticLogsIndexAction extends IndexAction
         }
 
         if ($request->getQuery('query')) {
+            // Escape ES query DSL meta-characters so the parameter behaves as
+            // a free-text search rather than a full DSL expression — wildcard
+            // / regex / field-selector tricks would otherwise let a caller
+            // read fields the UI did not intend or run expensive queries.
+            $escaped = Util::escapeTerm((string)$request->getQuery('query'));
             $query->where(fn (QueryBuilder $builder): BoolQuery => $builder
-                ->and(new QueryString($request->getQuery('query'))));
+                ->and(new QueryString($escaped)));
         }
 
         try {

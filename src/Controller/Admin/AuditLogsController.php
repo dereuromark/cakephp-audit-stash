@@ -10,6 +10,7 @@ use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
 use Cake\Log\Log;
@@ -28,6 +29,19 @@ use Throwable;
 class AuditLogsController extends AppController
 {
     use LoadHelperTrait;
+
+    /**
+     * Pattern for filter inputs used inside JSON path expressions.
+     *
+     * Restricts values to identifier-shaped tokens (column names, field names)
+     * so users cannot inject JSON path meta characters (`.`, `[`, `]`, `*`,
+     * `"`, ...) which would otherwise reshape `JSON_CONTAINS_PATH` /
+     * `JSON_EXTRACT` / `jsonb_exists` queries against the audit log JSON
+     * payload.
+     *
+     * @var string
+     */
+    protected const FILTER_IDENTIFIER_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]{0,63}$/';
 
     /**
      * The default model class to use.
@@ -117,54 +131,28 @@ class AuditLogsController extends AppController
     public function index()
     {
         $query = $this->AuditLogs->find();
+        $this->applyBaseFilters($query);
 
-        // Filter by table/source
-        if ($this->request->getQuery('source')) {
-            $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
-        }
-
-        // Filter by user ID
-        if ($this->request->getQuery('user_id')) {
-            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
-        }
-
-        // Filter by event type
-        if ($this->request->getQuery('type')) {
-            $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
-        }
-
-        // Filter by transaction ID
-        if ($this->request->getQuery('transaction_key')) {
-            $query->where(['AuditLogs.transaction_key' => $this->request->getQuery('transaction_key')]);
-        }
-
-        // Filter by primary key
-        if ($this->request->getQuery('primary_key')) {
-            $query->where(['AuditLogs.primary_key' => $this->request->getQuery('primary_key')]);
-        }
-
-        // Filter by date range
-        if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
-        }
-        if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
-        }
-
-        // Filter by changed field (field-level tracking)
-        $changedField = $this->request->getQuery('changed_field');
-        if ($changedField) {
+        // Filter by changed field (field-level tracking).
+        // Validated as a strict identifier to avoid JSON path injection.
+        $changedField = $this->validateFilterIdentifier(
+            $this->request->getQuery('changed_field'),
+            'changed_field',
+        );
+        if ($changedField !== null) {
             $query = $this->AuditLogs->find('byChangedField', field: $changedField);
-            // Re-apply other filters after using finder
             $this->applyBaseFilters($query);
         }
 
-        // Filter by field name + value (value-based search)
-        $fieldName = $this->request->getQuery('field_name');
+        // Filter by field name + value (value-based search).
+        // Field name validated as identifier; value is parameter-bound.
+        $fieldName = $this->validateFilterIdentifier(
+            $this->request->getQuery('field_name'),
+            'field_name',
+        );
         $fieldValue = $this->request->getQuery('field_value');
-        if ($fieldName && $fieldValue !== null && $fieldValue !== '') {
+        if ($fieldName !== null && $fieldValue !== null && $fieldValue !== '') {
             $query = $this->AuditLogs->find('byChangedFieldValue', field: $fieldName, value: $fieldValue);
-            // Re-apply other filters after using finder
             $this->applyBaseFilters($query);
         }
 
@@ -173,12 +161,10 @@ class AuditLogsController extends AppController
         if ($bulkFilter === 'yes') {
             $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
             $query = $this->AuditLogs->find('bulkChanges', minRecords: $minRecords);
-            // Re-apply other filters after using finder
             $this->applyBaseFilters($query);
         } elseif ($bulkFilter === 'no') {
             $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
             $query = $this->AuditLogs->find('nonBulkChanges', minRecords: $minRecords);
-            // Re-apply other filters after using finder
             $this->applyBaseFilters($query);
         }
 
@@ -203,9 +189,11 @@ class AuditLogsController extends AppController
     }
 
     /**
-     * Apply base filters to a query
+     * Apply base filters to a query.
      *
-     * Used when a finder resets the query and we need to re-apply standard filters.
+     * Single source of truth for the index/export filter set so the LIKE
+     * escape and other guards stay in sync. Used both at the start of index()
+     * and after a finder resets the query.
      *
      * @param \Cake\ORM\Query\SelectQuery $query The query to modify
      *
@@ -216,8 +204,12 @@ class AuditLogsController extends AppController
         if ($this->request->getQuery('source')) {
             $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
         }
-        if ($this->request->getQuery('user_id')) {
-            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
+        $userId = $this->request->getQuery('user_id');
+        if ($userId !== null && $userId !== '') {
+            // Escape LIKE wildcards so a literal `%` or `_` from user input
+            // does not turn the query into a full-table-scan / match-all.
+            $needle = addcslashes((string)$userId, '%_\\');
+            $query->where(['AuditLogs.user_id LIKE' => '%' . $needle . '%']);
         }
         if ($this->request->getQuery('type')) {
             $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
@@ -234,6 +226,43 @@ class AuditLogsController extends AppController
         if ($this->request->getQuery('date_to')) {
             $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
         }
+    }
+
+    /**
+     * Validate a filter input that will be interpolated into a JSON path
+     * expression (`$.<key>`).
+     *
+     * The audit log's `original`/`changed` columns hold arbitrary JSON. Any
+     * character with meaning in the JSON path mini-language (`.`, `[`, `]`,
+     * `*`, `"`, escapes) lets a caller reshape the path and read fields the
+     * UI did not intend to expose. Reject anything that is not a plain
+     * identifier-shaped token.
+     *
+     * Returns null for empty/missing input (treat as "no filter"). Returns
+     * the validated string. Throws on a non-empty malformed value so the
+     * request fails loudly instead of silently returning the wrong rows.
+     *
+     * @param mixed $value The raw query parameter
+     * @param string $name The parameter name (for the error message)
+     *
+     * @throws \Cake\Http\Exception\BadRequestException When the value is set but malformed.
+     *
+     * @return string|null The validated identifier, or null if not provided.
+     */
+    protected function validateFilterIdentifier(mixed $value, string $name): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (!is_string($value) || preg_match(self::FILTER_IDENTIFIER_PATTERN, $value) !== 1) {
+            throw new BadRequestException(sprintf(
+                'Invalid %s filter: must match %s',
+                $name,
+                self::FILTER_IDENTIFIER_PATTERN,
+            ));
+        }
+
+        return $value;
     }
 
     /**
@@ -474,22 +503,8 @@ class AuditLogsController extends AppController
         $format = $this->request->getParam('_ext') ?: 'csv';
         $query = $this->AuditLogs->find();
 
-        // Apply same filters as index
-        if ($this->request->getQuery('source')) {
-            $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
-        }
-        if ($this->request->getQuery('user_id')) {
-            $query->where(['AuditLogs.user_id LIKE' => '%' . $this->request->getQuery('user_id') . '%']);
-        }
-        if ($this->request->getQuery('type')) {
-            $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
-        }
-        if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
-        }
-        if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
-        }
+        // Reuse the index filter set so LIKE escaping etc. stay aligned.
+        $this->applyBaseFilters($query);
 
         $query->orderBy(['AuditLogs.created' => 'DESC'])->limit(10000);
 

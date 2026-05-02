@@ -9,6 +9,7 @@ use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\IdentifierExpression;
 use Cake\Database\Expression\QueryExpression;
 use Cake\ORM\Query\SelectQuery;
+use InvalidArgumentException;
 
 /**
  * Database-agnostic JSON query helper
@@ -17,6 +18,38 @@ use Cake\ORM\Query\SelectQuery;
  */
 class JsonQueryHelper
 {
+    /**
+     * Pattern that JSON path keys must match.
+     *
+     * The key is interpolated into a JSON path expression (`$.<key>`). Any
+     * character with meaning in the path mini-language (`.`, `[`, `]`, `*`,
+     * `"`, escapes) must be rejected to prevent path injection. Callers
+     * should also validate at the controller boundary as defense-in-depth.
+     *
+     * @var string
+     */
+    public const KEY_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]{0,63}$/';
+
+    /**
+     * Validate a JSON path key before interpolating it into a path expression.
+     *
+     * @param string $key The key to validate
+     *
+     * @throws \InvalidArgumentException When the key is malformed.
+     *
+     * @return void
+     */
+    protected static function assertValidKey(string $key): void
+    {
+        if (preg_match(self::KEY_PATTERN, $key) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid JSON path key %s: must match %s',
+                var_export($key, true),
+                self::KEY_PATTERN,
+            ));
+        }
+    }
+
     /**
      * Check if a JSON column contains a specific key
      *
@@ -28,6 +61,8 @@ class JsonQueryHelper
      */
     public static function jsonKeyExists(SelectQuery $query, string $column, string $key): QueryExpression
     {
+        self::assertValidKey($key);
+
         $driver = self::getDriverName($query);
         $expr = $query->expr();
 
@@ -87,6 +122,8 @@ class JsonQueryHelper
      */
     public static function jsonExtract(SelectQuery $query, string $column, string $key): FunctionExpression
     {
+        self::assertValidKey($key);
+
         $driver = self::getDriverName($query);
 
         if ($driver === 'Mysql') {
@@ -142,6 +179,10 @@ class JsonQueryHelper
      */
     public static function jsonEquals(SelectQuery $query, string $column, string $key, mixed $value): QueryExpression
     {
+        // jsonExtract() asserts the key shape; this guard makes the contract
+        // explicit for direct callers/readers of jsonEquals().
+        self::assertValidKey($key);
+
         $driver = self::getDriverName($query);
         $expr = $query->expr();
 

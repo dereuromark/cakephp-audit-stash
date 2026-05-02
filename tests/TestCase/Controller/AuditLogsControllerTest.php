@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Controller;
 
 use Cake\Core\Configure;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
@@ -193,6 +194,106 @@ class AuditLogsControllerTest extends TestCase
             'controller' => 'AuditLogs',
             'action' => 'index',
             '?' => ['user' => 'admin'],
+        ]);
+
+        $this->assertResponseOk();
+    }
+
+    /**
+     * LIKE wildcards in `user_id` must be escaped, not treated as wildcards.
+     *
+     * Without escaping, a literal `_` matches every row and `%a%` ignores
+     * positional intent (Issue #1). The fix `addcslashes()` escapes them so
+     * the search behaves as a substring match on the literal needle.
+     *
+     * @return void
+     */
+    public function testIndexUserIdLikeWildcardsAreEscaped(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'tx-real',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 1,
+            'user_id' => 'real-user',
+            'created' => new DateTime(),
+        ]));
+
+        // A bare `_` would match everything if not escaped. With escaping it
+        // matches nothing because no `user_id` contains a literal underscore
+        // matching the needle "_".
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'index',
+            '?' => ['user_id' => '_'],
+        ]);
+
+        $this->assertResponseOk();
+        $auditLogs = $this->viewVariable('auditLogs');
+        $this->assertNotNull($auditLogs);
+        $count = 0;
+        foreach ($auditLogs as $_log) {
+            $count++;
+        }
+        $this->assertSame(0, $count, 'Underscore must not act as a SQL LIKE wildcard.');
+    }
+
+    /**
+     * JSON-path filter inputs must reject non-identifier values to prevent
+     * path injection into MySQL `JSON_CONTAINS_PATH` etc. (Issue #2).
+     *
+     * @return void
+     */
+    public function testIndexChangedFieldRejectsPathMetaCharacters(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        $this->expectException(BadRequestException::class);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'index',
+            '?' => ['changed_field' => 'foo.bar'],
+        ]);
+    }
+
+    /**
+     * `field_name` is also interpolated into the JSON path, so it gets the
+     * same identifier-shape gate (Issue #2).
+     *
+     * @return void
+     */
+    public function testIndexFieldNameRejectsPathMetaCharacters(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        $this->expectException(BadRequestException::class);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'index',
+            '?' => ['field_name' => '*', 'field_value' => 'x'],
+        ]);
+    }
+
+    /**
+     * Empty/missing JSON-path filters should be ignored, not rejected.
+     *
+     * @return void
+     */
+    public function testIndexAcceptsEmptyChangedFieldFilter(): void
+    {
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'index',
+            '?' => ['changed_field' => ''],
         ]);
 
         $this->assertResponseOk();
