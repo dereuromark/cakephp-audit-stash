@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash;
 
 use AuditStash\Event\AuditCreateEvent;
+use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use Cake\ORM\Entity;
@@ -49,13 +50,25 @@ class EventFactory
                 new Entity(),
                 $displayValue,
             );
-        } else {
+        } elseif ($data['type'] === 'update') {
             $event = new AuditUpdateEvent(
                 $data['transaction_key'],
                 $data['primary_key'],
                 $data['source'],
                 array_key_exists('changed', $data) ? $data['changed'] : [],
                 array_key_exists('original', $data) ? $data['original'] : [],
+                new Entity(),
+                $displayValue,
+            );
+        } else {
+            // Custom action event (e.g. user.login, report.exported)
+            $event = new AuditCustomEvent(
+                $data['type'],
+                $data['transaction_key'],
+                $data['primary_key'] ?? null,
+                $data['source'],
+                array_key_exists('changed', $data) ? $data['changed'] : null,
+                array_key_exists('original', $data) ? $data['original'] : null,
                 new Entity(),
                 $displayValue,
             );

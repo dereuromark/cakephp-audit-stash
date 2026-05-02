@@ -206,7 +206,7 @@ class RevertService
 
         $auditLog = $auditLogs->newEntity([
             'transaction_key' => Text::uuid(),
-            'type' => AuditLogType::Revert,
+            'type' => AuditLogType::Revert->value,
             'source' => $source,
             'primary_key' => (string)$primaryKey,
             'original' => json_encode($currentState, AuditStashPlugin::JSON_FLAGS),

@@ -23,7 +23,7 @@ class MassDeleteRule extends AbstractRule
      */
     public function matches(AuditLog $auditLog): bool
     {
-        if ($auditLog->type !== AuditLogType::Delete) {
+        if ($auditLog->type !== AuditLogType::Delete->value) {
             return false;
         }
 

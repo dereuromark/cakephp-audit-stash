@@ -40,7 +40,7 @@ class MassDeleteRuleTest extends TestCase
         // Create multiple delete events
         for ($i = 0; $i < 3; $i++) {
             $auditLogsTable->save($auditLogsTable->newEntity([
-                'type' => AuditLogType::Delete,
+                'type' => AuditLogType::Delete->value,
                 'transaction_key' => 'test-' . $i,
                 'source' => 'users',
                 'primary_key' => $i + 1,
@@ -48,7 +48,7 @@ class MassDeleteRuleTest extends TestCase
         }
 
         $testLog = $auditLogsTable->newEntity([
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'transaction_key' => 'test',
             'source' => 'users',
             'primary_key' => 999,
@@ -70,7 +70,7 @@ class MassDeleteRuleTest extends TestCase
         ]);
 
         $testLog = new AuditLog([
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'source' => 'users',
             'primary_key' => 1,
         ]);
@@ -90,7 +90,7 @@ class MassDeleteRuleTest extends TestCase
         ]);
 
         $testLog = new AuditLog([
-            'type' => AuditLogType::Update,
+            'type' => AuditLogType::Update->value,
             'source' => 'users',
             'primary_key' => 1,
         ]);
@@ -111,7 +111,7 @@ class MassDeleteRuleTest extends TestCase
         ]);
 
         $testLog = new AuditLog([
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'source' => 'users',
             'primary_key' => 1,
         ]);
@@ -144,7 +144,7 @@ class MassDeleteRuleTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $auditLogsTable->save($auditLogsTable->newEntity([
-                'type' => AuditLogType::Delete,
+                'type' => AuditLogType::Delete->value,
                 'transaction_key' => 'test-' . $i,
                 'source' => 'posts',
                 'primary_key' => $i + 1,
@@ -157,7 +157,7 @@ class MassDeleteRuleTest extends TestCase
         ]);
 
         $testLog = new AuditLog([
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'source' => 'posts',
             'primary_key' => 999,
         ]);
@@ -181,7 +181,7 @@ class MassDeleteRuleTest extends TestCase
         ]);
 
         $testLog = new AuditLog([
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'source' => 'users',
             'primary_key' => 1,
         ]);

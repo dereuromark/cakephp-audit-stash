@@ -11,7 +11,7 @@ use Cake\ORM\Entity;
  *
  * @property int $id
  * @property string $transaction_key
- * @property \AuditStash\AuditLogType $type
+ * @property string $type
  * @property int|string|null $primary_key
  * @property string|null $display_value
  * @property string $source

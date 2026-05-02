@@ -115,6 +115,25 @@ configuration, verification, and anchoring strategies.
 
 See [Configuration Documentation](docs/configuration.md) for storage options.
 
+### Custom Action Events
+Beyond entity create/update/delete, log arbitrary actions like logins,
+exports, or permission grants:
+
+```php
+use AuditStash\Audit;
+
+Audit::log(
+    type: 'user.login',
+    source: 'Users',
+    primaryKey: $user->id,
+    data: ['ip' => $request->clientIp()],
+    meta: ['user_id' => $user->id, 'user_display' => $user->name],
+);
+```
+
+The `type` column accepts any string up to 64 chars. Custom events flow
+through the same persister, hash chain, and viewer as entity events.
+
 ## Documentation
 
 - **[Configuration](docs/configuration.md)** - Database and Elasticsearch setup, persister options
