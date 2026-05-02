@@ -8,6 +8,7 @@ use AuditStash\Model\Table\AuditLogsTable;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
 
 /**
  * AuditStash\Model\Table\AuditLogsTable Test Case
@@ -88,6 +89,30 @@ class AuditLogsTableTest extends TestCase
         $results = $this->getAuditLogsTable()->find('byChangedField', field: 'body')->toArray();
 
         $this->assertCount(2, $results);
+    }
+
+    /**
+     * Defense-in-depth: a key with JSON-path meta characters must be
+     * rejected by the JsonQueryHelper even if the controller boundary is
+     * bypassed (Issue #2).
+     *
+     * @return void
+     */
+    public function testFindByChangedFieldRejectsPathMetaCharacters(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->getAuditLogsTable()->find('byChangedField', field: 'foo.bar')->toArray();
+    }
+
+    /**
+     * `*` reaches into the JSON-path mini-language; reject it.
+     *
+     * @return void
+     */
+    public function testFindByChangedFieldValueRejectsWildcard(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->getAuditLogsTable()->find('byChangedFieldValue', field: '*', value: 'x')->toArray();
     }
 
     /**
