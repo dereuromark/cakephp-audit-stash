@@ -9,11 +9,12 @@ use AuditStash\Service\CoverageService;
 use AuditStash\Service\DashboardService;
 
 /**
- * Dashboard — KPI cards, daily histogram, top sources/users, recent events.
+ * Plugin entry point — dashboard with KPI cards, daily histogram, top
+ * sources/users, and recent events.
  *
  * @property \AuditStash\Model\Table\AuditLogsTable $AuditLogs
  */
-class DashboardController extends AppController
+class AuditStashController extends AppController
 {
     use AdminControllerTrait;
 
