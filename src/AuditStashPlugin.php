@@ -89,8 +89,8 @@ class AuditStashPlugin extends BasePlugin
      * `'/audit-logs'` to retain the pre-dashboard URLs.
      *
      * Routes available (assuming the default path):
-     * - /admin/audit-stash             → dashboard
-     * - /admin/audit-stash/audit-logs/index    → browse (filterable list)
+     * - /admin/audit-stash → dashboard
+     * - /admin/audit-stash/audit-logs/index → browse (filterable list)
      * - /admin/audit-stash/audit-logs/coverage → coverage report
      * - /admin/audit-stash/view/{id}
      * - /admin/audit-stash/timeline/{source}/{primaryKey}
