@@ -170,7 +170,7 @@ class GdprService
             $data[] = [
                 'id' => $log->id,
                 'transaction_key' => $log->transaction_key,
-                'type' => $log->type->value ?? $log->type,
+                'type' => $log->type,
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,

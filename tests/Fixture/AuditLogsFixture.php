@@ -19,7 +19,7 @@ class AuditLogsFixture extends TestFixture
     public array $fields = [
         'id' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => false, 'default' => null, 'autoIncrement' => true],
         'transaction_key' => ['type' => 'string', 'length' => 36, 'null' => false, 'default' => null],
-        'type' => ['type' => 'string', 'length' => 7, 'null' => false, 'default' => null],
+        'type' => ['type' => 'string', 'length' => 64, 'null' => false, 'default' => null],
         'primary_key' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'null' => true, 'default' => null],
         'display_value' => ['type' => 'string', 'length' => 255, 'null' => true, 'default' => null],
         'source' => ['type' => 'string', 'length' => 255, 'null' => false, 'default' => null],

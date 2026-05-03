@@ -83,7 +83,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a revert audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => AuditLogType::Revert])
+            ->where(['type' => AuditLogType::Revert->value])
             ->first();
 
         $this->assertNotNull($revertLog);
@@ -134,7 +134,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a partial revert audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => AuditLogType::Revert])
+            ->where(['type' => AuditLogType::Revert->value])
             ->first();
 
         $this->assertNotNull($revertLog);
@@ -181,7 +181,7 @@ class RevertServiceTest extends TestCase
 
         // Check that a restore audit log was created
         $revertLog = $auditLogs->find()
-            ->where(['type' => AuditLogType::Revert])
+            ->where(['type' => AuditLogType::Revert->value])
             ->first();
 
         $this->assertNotNull($revertLog);

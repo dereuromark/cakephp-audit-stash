@@ -82,13 +82,13 @@ use AuditStash\AuditLogType;
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <?= __('Changes') ?>
-                <?php if ($auditLog->type === AuditLogType::Create) { ?>
+                <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                     <span class="badge bg-info"><?= __('New Record') ?></span>
-                <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
+                <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                     <span class="badge bg-danger"><?= __('Deleted Record') ?></span>
                 <?php } ?>
             </h5>
-            <?php if ($auditLog->type === AuditLogType::Update) { ?>
+            <?php if ($auditLog->type === AuditLogType::Update->value) { ?>
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff"><?= __('Inline') ?></button>
                 <button type="button" class="btn btn-outline-secondary" id="btn-side-diff"><?= __('Side-by-side') ?></button>
@@ -96,17 +96,19 @@ use AuditStash\AuditLogType;
             <?php } ?>
         </div>
         <div class="card-body">
-            <?php if ($auditLog->type === AuditLogType::Create) { ?>
+            <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                 <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Created with values:')) ?>
-            <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
+            <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                 <?= $this->Audit->fieldValuesTable($auditLog->original, __('Deleted record had these values:')) ?>
-            <?php } else { ?>
+            <?php } elseif (in_array($auditLog->type, [AuditLogType::Update->value, AuditLogType::Revert->value], true)) { ?>
                 <div id="inline-diff-view">
                     <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
                 </div>
                 <div id="side-diff-view" style="display: none;">
                     <?= $this->Audit->diff($auditLog->original, $auditLog->changed) ?>
                 </div>
+            <?php } else { ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Event payload:')) ?>
             <?php } ?>
         </div>
     </div>

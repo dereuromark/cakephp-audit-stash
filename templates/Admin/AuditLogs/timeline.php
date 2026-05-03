@@ -39,14 +39,16 @@ use AuditStash\AuditLogType;
                         </div>
                         <div class="col-md-1 text-center">
                             <div class="timeline-marker">
-                                <?php if ($auditLog->type === AuditLogType::Create) { ?>
+                                <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                                     <div class="marker marker-success"></div>
-                                <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
+                                <?php } elseif ($auditLog->type === AuditLogType::Update->value) { ?>
                                     <div class="marker marker-primary"></div>
-                                <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
+                                <?php } elseif ($auditLog->type === AuditLogType::Revert->value) { ?>
                                     <div class="marker marker-warning"></div>
-                                <?php } else { ?>
+                                <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                                     <div class="marker marker-danger"></div>
+                                <?php } else { ?>
+                                    <div class="marker marker-secondary"></div>
                                 <?php } ?>
                                 <?php if ($index < count($auditLogs) - 1) { ?>
                                     <div class="timeline-line"></div>
@@ -59,18 +61,20 @@ use AuditStash\AuditLogType;
                                     <div>
                                         <?= $this->Audit->eventTypeBadge($auditLog->type) ?>
                                         <span class="ms-2">
-                                            <?php if ($auditLog->type === AuditLogType::Create) { ?>
+                                            <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                                                 Record created
-                                            <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
+                                            <?php } elseif ($auditLog->type === AuditLogType::Update->value) { ?>
                                                 <?= $this->Audit->changeSummary($auditLog->changed) ?>
-                                            <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
+                                            <?php } elseif ($auditLog->type === AuditLogType::Revert->value) { ?>
                                                 <?php
                                                 $meta = is_string($auditLog->meta) ? json_decode($auditLog->meta, true) : $auditLog->meta;
                                                 $revertType = $meta['revert_type'] ?? 'unknown';
                                                 ?>
                                                 Record reverted (<?= h($revertType) ?>)
-                                            <?php } else { ?>
+                                            <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                                                 Record deleted
+                                            <?php } else { ?>
+                                                <?= h($auditLog->type) ?>
                                             <?php } ?>
                                         </span>
                                     </div>
@@ -80,9 +84,9 @@ use AuditStash\AuditLogType;
                                             ['action' => 'view', $auditLog->id],
                                             ['class' => 'btn btn-sm btn-outline-primary']
                                         ) ?>
-                                        <?php if ($auditLog->type === AuditLogType::Delete) { ?>
+                                        <?php if ($auditLog->type === AuditLogType::Delete->value) { ?>
                                             <?= $this->Audit->restoreButton($auditLog->source, $auditLog->primary_key) ?>
-                                        <?php } elseif ($auditLog->type !== AuditLogType::Revert) { ?>
+                                        <?php } elseif (in_array($auditLog->type, [AuditLogType::Create->value, AuditLogType::Update->value], true)) { ?>
                                             <?= $this->Audit->revertButton($auditLog->id) ?>
                                         <?php } ?>
                                     </div>
@@ -102,7 +106,7 @@ use AuditStash\AuditLogType;
                                         </div>
                                     </div>
 
-                                    <?php if ($auditLog->type === AuditLogType::Create) { ?>
+                                    <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                                         <div class="changes-preview">
                                             <strong>Initial values:</strong>
                                             <?php
@@ -123,18 +127,18 @@ use AuditStash\AuditLogType;
                                             }
                                             ?>
                                         </div>
-                                    <?php } elseif ($auditLog->type === AuditLogType::Update) { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Update->value) { ?>
                                         <details>
                                             <summary class="cursor-pointer text-primary">Show changes</summary>
                                             <div class="mt-2">
                                                 <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
                                             </div>
                                         </details>
-                                    <?php } elseif ($auditLog->type === AuditLogType::Delete) { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                                         <div class="alert alert-danger mb-0">
                                             <strong>Record was deleted</strong>
                                         </div>
-                                    <?php } elseif ($auditLog->type === AuditLogType::Revert) { ?>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Revert->value) { ?>
                                         <div class="alert alert-warning mb-2">
                                             <?php
                                             $meta = is_string($auditLog->meta) ? json_decode($auditLog->meta, true) : $auditLog->meta;
@@ -152,6 +156,31 @@ use AuditStash\AuditLogType;
                                                 <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
                                             </div>
                                         </details>
+                                    <?php } else { ?>
+                                        <?php
+                                        $changed = is_string($auditLog->changed) ? json_decode($auditLog->changed, true) : $auditLog->changed;
+                                        if ($changed && is_array($changed)) {
+                                            ?>
+                                            <div class="changes-preview">
+                                                <strong>Event payload:</strong>
+                                                <ul class="mb-0">
+                                                    <?php
+                                                    $count = 0;
+                                                    foreach ($changed as $field => $value) {
+                                                        if ($count < 5) {
+                                                            echo '<li><code>' . h($field) . '</code>: ' . h(is_array($value) ? json_encode($value) : $value) . '</li>';
+                                                        }
+                                                        $count++;
+                                                    }
+                                                    if ($count > 5) {
+                                                        echo '<li><em>... and ' . ($count - 5) . ' more fields</em></li>';
+                                                    }
+                                                    ?>
+                                                </ul>
+                                            </div>
+                                            <?php
+                                        }
+                                        ?>
                                     <?php } ?>
                                 </div>
                             </div>

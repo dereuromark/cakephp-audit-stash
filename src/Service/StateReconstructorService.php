@@ -40,11 +40,11 @@ class StateReconstructorService
 
         // Apply changes sequentially up to target
         foreach ($logs as $log) {
-            if ($log->type === AuditLogType::Create && $log->changed !== null) {
+            if ($log->type === AuditLogType::Create->value && $log->changed !== null) {
                 $state = is_string($log->changed)
                     ? (json_decode($log->changed, true) ?: [])
                     : $log->changed;
-            } elseif ($log->type === AuditLogType::Update && $log->changed !== null) {
+            } elseif ($log->type === AuditLogType::Update->value && $log->changed !== null) {
                 $changed = is_string($log->changed)
                     ? (json_decode($log->changed, true) ?: [])
                     : $log->changed;

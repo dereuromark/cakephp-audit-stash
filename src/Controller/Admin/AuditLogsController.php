@@ -179,7 +179,24 @@ class AuditLogsController extends AppController
             ->orderBy(['source' => 'ASC'])
             ->toArray();
 
-        $eventTypes = ['create', 'update', 'delete'];
+        // Built-in CRUD types plus any custom action event types (e.g.
+        // "user.login") that have actually been recorded.
+        $distinctTypes = $this->AuditLogs->find()
+            ->select(['type'])
+            ->distinct(['type'])
+            ->orderBy(['type' => 'ASC'])
+            ->all()
+            ->extract('type')
+            ->toList();
+        $eventTypes = array_values(array_unique(array_merge(
+            [
+                AuditLogType::Create->value,
+                AuditLogType::Update->value,
+                AuditLogType::Delete->value,
+                AuditLogType::Revert->value,
+            ],
+            $distinctTypes,
+        )));
 
         // Get distinct changed fields for autocomplete
         $changedFields = $this->AuditLogs->getDistinctChangedFields();
@@ -430,7 +447,7 @@ class AuditLogsController extends AppController
             ->where([
                 'source' => $source,
                 'primary_key' => $primaryKey,
-                'type' => AuditLogType::Delete,
+                'type' => AuditLogType::Delete->value,
             ])
             ->orderBy(['created' => 'DESC'])
             ->first();
@@ -560,7 +577,7 @@ class AuditLogsController extends AppController
             fputcsv($output, [
                 $log->id,
                 $log->transaction_key,
-                $log->type->value,
+                $log->type,
                 $log->source,
                 $log->primary_key,
                 $log->display_value,
@@ -602,7 +619,7 @@ class AuditLogsController extends AppController
             $data[] = [
                 'id' => $log->id,
                 'transaction_key' => $log->transaction_key,
-                'type' => $log->type->value,
+                'type' => $log->type,
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,

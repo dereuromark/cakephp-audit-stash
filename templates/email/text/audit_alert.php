@@ -22,7 +22,7 @@ Audit Log Details:
 ------------------
 ID: <?= $auditLog->id ?>
 
-Type: <?= ucfirst($auditLog->type->value) ?>
+Type: <?= ucfirst($auditLog->type) ?>
 
 Table: <?= $auditLog->source ?>
 

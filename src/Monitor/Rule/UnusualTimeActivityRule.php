@@ -63,7 +63,7 @@ class UnusualTimeActivityRule extends AbstractRule
 
         return sprintf(
             'Off-hours activity detected: %s operation on %s at %s',
-            ucfirst($auditLog->type->value),
+            ucfirst($auditLog->type),
             $auditLog->source,
             $created->format('Y-m-d H:i:s'),
         );
@@ -81,7 +81,7 @@ class UnusualTimeActivityRule extends AbstractRule
 
         return [
             'table' => $auditLog->source,
-            'operation' => $auditLog->type->value,
+            'operation' => $auditLog->type,
             'timestamp' => $created->toIso8601String(),
             'day_of_week' => $created->format('l'),
             'time_of_day' => $created->format('H:i:s'),

@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Model\Table;
 
-use AuditStash\AuditLogType;
 use AuditStash\Database\JsonQueryHelper;
-use Cake\Database\Type\EnumType;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -55,9 +53,9 @@ class AuditLogsTable extends Table
             ],
         ]);
 
-        $this->getSchema()->setColumnType('type', EnumType::from(AuditLogType::class));
-
-        // Set JSON column types for proper array handling
+        // type stays as plain string. Built-in events use AuditLogType enum
+        // values (create/update/delete/revert), but custom action events may
+        // use any string up to 64 chars.
         $this->getSchema()->setColumnType('original', 'json');
         $this->getSchema()->setColumnType('changed', 'json');
         $this->getSchema()->setColumnType('meta', 'json');

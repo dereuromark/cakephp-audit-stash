@@ -57,7 +57,7 @@ class LogChannelTest extends TestCase
 
         $auditLog = new AuditLog([
             'id' => 1,
-            'type' => AuditLogType::Delete,
+            'type' => AuditLogType::Delete->value,
             'source' => 'users',
             'primary_key' => 123,
             'transaction_key' => 'abc-123',
@@ -99,7 +99,7 @@ class LogChannelTest extends TestCase
         foreach ($testCases as $severity => $expectedLevel) {
             $auditLog = new AuditLog([
                 'id' => 1,
-                'type' => AuditLogType::Delete,
+                'type' => AuditLogType::Delete->value,
                 'source' => 'test',
                 'primary_key' => 1,
                 'transaction_key' => 'test',
