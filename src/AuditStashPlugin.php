@@ -10,6 +10,7 @@ use AuditStash\Command\VerifyChainCommand;
 use AuditStash\Monitor\AuditMonitor;
 use Cake\Console\CommandCollection;
 use Cake\Core\BasePlugin;
+use Cake\Core\Configure;
 use Cake\Core\PluginApplicationInterface;
 use Cake\Event\EventManager;
 use Cake\Routing\Route\DashedRoute;
@@ -83,11 +84,17 @@ class AuditStashPlugin extends BasePlugin
      * $this->addPlugin('AuditStash', ['routes' => false]);
      * ```
      *
-     * Routes are available at:
-     * - /admin/audit-logs
-     * - /admin/audit-logs/view/{id}
-     * - /admin/audit-logs/timeline/{source}/{primaryKey}
-     * - /admin/audit-logs/export
+     * Routes default to `/admin/audit-stash/...`. The path segment after the
+     * Admin prefix is configurable via `AuditStash.routePath` — set it to
+     * `'/audit-logs'` to retain the pre-dashboard URLs.
+     *
+     * Routes available (assuming the default path):
+     * - /admin/audit-stash             → dashboard
+     * - /admin/audit-stash/audit-logs/index    → browse (filterable list)
+     * - /admin/audit-stash/audit-logs/coverage → coverage report
+     * - /admin/audit-stash/view/{id}
+     * - /admin/audit-stash/timeline/{source}/{primaryKey}
+     * - /admin/audit-stash/export
      *
      * @param \Cake\Routing\RouteBuilder $routes The route builder to update.
      *
@@ -95,12 +102,15 @@ class AuditStashPlugin extends BasePlugin
      */
     public function routes(RouteBuilder $routes): void
     {
-        $routes->prefix('Admin', function (RouteBuilder $routes): void {
-            $routes->plugin('AuditStash', ['path' => '/audit-logs'], function (RouteBuilder $routes): void {
+        $path = Configure::read('AuditStash.routePath', '/audit-stash');
+        $routes->prefix('Admin', function (RouteBuilder $routes) use ($path): void {
+            $routes->plugin('AuditStash', ['path' => $path], function (RouteBuilder $routes): void {
                 $routes->setRouteClass(DashedRoute::class);
 
-                // Audit Logs viewer routes
-                $routes->connect('/', ['controller' => 'AuditLogs', 'action' => 'index']);
+                // Plugin root → dashboard. Param-patterned routes are kept
+                // explicit; everything else (index/browse, coverage, ...)
+                // resolves through fallbacks() below as /audit-logs/<action>.
+                $routes->connect('/', ['controller' => 'AuditLogs', 'action' => 'dashboard']);
                 $routes->connect('/view/{id}', ['controller' => 'AuditLogs', 'action' => 'view'])
                     ->setPass(['id'])
                     ->setPatterns(['id' => '[0-9]+']);
