@@ -10,7 +10,8 @@ Default routes are available at:
 - **Browse logs**: `/admin/audit-logs`
 - **View single log**: `/admin/audit-logs/view/{id}`
 - **Record timeline**: `/admin/audit-logs/timeline/{table}/{recordId}`
-- **Export**: `/admin/audit-logs/export.csv` or `/admin/audit-logs/export.json`
+- **Export form**: `/admin/audit-logs/export` — dedicated page with format picker (CSV / JSON / NDJSON), row-count estimate, and active-filter summary
+- **Export streaming download**: `/admin/audit-logs/export.csv`, `.json`, or `.ndjson` — bypasses the form (used by the inline "Export CSV" quick button on the index page)
 
 The routes are secured by being in the Admin prefix, which typically requires authentication in your application.
 
@@ -253,7 +254,7 @@ The audit log viewer provides:
   - **Inline diff** (default): Compact, git-style unified diff with + and - indicators
   - **Side-by-side diff**: Traditional two-column comparison showing before and after values
   - Toggle between views with a single click in the detail view
-- **Export**: Export filtered results to CSV or JSON format
+- **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download.
 - **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
 
 ## Additional Security

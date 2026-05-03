@@ -6,11 +6,13 @@ namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
 use AuditStash\AuditLogType;
+use AuditStash\Service\ExportService;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Response;
 use InvalidArgumentException;
+use Laminas\Diactoros\Stream;
 use RuntimeException;
 
 /**
@@ -432,135 +434,110 @@ class AuditLogsController extends AppController
     }
 
     /**
-     * Export method - Export audit logs to CSV or JSON
+     * Export action — renders the dedicated export form when called without
+     * a format, otherwise streams the export.
      *
-     * @return \Cake\Http\Response
+     * URL shapes:
+     * - `GET /audit-logs/export` → form page (filter / format / date-range
+     *   picker, with row-count estimate)
+     * - `GET /audit-logs/export.csv|.json|.ndjson` → streaming download
+     *   (legacy URL kept for the index-page quick-export buttons)
+     * - `GET /audit-logs/export?format=csv|json|ndjson` → same as above,
+     *   used when the form page submits without a `_ext`-style URL
+     *
+     * The streaming path defaults the date floor to the last
+     * `AuditStash.export.defaultDays` days when the caller did not narrow
+     * the range, and refuses (`BadRequestException`) when the result set
+     * exceeds `AuditStash.export.hardCap` — no silent truncation.
+     *
+     * @throws \RuntimeException
+     *
+     * @return \Cake\Http\Response|null|void
      */
-    public function export(): Response
+    public function export()
     {
-        $format = $this->request->getParam('_ext') ?: 'csv';
+        $service = new ExportService();
+        $format = $this->resolveExportFormat();
+
+        if ($format === null) {
+            $query = $this->AuditLogs->find();
+            $this->applyBaseFilters($query);
+            $defaultFloor = $service->applyDefaultDateRange(
+                $query,
+                $this->request->getQuery('date_from'),
+                $this->request->getQuery('date_to'),
+            );
+
+            $rowCount = $service->estimate($query);
+            $hardCap = $service->hardCap();
+
+            $this->set(compact('rowCount', 'hardCap', 'defaultFloor'));
+            $this->set('formats', ExportService::FORMATS);
+            $this->set('queryParams', $this->request->getQueryParams());
+
+            return null;
+        }
+
         $query = $this->AuditLogs->find();
-
-        // Reuse the index filter set so LIKE escaping etc. stay aligned.
         $this->applyBaseFilters($query);
+        $service->applyDefaultDateRange(
+            $query,
+            $this->request->getQuery('date_from'),
+            $this->request->getQuery('date_to'),
+        );
 
-        $query->orderBy(['AuditLogs.created' => 'DESC'])->limit(10000);
+        $service->assertWithinHardCap($service->estimate($query));
 
-        $auditLogs = $query->toArray();
+        $contentType = match ($format) {
+            'json' => 'application/json',
+            'ndjson' => 'application/x-ndjson',
+            default => 'text/csv',
+        };
 
-        if ($format === 'json') {
-            return $this->exportJson($auditLogs);
+        // php://temp keeps up to 2MB in memory and spills to disk after that,
+        // so PHP-process memory stays bounded regardless of result-set size.
+        // True byte-by-byte streaming is impractical inside Cake's response
+        // model; this gives the same memory profile without the test-mode
+        // headaches of php://output.
+        $resource = fopen('php://temp', 'r+');
+        if ($resource === false) {
+            throw new RuntimeException('Failed to open temp stream');
         }
-
-        return $this->exportCsv($auditLogs);
-    }
-
-    /**
-     * Export audit logs as CSV
-     *
-     * @param array $auditLogs Audit logs
-     *
-     * @throws \RuntimeException
-     *
-     * @return \Cake\Http\Response
-     */
-    protected function exportCsv(array $auditLogs): Response
-    {
-        $filename = 'audit_logs_' . date('Y-m-d_His') . '.csv';
-
-        $response = $this->response
-            ->withType('csv')
-            ->withDownload($filename);
-
-        $output = fopen('php://temp', 'r+');
-        if ($output === false) {
-            throw new RuntimeException('Failed to open temporary stream');
-        }
-
-        // Headers
-        fputcsv($output, [
-            'ID',
-            'Transaction',
-            'Type',
-            'Source',
-            'Primary Key',
-            'Display Value',
-            'User ID',
-            'User Display',
-            'Original',
-            'Changed',
-            'Meta',
-            'Created',
-        ], escape: '\\');
-
-        // Data
-        foreach ($auditLogs as $log) {
-            fputcsv($output, [
-                $log->id,
-                $log->transaction_key,
-                $log->type,
-                $log->source,
-                $log->primary_key,
-                $log->display_value,
-                $log->user_id,
-                $log->user_display,
-                is_array($log->original) ? json_encode($log->original) : $log->original,
-                is_array($log->changed) ? json_encode($log->changed) : $log->changed,
-                is_array($log->meta) ? json_encode($log->meta) : $log->meta,
-                $log->created,
-            ], escape: '\\');
-        }
-
-        rewind($output);
-        $csv = stream_get_contents($output);
-        fclose($output);
-
-        if ($csv === false) {
-            throw new RuntimeException('Failed to read CSV content');
-        }
-
-        return $response->withStringBody($csv);
-    }
-
-    /**
-     * Export audit logs as JSON
-     *
-     * @param array $auditLogs Audit logs
-     *
-     * @throws \RuntimeException
-     *
-     * @return \Cake\Http\Response
-     */
-    protected function exportJson(array $auditLogs): Response
-    {
-        $filename = 'audit_logs_' . date('Y-m-d_His') . '.json';
-
-        $data = [];
-        foreach ($auditLogs as $log) {
-            $data[] = [
-                'id' => $log->id,
-                'transaction_key' => $log->transaction_key,
-                'type' => $log->type,
-                'source' => $log->source,
-                'primary_key' => $log->primary_key,
-                'display_value' => $log->display_value,
-                'user_id' => $log->user_id,
-                'user_display' => $log->user_display,
-                'original' => is_array($log->original) ? $log->original : ($log->original ? json_decode($log->original, true) : null),
-                'changed' => is_array($log->changed) ? $log->changed : ($log->changed ? json_decode($log->changed, true) : null),
-                'meta' => is_array($log->meta) ? $log->meta : ($log->meta ? json_decode($log->meta, true) : null),
-                'created' => $log->created,
-            ];
-        }
-
-        $json = json_encode($data, JSON_PRETTY_PRINT);
-        if ($json === false) {
-            throw new RuntimeException('Failed to encode JSON');
-        }
+        $service->stream($query, $format, $resource);
+        rewind($resource);
 
         return $this->response
-            ->withType('json')
-            ->withDownload($filename)
-            ->withStringBody($json);
+            ->withType($contentType)
+            ->withDownload($service->filename($format))
+            ->withBody(new Stream($resource));
+    }
+
+    /**
+     * Resolve the export format from the request, or return `null` when
+     * the user hit the form page without picking one yet.
+     *
+     * Accepts both `_ext` (route extension, used by the legacy inline
+     * buttons) and `?format=` (form submission).
+     *
+     * @throws \Cake\Http\Exception\BadRequestException When the supplied format is unknown.
+     *
+     * @return string|null
+     */
+    protected function resolveExportFormat(): ?string
+    {
+        $candidate = $this->request->getParam('_ext') ?: $this->request->getQuery('format');
+        if ($candidate === null || $candidate === '') {
+            return null;
+        }
+        $candidate = strtolower((string)$candidate);
+        if (!in_array($candidate, ExportService::FORMATS, true)) {
+            throw new BadRequestException(sprintf(
+                'Unsupported export format "%s". Supported: %s.',
+                $candidate,
+                implode(', ', ExportService::FORMATS),
+            ));
+        }
+
+        return $candidate;
     }
 }

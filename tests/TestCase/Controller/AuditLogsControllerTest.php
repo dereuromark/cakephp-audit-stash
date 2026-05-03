@@ -461,9 +461,11 @@ class AuditLogsControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertContentType('text/csv');
         $this->assertHeaderContains('Content-Disposition', 'attachment');
-        $this->assertResponseContains('ID');
-        $this->assertResponseContains('Transaction');
-        $this->assertResponseContains('Type');
+        // Header row uses snake_case column names so the CSV is unambiguous
+        // for programmatic consumers (was 'ID', 'Transaction', etc. pre-2.0).
+        $this->assertResponseContains('id');
+        $this->assertResponseContains('transaction_key');
+        $this->assertResponseContains('type');
     }
 
     /**
@@ -554,11 +556,13 @@ class AuditLogsControllerTest extends TestCase
     }
 
     /**
-     * Test export defaults to CSV
+     * Without an `_ext` or `?format=`, the export action renders the
+     * dedicated form page (introduced in 2.0) instead of streaming a
+     * default-format download.
      *
      * @return void
      */
-    public function testExportDefaultsToCsv(): void
+    public function testExportRendersFormPageWithoutFormat(): void
     {
         $this->get([
             'prefix' => 'Admin',
@@ -568,7 +572,232 @@ class AuditLogsControllerTest extends TestCase
         ]);
 
         $this->assertResponseOk();
-        $this->assertContentType('text/csv');
+        $this->assertContentType('text/html');
+        $this->assertResponseContains('Export Audit Logs');
+        $this->assertResponseContains('Format');
+    }
+
+    /**
+     * The form-page submit path passes the chosen format via a query
+     * parameter (the form is plain `GET`), and that path streams the
+     * download just like the legacy `_ext`-based URL.
+     *
+     * @return void
+     */
+    public function testExportFormatQueryParamStreamsDownload(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'tx-1',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 1,
+            'created' => new DateTime(),
+        ]));
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'export',
+            '?' => ['format' => 'ndjson'],
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertContentType('application/x-ndjson');
+        $this->assertHeaderContains('Content-Disposition', 'attachment');
+    }
+
+    /**
+     * NDJSON: one JSON object per line. Use to verify the streaming
+     * format actually emits valid line-delimited JSON.
+     *
+     * @return void
+     */
+    public function testExportNdjson(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        for ($i = 1; $i <= 3; $i++) {
+            $auditLogsTable->save($auditLogsTable->newEntity([
+                'transaction_key' => 'tx-' . $i,
+                'type' => 'update',
+                'source' => 'articles',
+                'primary_key' => $i,
+                'created' => new DateTime(),
+            ]));
+        }
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'export',
+            '_ext' => 'ndjson',
+        ]);
+
+        $this->assertResponseOk();
+        $body = trim((string)$this->_response->getBody());
+        $lines = explode("\n", $body);
+        $this->assertCount(3, $lines);
+        foreach ($lines as $line) {
+            $row = json_decode($line, true);
+            $this->assertIsArray($row);
+            $this->assertArrayHasKey('id', $row);
+            $this->assertArrayHasKey('transaction_key', $row);
+        }
+    }
+
+    /**
+     * The hard cap is enforced server-side; oversized exports are rejected
+     * before any download starts so the user gets a clear error rather
+     * than a silently truncated file (the pre-2.0 behaviour was a hidden
+     * `LIMIT 10000`).
+     *
+     * @return void
+     */
+    public function testExportRefusesWhenHardCapExceeded(): void
+    {
+        Configure::write('AuditStash.export.hardCap', 2);
+
+        try {
+            $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+            for ($i = 1; $i <= 5; $i++) {
+                $auditLogsTable->save($auditLogsTable->newEntity([
+                    'transaction_key' => 'tx-' . $i,
+                    'type' => 'create',
+                    'source' => 'articles',
+                    'primary_key' => $i,
+                    'created' => new DateTime(),
+                ]));
+            }
+
+            $this->disableErrorHandlerMiddleware();
+            $thrown = null;
+            try {
+                $this->get([
+                    'prefix' => 'Admin',
+                    'plugin' => 'AuditStash',
+                    'controller' => 'AuditLogs',
+                    'action' => 'export',
+                    '_ext' => 'csv',
+                ]);
+            } catch (BadRequestException $e) {
+                $thrown = $e;
+            }
+
+            $this->assertNotNull($thrown, 'Expected the hard cap to throw BadRequestException.');
+            $this->assertStringContainsString('exceeding the hard cap of 2', $thrown->getMessage());
+        } finally {
+            Configure::delete('AuditStash.export.hardCap');
+        }
+    }
+
+    /**
+     * Without an explicit date range, the export defaults to the last N
+     * days (configurable via `AuditStash.export.defaultDays`). This stops
+     * an unbounded export from getting slower with every passing month.
+     *
+     * @return void
+     */
+    public function testExportDefaultDateRangeNarrowsResultSet(): void
+    {
+        Configure::write('AuditStash.export.defaultDays', 7);
+
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $recent = $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'recent',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 1,
+            'created' => new DateTime(),
+        ]));
+        $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'ancient',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 2,
+            'created' => new DateTime('-90 days'),
+        ]));
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'export',
+            '_ext' => 'json',
+        ]);
+
+        $this->assertResponseOk();
+        $body = (string)$this->_response->getBody();
+        $data = json_decode($body, true);
+        $this->assertIsArray($data);
+        $this->assertCount(1, $data, 'Default date range must filter out the 90-day-old row.');
+        $this->assertSame('recent', $data[0]['transaction_key']);
+
+        Configure::delete('AuditStash.export.defaultDays');
+    }
+
+    /**
+     * An explicit `date_from` overrides the default narrowing, so a
+     * one-shot "give me everything since launch" export is still possible
+     * by setting an early date.
+     *
+     * @return void
+     */
+    public function testExplicitDateRangeOverridesDefault(): void
+    {
+        Configure::write('AuditStash.export.defaultDays', 7);
+
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'recent',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 1,
+            'created' => new DateTime(),
+        ]));
+        $auditLogsTable->save($auditLogsTable->newEntity([
+            'transaction_key' => 'ancient',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 2,
+            'created' => new DateTime('-90 days'),
+        ]));
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'export',
+            '_ext' => 'json',
+            '?' => ['date_from' => date('Y-m-d', strtotime('-180 days'))],
+        ]);
+
+        $this->assertResponseOk();
+        $data = json_decode((string)$this->_response->getBody(), true);
+        $this->assertCount(2, $data, 'Explicit date_from must include the 90-day-old row.');
+
+        Configure::delete('AuditStash.export.defaultDays');
+    }
+
+    /**
+     * Unknown format strings via `?format=` are rejected with 400 rather
+     * than falling back silently to CSV.
+     *
+     * @return void
+     */
+    public function testExportRejectsUnknownFormat(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        $this->expectException(BadRequestException::class);
+
+        $this->get([
+            'prefix' => 'Admin',
+            'plugin' => 'AuditStash',
+            'controller' => 'AuditLogs',
+            'action' => 'export',
+            '?' => ['format' => 'xml'],
+        ]);
     }
 
     /**
