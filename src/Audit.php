@@ -6,6 +6,7 @@ namespace AuditStash;
 
 use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Persister\TablePersister;
+use Cake\Core\Configure;
 use Cake\Utility\Text;
 
 /**
@@ -24,8 +25,10 @@ use Cake\Utility\Text;
  * ]);
  * ```
  *
- * The persister can be swapped via `Audit::setPersister()` for testing or to
- * apply non-default config (e.g. hash chain enabled).
+ * The default persister is `TablePersister`, configured from
+ * `AuditStash.persisterConfig` (so custom events participate in the same hash
+ * chain as entity events). To use a non-default persister class (e.g.
+ * `ElasticSearchPersister`), wire it explicitly via `Audit::setPersister()`.
  */
 class Audit
 {
@@ -90,17 +93,29 @@ class Audit
     }
 
     /**
-     * Returns the configured persister, lazily creating a default
-     * `TablePersister` on first use.
+     * Returns the configured persister, lazily creating a `TablePersister` on
+     * first use.
+     *
+     * The default persister is `TablePersister`. `AuditStash.persisterConfig`
+     * is applied via `setConfig()` so custom events share the same options
+     * (notably `hashChain`) as entity events recorded by the behavior. To use
+     * a non-default persister class, call `Audit::setPersister()` explicitly.
      *
      * @return \AuditStash\PersisterInterface
      */
     protected static function persister(): PersisterInterface
     {
-        if (static::$persister === null) {
-            static::$persister = new TablePersister();
+        if (static::$persister !== null) {
+            return static::$persister;
         }
 
-        return static::$persister;
+        $instance = new TablePersister();
+
+        $persisterConfig = Configure::read('AuditStash.persisterConfig');
+        if (is_array($persisterConfig) && $persisterConfig) {
+            $instance->setConfig($persisterConfig);
+        }
+
+        return static::$persister = $instance;
     }
 }

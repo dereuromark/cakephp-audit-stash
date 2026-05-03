@@ -48,7 +48,7 @@ class ElasticSearchPersister implements PersisterInterface
      * Sets the options for this persister. The available options are:
      *
      * - connection: The client of connection to Elasticsearch
-     * - userTransactionId: Whether to use the transaction ids as document ids
+     * - useTransactionId: Whether to use the transaction ids as document ids
      * - index: The Elasticsearch index to store documents
      * - type: The Elasticsearch mapping type of documents
      *

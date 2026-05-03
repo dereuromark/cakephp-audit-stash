@@ -138,6 +138,8 @@ Audit::log(
 
 The `type` column accepts any string up to 64 chars. Custom events flow
 through the same persister, hash chain, and viewer as entity events.
+Optional `original:` (prior state, for before/after diffs) and
+`displayValue:` (human-friendly row label) round out the signature.
 
 ## Documentation
 
@@ -171,31 +173,4 @@ For Elasticsearch tests, set the environment variable:
 elastic_dsn="Cake\ElasticSearch\Datasource\Connection://127.0.0.1:9200?driver=Cake\ElasticSearch\Datasource\Connection" vendor/bin/phpunit
 ```
 
-### Asserting audit logs in your own tests
-
-Mix `AuditStash\TestSuite\AuditAssertionsTrait` into any `TestCase` that
-loads `plugin.AuditStash.AuditLogs` to assert on what was actually persisted:
-
-```php
-use AuditStash\TestSuite\AuditAssertionsTrait;
-
-class ArticlesControllerTest extends TestCase
-{
-    use AuditAssertionsTrait;
-
-    protected array $fixtures = ['plugin.AuditStash.AuditLogs', 'app.Articles'];
-
-    public function testArticleCreateIsAudited(): void
-    {
-        $this->post('/articles/add', ['title' => 'Hello']);
-
-        $this->assertAuditLogged('Articles', 'create');
-        $this->assertAuditFieldChanged('Articles', 'title', 'Hello');
-        $this->assertAuditCount(1, 'Articles');
-    }
-}
-```
-
-Available assertions: `assertAuditLogged()`, `assertAuditNotLogged()`,
-`assertAuditCount()`, `assertAuditFieldChanged()`. See [Testing
-Documentation](docs/testing.md) for full signatures and usage tips.
+To assert audit logs from your own test suite, see the [Testing documentation](docs/testing.md) (`AuditStash\TestSuite\AuditAssertionsTrait`).

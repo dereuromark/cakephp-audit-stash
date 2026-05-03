@@ -74,7 +74,7 @@ return [
          * tables are filtered out of the default view via this deny-list:
          *
          * - `hidePlugins`: plugin names whose Tables are always considered
-         *   internal. Defaults baked in: AuditStash, Migrations, DebugKit.
+         *   internal. Defaults baked in: AuditStash, Bouncer, Migrations, DebugKit.
          *   Add to extend.
          * - `hideTables`: specific aliases (e.g. 'Sessions') to hide
          *   regardless of plugin.
@@ -109,10 +109,21 @@ return [
         'linkRecord' => null,
 
         /**
+         * Persister class (FQCN).
+         *
+         * Defaults to TablePersister (database). For Elasticsearch, set:
+         *   'persister' => \AuditStash\Persister\ElasticSearchPersister::class,
+         *
+         * Note: the `Audit::log()` static facade always uses TablePersister;
+         * to direct custom events at a different persister, call
+         * `Audit::setPersister()` explicitly during bootstrap.
+         */
+        // 'persister' => \AuditStash\Persister\TablePersister::class,
+
+        /**
          * Persister-specific options passed to the persister's setConfig().
          *
          * The default persister is TablePersister (database).
-         * For Elasticsearch, set 'persister' => ElasticSearchPersister::class.
          */
         'persisterConfig' => [
             /**
@@ -126,6 +137,103 @@ return [
              * See docs/tamper-evidence.md for rationale and verification workflow.
              */
             'hashChain' => false,
+        ],
+
+        /**
+         * Save timing.
+         *
+         * - null/unset (default): persist after the transaction commits
+         *   (`Model.afterSaveCommit`/`afterDeleteCommit`). Audit rows reflect
+         *   what actually committed; data lost during a rollback isn't logged.
+         * - 'afterSave': persist immediately after `Model.afterSave`/
+         *   `afterDelete`, before the transaction commits. Useful when you
+         *   need the audit row available to other code in the same request,
+         *   at the cost of logging changes that may later roll back.
+         */
+        // 'saveType' => 'afterSave',
+
+        /**
+         * Retention / cleanup policy.
+         *
+         * Used by `bin/cake audit_stash cleanup`. Without `--days` on the
+         * command line, the cleanup walks every entry in `tables` and falls
+         * back to `default` for tables without a per-table override. A `null`
+         * default means no global retention (per-table only).
+         *
+         * `tables` keys are source identifiers (Table aliases, e.g. 'Articles').
+         * Values are integer days.
+         */
+        'retention' => [
+            'default' => null, // e.g. 365
+            'tables' => [
+                // 'Sessions' => 30,
+                // 'Articles' => 730,
+            ],
+        ],
+
+        /**
+         * Real-time monitoring & alerting.
+         *
+         * The plugin ships a passive `AuditMonitor` that listens to persisted
+         * events and dispatches alerts through configured channels when one or
+         * more rules match. Off by default.
+         *
+         * - `enabled`: master switch.
+         * - `rules`: list of rule definitions. Each entry is either an FQCN or
+         *   `['class' => ..., 'options' => [...]]` for parameterized rules.
+         * - `channels`: list of channel definitions in the same shape. All
+         *   matched alerts are dispatched to every configured channel.
+         *
+         * See docs/monitoring.md for the full rule/channel catalogue.
+         */
+        'monitor' => [
+            'enabled' => false,
+            'rules' => [
+                // \AuditStash\Monitor\Rule\MassDeleteRule::class,
+                // [
+                //     'class' => \AuditStash\Monitor\Rule\UnusualTimeActivityRule::class,
+                //     'options' => ['startHour' => 22, 'endHour' => 6],
+                // ],
+            ],
+            'channels' => [
+                // \AuditStash\Monitor\Channel\LogChannel::class,
+                // [
+                //     'class' => \AuditStash\Monitor\Channel\EmailChannel::class,
+                //     'options' => ['to' => 'security@example.com'],
+                // ],
+            ],
+        ],
+
+        /**
+         * GDPR / right-to-be-forgotten configuration.
+         *
+         * Used by `GdprService` and `bin/cake audit_stash gdpr`.
+         *
+         * - `anonymizeUserId`: strategy for the `user_id` column when a user
+         *   is anonymized. Accepts 'hash' (SHA-256, irreversible but joinable
+         *   across rows for the same user), 'null' (clear the column), or
+         *   'placeholder' (replace with a fixed sentinel like 'ANONYMIZED').
+         * - `anonymizeFields`: meta-field overrides merged on top of the
+         *   service's defaults (user, username, email, ip, user_agent).
+         *   Keys are meta keys, values are the replacement value.
+         * - `piiFields`: list of column names treated as PII when redacting
+         *   `original` / `changed` payloads on anonymization.
+         */
+        'gdpr' => [
+            'anonymizeUserId' => 'hash',
+            'anonymizeFields' => [
+                // 'phone' => 'ANONYMIZED',
+            ],
+            'piiFields' => [
+                'email',
+                'name',
+                'first_name',
+                'last_name',
+                'phone',
+                'address',
+                'ip_address',
+                'username',
+            ],
         ],
 
         /**

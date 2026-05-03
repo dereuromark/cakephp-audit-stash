@@ -33,22 +33,17 @@ class CoverageService
     use LocatorAwareTrait;
 
     /**
-     * Plugins whose Tables never belong on a coverage report (operational /
-     * internal / our own). Merged with `AuditStash.coverage.hidePlugins`.
+     * Plugins whose Tables never belong on a coverage report (the plugin's
+     * own bookkeeping plus tooling/dev plugins that don't represent domain
+     * data). Merged with `AuditStash.coverage.hidePlugins` so apps can
+     * extend the deny-list without losing the safe defaults.
      *
      * @var array<int, string>
      */
     protected const DEFAULT_HIDE_PLUGINS = [
         'AuditStash',
         'Bouncer',
-        'DatabaseLog',
         'Migrations',
-        'Feedback',
-        'Queue',
-        'Captcha',
-        'Workflow',
-        'Geo',
-        'QueueScheduler',
         'DebugKit',
     ];
 
