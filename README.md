@@ -147,6 +147,7 @@ through the same persister, hash chain, and viewer as entity events.
 - **[Retention](docs/retention.md)** - Automated log cleanup and retention policies
 - **[Monitoring](docs/monitoring.md)** - Real-time alerting for suspicious activities
 - **[Tamper-Evidence](docs/tamper-evidence.md)** - Optional SHA-256 hash chain for GoBD / SOX / HIPAA integrity
+- **[Testing](docs/testing.md)** - `AuditAssertionsTrait` for asserting audit logs in your own test suite
 
 ## Demo
 
@@ -196,4 +197,5 @@ class ArticlesControllerTest extends TestCase
 ```
 
 Available assertions: `assertAuditLogged()`, `assertAuditNotLogged()`,
-`assertAuditCount()`, `assertAuditFieldChanged()`.
+`assertAuditCount()`, `assertAuditFieldChanged()`. See [Testing
+Documentation](docs/testing.md) for full signatures and usage tips.

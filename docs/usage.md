@@ -639,6 +639,101 @@ $table->addColumn('reason', 'text', [
 ]);
 ```
 
+## Tracking File Uploads (Hashes, not Content)
+
+Audited tables that store file content directly (binary blobs, base64 payloads, raw `UploadedFile` objects in a virtual field) cause two problems for the audit trail:
+
+- The audit row balloons to the size of the file — a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
+- The audit table ends up holding sensitive content in plaintext, defeating the typical reason for separating uploads from primary tables.
+
+The fix is to make the entity field that the auditor sees be a **fingerprint** (hash + size + mime), not the raw content. Two ways to do that, depending on where the file lives in your model.
+
+### Approach 1: Computed virtual field on the entity
+
+If the file is uploaded to disk on save and the table only stores a path, expose a small "fingerprint" field that the auditor will pick up via the standard whitelist:
+
+```php
+// src/Model/Entity/Document.php
+namespace App\Model\Entity;
+
+use Cake\ORM\Entity;
+
+class Document extends Entity
+{
+    protected array $_virtual = ['file_fingerprint'];
+
+    protected function _getFileFingerprint(): ?string
+    {
+        if ($this->file_path === null || !is_file($this->file_path)) {
+            return null;
+        }
+
+        return sprintf(
+            'sha256:%s size:%d mime:%s',
+            hash_file('sha256', $this->file_path),
+            filesize($this->file_path),
+            mime_content_type($this->file_path) ?: 'application/octet-stream',
+        );
+    }
+}
+```
+
+Then whitelist the virtual field in your behavior config so the audit picks it up alongside the real columns:
+
+```php
+// src/Model/Table/DocumentsTable.php
+$this->addBehavior('AuditStash.AuditLog', [
+    'whitelist' => ['title', 'file_path', 'file_fingerprint'],
+]);
+```
+
+A re-upload of the *same bytes* produces the same fingerprint → no audit row (assuming `ignoreEmpty` defaults). A re-upload of *different* bytes produces a different fingerprint → audit row showing `sha256:abc... → sha256:def...` with no file content stored.
+
+### Approach 2: Transform via the `AuditStash.beforeLog` event
+
+When the file content is already in a column you can't easily change (legacy schema, content stored as binary in the row), strip it at the audit boundary instead of at the model boundary. The `AuditStash.beforeLog` event fires once per save with all events for that transaction, and the listener can rewrite each event's payload before persistence:
+
+```php
+// in Application::bootstrap() or a dedicated listener
+EventManager::instance()->on(
+    'AuditStash.beforeLog',
+    function (EventInterface $event, array $logs): void {
+        foreach ($logs as $log) {
+            foreach (['changed', 'original'] as $side) {
+                $payload = $log->{'get' . ucfirst($side)}() ?? [];
+                if (isset($payload['file_blob']) && is_string($payload['file_blob'])) {
+                    $payload['file_blob'] = sprintf(
+                        'sha256:%s size:%d',
+                        hash('sha256', $payload['file_blob']),
+                        strlen($payload['file_blob']),
+                    );
+                }
+                if ($side === 'changed') {
+                    // BaseEvent has no public setter for changed/original, so this
+                    // approach requires either (a) an event subclass that exposes
+                    // setters, or (b) a custom persister wrapping the default one.
+                }
+            }
+        }
+    },
+);
+```
+
+> [!WARNING]
+> `BaseEvent` exposes `getChanged()` / `getOriginal()` but no public setters (the audit row is a value object). For Approach 2 to work end-to-end without a fork, wrap your persister: write a thin `PersisterInterface` decorator that walks each event, rebuilds it with the redacted payload, and forwards to the real persister. For most apps Approach 1 is simpler and avoids that detour.
+
+### Bonus: redact PII fields in the same hook
+
+The same `beforeLog` listener (or the `sensitive` behavior config) is the right place to redact non-file PII inputs (passport numbers, ID photos as data URIs, etc.) — keep the audit row showing *that* the field changed, but never *what* it was:
+
+```php
+// In your Table:
+$this->addBehavior('AuditStash.AuditLog', [
+    'sensitive' => ['passport_scan_b64', 'id_photo_b64'],
+]);
+// → values appear as '****' in changed/original.
+```
+
 ## Implementing Your Own Persister Strategies
 
 There are valid reasons for wanting to use a different persist engine for your audit logs. Luckily, this plugin allows you to implement
