@@ -6,17 +6,10 @@ namespace AuditStash\Controller\Admin;
 
 use App\Controller\AppController;
 use AuditStash\AuditLogType;
-use AuditStash\Service\CoverageService;
-use AuditStash\Service\DashboardService;
 use AuditStash\Service\RevertService;
 use AuditStash\Service\StateReconstructorService;
-use Cake\Core\Configure;
-use Cake\Event\EventInterface;
 use Cake\Http\Exception\BadRequestException;
-use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Response;
-use Cake\Log\Log;
-use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -30,7 +23,7 @@ use Throwable;
  */
 class AuditLogsController extends AppController
 {
-    use LoadHelperTrait;
+    use AdminControllerTrait;
 
     /**
      * Pattern for filter inputs used inside JSON path expressions.
@@ -51,122 +44,6 @@ class AuditLogsController extends AppController
      * @var string|null
      */
     protected ?string $defaultTable = 'AuditStash.AuditLogs';
-
-    /**
-     * @return void
-     */
-    public function initialize(): void
-    {
-        parent::initialize();
-
-        $this->loadComponent('Flash');
-        $this->loadHelpers();
-
-        // Configure layout
-        $adminLayout = Configure::read('AuditStash.adminLayout');
-        if ($adminLayout === false) {
-            // Disable plugin layout, use app's default
-        } elseif ($adminLayout === null) {
-            // Use plugin's isolated Bootstrap 5 layout
-            $this->viewBuilder()->setLayout('AuditStash.audit_stash');
-        } else {
-            // Use custom layout
-            $this->viewBuilder()->setLayout($adminLayout);
-        }
-    }
-
-    /**
-     * Optional defense-in-depth access gate.
-     *
-     * Audit logs commonly contain sensitive who-did-what records (PII, IP
-     * addresses, what fields were changed). Set `AuditStash.accessCheck` to
-     * a Closure that receives the current request and returns literal `true`
-     * to grant access; anything else (returns false, returns a truthy
-     * non-bool, throws) yields a 403.
-     *
-     * Unset = no-op (host AppController auth alone applies).
-     *
-     * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event
-     *
-     * @throws \Cake\Http\Exception\ForbiddenException When the configured Closure rejects the request.
-     *
-     * @return void
-     */
-    public function beforeFilter(EventInterface $event): void
-    {
-        parent::beforeFilter($event);
-
-        $check = Configure::read('AuditStash.accessCheck');
-        if ($check === null) {
-            return;
-        }
-        if (!($check instanceof Closure)) {
-            throw new ForbiddenException('AuditStash.accessCheck must be a Closure');
-        }
-
-        // Coexist with cakephp/authorization: the gate IS the authorization
-        // decision, so silence the policy check.
-        if ($this->components()->has('Authorization') && method_exists($this->components()->get('Authorization'), 'skipAuthorization')) {
-            $this->components()->get('Authorization')->skipAuthorization();
-        }
-
-        try {
-            $allowed = $check($this->request) === true;
-        } catch (ForbiddenException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            Log::warning(sprintf('AuditStash.accessCheck threw %s: %s', $e::class, $e->getMessage()));
-
-            throw new ForbiddenException('AuditStash admin access denied');
-        }
-
-        if (!$allowed) {
-            throw new ForbiddenException('AuditStash admin access denied');
-        }
-    }
-
-    /**
-     * Dashboard — KPI cards, daily histogram, top sources/users, recent events.
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
-    public function dashboard()
-    {
-        $service = new DashboardService($this->AuditLogs);
-
-        $kpis = $service->kpis();
-        $histogram = $service->eventsHistogram(30);
-        $topSources = $service->topSources(7, 10);
-        $topUsers = $service->topUsers(7, 10);
-        $recent = $service->recentEvents(20);
-
-        // Coverage summary count for the "Coverage" KPI card.
-        $coverage = (new CoverageService())->summary();
-
-        $this->set(compact('kpis', 'histogram', 'topSources', 'topUsers', 'recent', 'coverage'));
-    }
-
-    /**
-     * Coverage page — which Tables have AuditLog behavior attached vs which don't.
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
-    public function coverage()
-    {
-        $filter = (string)$this->request->getQuery('filter', '');
-        $includeInternal = (bool)$this->request->getQuery('include_internal', false);
-
-        $service = new CoverageService();
-        $rows = $service->discover($includeInternal);
-
-        if (in_array($filter, ['tracked', 'missing', 'empirical', 'internal'], true)) {
-            $rows = array_values(array_filter($rows, fn (array $r): bool => $r['status'] === $filter));
-        }
-
-        $summary = $service->summary();
-
-        $this->set(compact('rows', 'filter', 'includeInternal', 'summary'));
-    }
 
     /**
      * Index method - Browse and search audit logs

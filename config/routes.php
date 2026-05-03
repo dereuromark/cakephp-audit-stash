@@ -2,37 +2,10 @@
 
 declare(strict_types=1);
 
-use Cake\Routing\Route\DashedRoute;
-use Cake\Routing\RouteBuilder;
-
 /**
- * @var \Cake\Routing\RouteBuilder $routes
+ * No-op stub. The plugin's routes are defined in
+ * `AuditStashPlugin::routes()` so the host application can hook them in
+ * via `addPlugin('AuditStash', ['routes' => true])`. This file exists
+ * only to satisfy `BaseApplication::routes()` which require()s it.
  */
-$routes->plugin(
-    'AuditStash',
-    ['path' => '/audit-stash'],
-    function (RouteBuilder $builder): void {
-        $builder->setRouteClass(DashedRoute::class);
-
-        $builder->prefix('Admin', function (RouteBuilder $builder): void {
-            $builder->connect('/', ['controller' => 'AuditLogs', 'action' => 'index']);
-
-            // Related changes route
-            $builder->connect(
-                '/audit-logs/related-changes/{source}/{primary_key}',
-                ['controller' => 'AuditLogs', 'action' => 'relatedChanges'],
-                ['pass' => ['source', 'primary_key']],
-            );
-
-            // Bulk changes route
-            $builder->connect(
-                '/audit-logs/bulk-changes',
-                ['controller' => 'AuditLogs', 'action' => 'bulkChanges'],
-            );
-
-            $builder->fallbacks();
-        });
-
-        $builder->fallbacks();
-    },
-);
+return function (): void {};

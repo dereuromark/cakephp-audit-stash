@@ -84,17 +84,11 @@ class AuditStashPlugin extends BasePlugin
      * $this->addPlugin('AuditStash', ['routes' => false]);
      * ```
      *
-     * Routes default to `/admin/audit-stash/...`. The path segment after the
-     * Admin prefix is configurable via `AuditStash.routePath` — set it to
-     * `'/audit-logs'` to retain the pre-dashboard URLs.
+     * Mounted under the Admin prefix at `AuditStash.routePath`
+     * (default `/audit-stash`; set to `/audit-logs` for pre-dashboard URLs).
      *
-     * Routes available (assuming the default path):
-     * - /admin/audit-stash → dashboard
-     * - /admin/audit-stash/audit-logs/index → browse (filterable list)
-     * - /admin/audit-stash/audit-logs/coverage → coverage report
-     * - /admin/audit-stash/view/{id}
-     * - /admin/audit-stash/timeline/{source}/{primaryKey}
-     * - /admin/audit-stash/export
+     * The plugin root maps to the dashboard; everything else
+     * (`audit-logs/*`, `coverage/*`) resolves via fallbacks.
      *
      * @param \Cake\Routing\RouteBuilder $routes The route builder to update.
      *
@@ -106,19 +100,8 @@ class AuditStashPlugin extends BasePlugin
         $routes->prefix('Admin', function (RouteBuilder $routes) use ($path): void {
             $routes->plugin('AuditStash', ['path' => $path], function (RouteBuilder $routes): void {
                 $routes->setRouteClass(DashedRoute::class);
-
-                // Plugin root → dashboard. Param-patterned routes are kept
-                // explicit; everything else (index/browse, coverage, ...)
-                // resolves through fallbacks() below as /audit-logs/<action>.
-                $routes->connect('/', ['controller' => 'AuditLogs', 'action' => 'dashboard']);
-                $routes->connect('/view/{id}', ['controller' => 'AuditLogs', 'action' => 'view'])
-                    ->setPass(['id'])
-                    ->setPatterns(['id' => '[0-9]+']);
-                $routes->connect('/timeline/{source}/{primaryKey}', ['controller' => 'AuditLogs', 'action' => 'timeline'])
-                    ->setPass(['source', 'primaryKey']);
-                $routes->connect('/export', ['controller' => 'AuditLogs', 'action' => 'export'])
-                    ->setExtensions(['csv', 'json']);
-
+                $routes->setExtensions(['csv', 'json']);
+                $routes->connect('/', ['controller' => 'Dashboard', 'action' => 'index']);
                 $routes->fallbacks();
             });
         });
