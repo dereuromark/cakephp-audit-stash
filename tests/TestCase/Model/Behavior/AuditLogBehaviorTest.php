@@ -9,6 +9,7 @@ use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Model\Behavior\AuditLogBehavior;
+use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
 use Cake\Event\Event;
 use Cake\ORM\Entity;
@@ -217,6 +218,28 @@ class AuditLogBehaviorTest extends TestCase
             'afterCommit' => ['afterCommit'],
             'null' => [null],
         ];
+    }
+
+    /**
+     * `AuditStash.persisterConfig` (documented in app.example.php and
+     * docs/tamper-evidence.md) is applied to the lazily-built persister so
+     * settings like `hashChain` actually take effect via global config.
+     *
+     * @return void
+     */
+    public function testPersisterConfigIsAppliedFromGlobalConfig(): void
+    {
+        Configure::write('AuditStash.persisterConfig', ['hashChain' => true]);
+
+        try {
+            $behavior = new AuditLogBehavior($this->table);
+            $persister = $behavior->persister();
+
+            $this->assertInstanceOf(TablePersister::class, $persister);
+            $this->assertTrue($persister->getConfig('hashChain'));
+        } finally {
+            Configure::delete('AuditStash.persisterConfig');
+        }
     }
 
     public function testSensitiveFields(): void

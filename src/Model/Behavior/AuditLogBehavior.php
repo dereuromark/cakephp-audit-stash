@@ -472,6 +472,12 @@ class AuditLogBehavior extends Behavior
 
             /** @var \AuditStash\PersisterInterface $instance */
             $instance = new $class(compact('index', 'type'));
+
+            $persisterConfig = Configure::read('AuditStash.persisterConfig');
+            if (is_array($persisterConfig) && $persisterConfig && method_exists($instance, 'setConfig')) {
+                $instance->setConfig($persisterConfig);
+            }
+
             $persister = $instance;
         }
 

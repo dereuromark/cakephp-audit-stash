@@ -58,10 +58,12 @@ public function beforeFilter(EventInterface $event)
 {
     parent::beforeFilter($event);
 
+    $identity = $this->getRequest()->getAttribute('identity');
     EventManager::instance()->on(
         new RequestMetadata(
             request: $this->getRequest(),
-            user: $this->getRequest()->getAttribute('identity')?->getIdentifier(),
+            userId: $identity?->getIdentifier(),
+            userDisplay: $identity?->get('username'),
         ),
     );
 }
