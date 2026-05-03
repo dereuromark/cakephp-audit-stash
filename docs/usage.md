@@ -190,6 +190,32 @@ This is particularly useful when:
 
 **Note:** The `cascadeDeletes` option is disabled by default for backward compatibility.
 
+### Plugin Tables and the `source` Column
+
+`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator** — and CakePHP allows both forms:
+
+- `$this->fetchTable('Comments.Comments')` → registry alias `Comments.Comments` → audit row `source = 'Comments.Comments'`
+- `$this->fetchTable('Comments')` → registry alias `Comments` → audit row `source = 'Comments'`
+
+Associations from app code without an explicit `className` may resolve to the bare alias, so plugin-owned tables often end up writing audit rows under the short form. The Audit-Log-Viewer's coverage report checks both forms, but the behavior records whatever the locator gave it at save time.
+
+This is mostly a non-issue, but **two situations need attention** if your app loads plugin tables:
+
+1. **Mixed load paths produce a fragmented audit trail.** If different code paths in the same app load the same plugin table both with and without the prefix, you'll get rows under both `Comments.Comments` AND `Comments`. The coverage report surfaces the orphaned form as `Empirical` so you can spot it. Pick one form and stick with it — using the dotted form everywhere (`fetchTable('Comments.Comments')`, association `className`, etc.) keeps the audit attribution stable.
+
+2. **Source collisions across an app and plugin with the same name.** If your app has its own `App\Model\Table\CommentsTable` AND you load a plugin's `Comments\Model\Table\CommentsTable`, both writing audit rows under the bare alias `Comments` becomes a real ambiguity — the audit trail can no longer tell the two logical tables apart. The cleanest fix is to alias the plugin table when registering it with the locator, so the `source` column carries a disambiguated name:
+
+   ```php
+   // In Application::bootstrap() or wherever you set up table associations:
+   $this->getTableLocator()->setConfig('PluginComments', [
+       'className' => 'Comments\\Model\\Table\\CommentsTable',
+   ]);
+   // Then load via $this->fetchTable('PluginComments') so the source column
+   // says 'PluginComments' instead of competing with the app's 'Comments'.
+   ```
+
+   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias — but that requires every association declaration in the app to set `className` explicitly.
+
 ## Storing The Logged In User
 
 It is often useful to store the identifier of the user that is triggering the changes in a certain table. For this purpose, `AuditStash`

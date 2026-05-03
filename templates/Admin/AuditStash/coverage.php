@@ -3,6 +3,7 @@
  * @var \App\View\AppView $this
  * @var array<int, array{
  *   alias: string,
+ *   source: string,
  *   class: ?string,
  *   plugin: ?string,
  *   has_behavior: bool,
@@ -116,7 +117,14 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                     <?php foreach ($rows as $row) { ?>
                         <tr>
                             <td><?= $badge($row['status']) ?></td>
-                            <td><code><?= h($row['alias']) ?></code></td>
+                            <td>
+                                <code><?= h($row['alias']) ?></code>
+                                <?php if (!empty($row['source']) && $row['source'] !== $row['alias']) { ?>
+                                    <div class="small text-muted">
+                                        <?= __('audit source: {0}', '<code>' . h($row['source']) . '</code>') ?>
+                                    </div>
+                                <?php } ?>
+                            </td>
                             <td><?= $row['plugin'] !== null ? '<code>' . h($row['plugin']) . '</code>' : '<span class="text-muted">—</span>' ?></td>
                             <td>
                                 <?php if ($row['class']) { ?>
@@ -133,7 +141,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                                 <?php if ($row['events_30d'] > 0) { ?>
                                     <?= $this->Html->link(
                                         __('View activity'),
-                                        ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['alias']]],
+                                        ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['source'] ?? $row['alias']]],
                                         ['class' => 'btn btn-sm btn-outline-primary'],
                                     ) ?>
                                 <?php } ?>

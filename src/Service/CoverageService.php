@@ -50,6 +50,7 @@ class CoverageService
     /**
      * @return array<int, array{
      *   alias: string,
+     *   source: string,
      *   class: ?string,
      *   plugin: ?string,
      *   has_behavior: bool,
@@ -84,10 +85,23 @@ class CoverageService
             }
 
             $inspection = $this->inspectClass($alias);
+
+            // Resolve the audit-log source for this class. AuditLogBehavior
+            // persists the source as `$_table->getRegistryAlias()`, which
+            // for plugin tables can be either `Plugin.Table` (when loaded
+            // with the dotted alias) or just `Table` (when loaded without
+            // the prefix from app code or via association). Pick whichever
+            // form actually has events; the dotted form wins when both
+            // forms have rows.
             $events = $eventCounts[$alias] ?? 0;
-            // Plugin-prefixed aliases also match unprefixed audit-log sources.
+            $source = $alias;
             if ($events === 0 && $info['plugin'] !== null) {
-                $events = $eventCounts[$info['short_alias']] ?? 0;
+                $shortEvents = $eventCounts[$info['short_alias']] ?? 0;
+                if ($shortEvents > 0) {
+                    $events = $shortEvents;
+                    $source = $info['short_alias'];
+                    $seenAliases[$info['short_alias']] = true;
+                }
             }
 
             $status = $isInternal
@@ -96,6 +110,7 @@ class CoverageService
 
             $rows[] = [
                 'alias' => $alias,
+                'source' => $source,
                 'class' => $info['class'],
                 'plugin' => $info['plugin'],
                 'has_behavior' => $inspection['has_behavior'],
@@ -114,6 +129,7 @@ class CoverageService
             }
             $rows[] = [
                 'alias' => $source,
+                'source' => $source,
                 'class' => null,
                 'plugin' => null,
                 'has_behavior' => false,
