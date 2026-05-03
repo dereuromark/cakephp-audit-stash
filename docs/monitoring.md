@@ -40,6 +40,15 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'severity' => 'medium',
                 'channels' => ['log', 'email'],
             ],
+
+            // Alert when sensitive fields are touched
+            'sensitive_fields' => [
+                'class' => \AuditStash\Monitor\Rule\SensitiveFieldRule::class,
+                'tables' => ['Users', 'ApiKeys'],         // Optional; empty = all sources
+                'fields' => ['password', 'role', 'two_factor_secret', 'api_token'],
+                'severity' => 'high',
+                'channels' => ['log', 'email'],
+            ],
         ],
 
         // Configure notification channels
@@ -94,6 +103,28 @@ Detects activity outside normal business hours.
   - 1 = Monday, 7 = Sunday
 - `tables` (array): Specific tables to monitor (optional)
 - `severity` (string): Alert severity level (default: 'medium')
+
+### SensitiveFieldRule
+
+Detects modifications to fields that you've flagged as sensitive (passwords, tokens, role assignments, etc.). Looks at the `changed` payload for create / update events and at `original` for deletes, so password rotations and API-key revocations both fire.
+
+**Configuration options:**
+- `fields` (array, required): Field names to flag. Empty means "no sensitive fields configured" — the rule never matches.
+- `tables` (array): Restrict to these source tables. Empty (default) matches any source.
+- `severity` (string): Alert severity level (default: 'high')
+
+**Example:**
+```php
+'sensitive_fields' => [
+    'class' => \AuditStash\Monitor\Rule\SensitiveFieldRule::class,
+    'tables' => ['Users'],
+    'fields' => ['password', 'role', 'email'],
+    'severity' => 'high',
+    'channels' => ['email', 'webhook'],
+],
+```
+
+The alert message lists the matched fields and the alert context includes both `matched_fields` and `configured_fields`, so downstream channels can render which sensitive field actually fired.
 
 ## Available Channels
 

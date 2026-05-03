@@ -209,4 +209,148 @@ class EnvironmentMetadataTest extends TestCase
         $this->assertArrayHasKey('AuditStash.beforeLog', $events);
         $this->assertSame('beforeLog', $events['AuditStash.beforeLog']);
     }
+
+    /**
+     * Capture is opt-in: omitting `capture` keeps the legacy meta payload.
+     *
+     * @return void
+     */
+    public function testCaptureDefaultsToOff(): void
+    {
+        $request = new ServerRequest([
+            'environment' => ['HTTP_USER_AGENT' => 'Mozilla/5.0 ...'],
+        ]);
+
+        $metadata = new EnvironmentMetadata('web', [], $request);
+
+        $log = new AuditCreateEvent('tx-1', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertSame(['request_source' => 'web'], $meta);
+    }
+
+    /**
+     * Opting into `user_agent` and `referer` adds the matching headers.
+     *
+     * @return void
+     */
+    public function testCaptureUserAgentAndReferer(): void
+    {
+        $request = new ServerRequest([
+            'environment' => [
+                'HTTP_USER_AGENT' => 'Mozilla/5.0 (X11; Linux) Firefox/123',
+                'HTTP_REFERER' => 'https://example.com/admin/articles',
+            ],
+        ]);
+
+        $metadata = new EnvironmentMetadata(
+            source: 'web',
+            request: $request,
+            capture: ['user_agent', 'referer'],
+        );
+
+        $log = new AuditCreateEvent('tx-2', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertSame('Mozilla/5.0 (X11; Linux) Firefox/123', $meta['user_agent']);
+        $this->assertSame('https://example.com/admin/articles', $meta['referer']);
+    }
+
+    /**
+     * Empty headers (no Referer at all on a direct hit) must NOT pollute the
+     * audit row with empty strings.
+     *
+     * @return void
+     */
+    public function testCaptureSkipsEmptyHeaders(): void
+    {
+        $request = new ServerRequest([
+            'environment' => ['HTTP_USER_AGENT' => 'curl/8.0'],
+        ]);
+
+        $metadata = new EnvironmentMetadata(
+            source: 'web',
+            request: $request,
+            capture: ['user_agent', 'referer'],
+        );
+
+        $log = new AuditCreateEvent('tx-3', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertSame('curl/8.0', $meta['user_agent']);
+        $this->assertArrayNotHasKey('referer', $meta);
+    }
+
+    /**
+     * Unknown capture field names are silently filtered out so a typo in
+     * userland config can't smuggle arbitrary values into meta.
+     *
+     * @return void
+     */
+    public function testCaptureFiltersUnknownFields(): void
+    {
+        $request = new ServerRequest([
+            'environment' => ['HTTP_USER_AGENT' => 'curl/8.0'],
+        ]);
+
+        $metadata = new EnvironmentMetadata(
+            source: 'web',
+            request: $request,
+            capture: ['user_agent', 'totally_unsupported'],
+        );
+
+        $log = new AuditCreateEvent('tx-4', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertSame('curl/8.0', $meta['user_agent']);
+        $this->assertArrayNotHasKey('totally_unsupported', $meta);
+    }
+
+    /**
+     * Without an active session the session_id capture must yield nothing
+     * rather than an empty string.
+     *
+     * @return void
+     */
+    public function testCaptureSessionIdSkippedWhenNotStarted(): void
+    {
+        $request = new ServerRequest([
+            'environment' => ['HTTP_USER_AGENT' => 'curl/8.0'],
+        ]);
+
+        $metadata = new EnvironmentMetadata(
+            source: 'web',
+            request: $request,
+            capture: ['session_id'],
+        );
+
+        $log = new AuditCreateEvent('tx-5', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertArrayNotHasKey('session_id', $meta);
+    }
+
+    /**
+     * `capture` is a no-op when no request is supplied (CLI / queue context).
+     *
+     * @return void
+     */
+    public function testCaptureIgnoredWithoutRequest(): void
+    {
+        $metadata = new EnvironmentMetadata(
+            source: 'cli',
+            capture: ['user_agent', 'referer'],
+        );
+
+        $log = new AuditCreateEvent('tx-6', 1, 'articles', [], [], null);
+        $metadata->beforeLog(new Event('AuditStash.beforeLog'), [$log]);
+
+        $meta = $log->getMetaInfo();
+        $this->assertSame(['request_source' => 'cli'], $meta);
+    }
 }

@@ -375,6 +375,25 @@ API requests are detected by:
 - URL path starting with `/api/`
 - `Authorization` header with `Bearer` or `Basic` prefix
 
+### Capturing forensic request fields
+
+`EnvironmentMetadata` can also pull a small set of request-derived fields into `meta`. They are off by default — these fields can carry PII / fingerprintable data and may have GDPR implications, so consumers must opt in explicitly via `capture`:
+
+```php
+EventManager::instance()->on(new EnvironmentMetadata(
+    request: $this->getRequest(),
+    capture: ['user_agent', 'referer', 'session_id'],
+));
+```
+
+Supported `capture` values:
+
+- `user_agent` — `User-Agent` header
+- `referer` — `Referer` header
+- `session_id` — PHP session id; only included when a session has actually been started (CLI, queue workers, and anonymous API hits silently skip it)
+
+Empty headers and unknown field names are filtered out so a typo can't smuggle arbitrary values into `meta`. `capture` is a no-op when no `request` is supplied (CLI / queue context).
+
 ### Combining with RequestMetadata
 
 You can use both listeners together:
