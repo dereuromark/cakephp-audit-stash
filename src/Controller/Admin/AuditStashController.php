@@ -7,6 +7,8 @@ namespace AuditStash\Controller\Admin;
 use App\Controller\AppController;
 use AuditStash\Service\CoverageService;
 use AuditStash\Service\DashboardService;
+use Cake\Core\Configure;
+use Cake\Http\Exception\ForbiddenException;
 
 /**
  * Plugin entry point. Hosts the admin dashboard (`index`) and the coverage
@@ -63,5 +65,27 @@ class AuditStashController extends AppController
         $summary = $service->summary();
 
         $this->set(compact('rows', 'filter', 'includeInternal', 'summary'));
+    }
+
+    /**
+     * Truncate audit_logs. Debug-only convenience for development /
+     * demo environments — refuses to run when `Configure::read('debug')`
+     * is false so a misconfigured route can't wipe production logs.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function reset()
+    {
+        $this->request->allowMethod(['post']);
+        if (!Configure::read('debug')) {
+            throw new ForbiddenException('AuditStash reset is only available in debug mode.');
+        }
+
+        $connection = $this->AuditLogs->getConnection();
+        $connection->execute('TRUNCATE TABLE ' . $connection->getDriver()->quoteIdentifier($this->AuditLogs->getTable()));
+
+        $this->Flash->success(__('All audit logs have been deleted.'));
+
+        return $this->redirect(['action' => 'index']);
     }
 }

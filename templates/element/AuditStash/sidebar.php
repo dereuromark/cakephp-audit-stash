@@ -82,4 +82,22 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
             </a>
         </nav>
     </div>
+
+    <?php if (\Cake\Core\Configure::read('debug')) { ?>
+    <div class="nav-section">
+        <div class="nav-section-title text-warning"><?= __('Debug') ?></div>
+        <nav class="nav flex-column">
+            <?= $this->Form->postLink(
+                $this->element('AuditStash.icon', ['name' => 'eraser', 'fallback' => 'fas fa-eraser']) . ' ' . __('Reset (truncate)'),
+                ['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'reset'],
+                [
+                    'class' => 'nav-link text-danger',
+                    'escapeTitle' => false,
+                    'confirm' => __('This wipes ALL audit log rows. Continue?'),
+                    'block' => true,
+                ],
+            ) ?>
+        </nav>
+    </div>
+    <?php } ?>
 </aside>

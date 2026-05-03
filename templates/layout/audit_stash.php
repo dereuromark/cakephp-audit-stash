@@ -347,8 +347,12 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>
+        <span class="text-light small ms-auto me-3" title="<?= __d('audit_stash', 'Server Time') ?>">
+            <i class="far fa-clock me-1"></i>
+            <?= date('Y-m-d H:i:s') ?>
+        </span>
         <?php if ($hasBouncerPlugin) { ?>
-        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => $prefix, 'controller' => 'Bouncer', 'action' => 'index']) ?>">
+        <a class="btn btn-outline-light btn-sm" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => $prefix, 'controller' => 'Bouncer', 'action' => 'index']) ?>">
             <i class="fas fa-shield-alt me-1"></i>
             Bouncer
         </a>
