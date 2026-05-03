@@ -53,44 +53,8 @@ class AuditLogsController extends AppController
      */
     public function index()
     {
-        $query = $this->AuditLogs->find();
-        $this->applyBaseFilters($query);
-
-        // Filter by changed field (field-level tracking).
-        // Validated as a strict identifier to avoid JSON path injection.
-        $changedField = $this->validateFilterIdentifier(
-            $this->request->getQuery('changed_field'),
-            'changed_field',
-        );
-        if ($changedField !== null) {
-            $query = $this->AuditLogs->find('byChangedField', field: $changedField);
-            $this->applyBaseFilters($query);
-        }
-
-        // Filter by field name + value (value-based search).
-        // Field name validated as identifier; value is parameter-bound.
-        $fieldName = $this->validateFilterIdentifier(
-            $this->request->getQuery('field_name'),
-            'field_name',
-        );
-        $fieldValue = $this->request->getQuery('field_value');
-        if ($fieldName !== null && $fieldValue !== null && $fieldValue !== '') {
-            $query = $this->AuditLogs->find('byChangedFieldValue', field: $fieldName, value: $fieldValue);
-            $this->applyBaseFilters($query);
-        }
-
-        // Filter by bulk/non-bulk changes
-        $bulkFilter = $this->request->getQuery('bulk_filter');
-        if ($bulkFilter === 'yes') {
-            $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
-            $query = $this->AuditLogs->find('bulkChanges', minRecords: $minRecords);
-            $this->applyBaseFilters($query);
-        } elseif ($bulkFilter === 'no') {
-            $minRecords = (int)($this->request->getQuery('min_records') ?: 5);
-            $query = $this->AuditLogs->find('nonBulkChanges', minRecords: $minRecords);
-            $this->applyBaseFilters($query);
-        }
-
+        $params = $this->resolveFilterParams();
+        $query = $this->AuditLogs->find('forFilters', params: $params);
         $query->orderBy(['AuditLogs.created' => 'DESC']);
 
         $auditLogs = $this->paginate($query);
@@ -129,60 +93,73 @@ class AuditLogsController extends AppController
     }
 
     /**
-     * Apply base filters to a query.
+     * Build the filter parameter array consumed by the
+     * {@see \AuditStash\Model\Table\AuditLogsTable::findForFilters()} finder.
      *
-     * Single source of truth for the index/export filter set so the LIKE
-     * escape and other guards stay in sync. Used both at the start of index()
-     * and after a finder resets the query.
+     * Validates `changed_field` and `field_name` as strict identifiers so
+     * the JSON path expression in the table-level finder cannot be
+     * reshaped via meta characters. Other values are passed through and
+     * parameter-bound by the ORM.
      *
-     * @param \Cake\ORM\Query\SelectQuery $query The query to modify
-     *
-     * @return void
+     * @return array<string, mixed>
      */
-    protected function applyBaseFilters($query): void
+    protected function resolveFilterParams(): array
     {
-        if ($this->request->getQuery('source')) {
-            $query->where(['AuditLogs.source' => $this->request->getQuery('source')]);
+        $params = [];
+        foreach (
+            [
+                'source', 'user_id', 'type', 'transaction_key', 'primary_key',
+                'date_from', 'date_to', 'field_value', 'bulk_filter', 'min_records',
+            ] as $key
+        ) {
+            $value = $this->request->getQuery($key);
+            if ($value !== null && $value !== '') {
+                $params[$key] = $value;
+            }
         }
-        $userId = $this->request->getQuery('user_id');
-        if ($userId !== null && $userId !== '') {
-            // Escape LIKE wildcards so a literal `%` or `_` from user input
-            // does not turn the query into a full-table-scan / match-all.
-            $needle = addcslashes((string)$userId, '%_\\');
-            $query->where(['AuditLogs.user_id LIKE' => '%' . $needle . '%']);
+
+        $changedField = $this->validateFilterIdentifier(
+            $this->request->getQuery('changed_field'),
+            'changed_field',
+        );
+        if ($changedField !== null) {
+            $params['changed_field'] = $changedField;
         }
-        if ($this->request->getQuery('type')) {
-            $query->where(['AuditLogs.type' => $this->request->getQuery('type')]);
+
+        $fieldName = $this->validateFilterIdentifier(
+            $this->request->getQuery('field_name'),
+            'field_name',
+        );
+        if ($fieldName !== null) {
+            $params['field_name'] = $fieldName;
         }
-        if ($this->request->getQuery('transaction_key')) {
-            $query->where(['AuditLogs.transaction_key' => $this->request->getQuery('transaction_key')]);
-        }
-        if ($this->request->getQuery('primary_key')) {
-            $query->where(['AuditLogs.primary_key' => $this->request->getQuery('primary_key')]);
-        }
-        if ($this->request->getQuery('date_from')) {
-            $query->where(['AuditLogs.created >=' => $this->request->getQuery('date_from') . ' 00:00:00']);
-        }
-        if ($this->request->getQuery('date_to')) {
-            $query->where(['AuditLogs.created <=' => $this->request->getQuery('date_to') . ' 23:59:59']);
-        }
+
+        return $params;
     }
 
     /**
-     * Whether the request carries at least one non-date filter that
-     * narrows the export.
+     * Whether the supplied filter set carries at least one non-date filter
+     * that narrows the export.
      *
      * Used by {@see export()} to decide whether the default 30-day floor
      * still adds value: if the caller already pinned the export to a
-     * specific source / row / transaction / user / type, the floor would
-     * silently drop rows the index page shows for the same filters.
+     * specific source / row / transaction / user / type / field /
+     * bulk class, the floor would silently drop rows the index page
+     * shows for the same filters.
+     *
+     * @param array<string, mixed> $params Filter set from {@see resolveFilterParams()}.
      *
      * @return bool
      */
-    protected function hasNarrowingFilters(): bool
+    protected function hasNarrowingFilters(array $params): bool
     {
-        foreach (['source', 'user_id', 'type', 'transaction_key', 'primary_key'] as $key) {
-            $value = $this->request->getQuery($key);
+        foreach (
+            [
+                'source', 'user_id', 'type', 'transaction_key', 'primary_key',
+                'changed_field', 'field_name', 'bulk_filter',
+            ] as $key
+        ) {
+            $value = $params[$key] ?? null;
             if ($value !== null && $value !== '') {
                 return true;
             }
@@ -481,17 +458,14 @@ class AuditLogsController extends AppController
     {
         $service = new ExportService();
         $format = $this->resolveExportFormat();
-        $hasOtherFilters = $this->hasNarrowingFilters();
+        $params = $this->resolveFilterParams();
+        $hasOtherFilters = $this->hasNarrowingFilters($params);
+        $dateFrom = isset($params['date_from']) && is_string($params['date_from']) ? $params['date_from'] : null;
+        $dateTo = isset($params['date_to']) && is_string($params['date_to']) ? $params['date_to'] : null;
 
         if ($format === null) {
-            $query = $this->AuditLogs->find();
-            $this->applyBaseFilters($query);
-            $defaultFloor = $service->applyDefaultDateRange(
-                $query,
-                $this->request->getQuery('date_from'),
-                $this->request->getQuery('date_to'),
-                $hasOtherFilters,
-            );
+            $query = $this->AuditLogs->find('forFilters', params: $params);
+            $defaultFloor = $service->applyDefaultDateRange($query, $dateFrom, $dateTo, $hasOtherFilters);
 
             $rowCount = $service->estimate($query);
             $hardCap = $service->hardCap();
@@ -503,14 +477,8 @@ class AuditLogsController extends AppController
             return null;
         }
 
-        $query = $this->AuditLogs->find();
-        $this->applyBaseFilters($query);
-        $service->applyDefaultDateRange(
-            $query,
-            $this->request->getQuery('date_from'),
-            $this->request->getQuery('date_to'),
-            $hasOtherFilters,
-        );
+        $query = $this->AuditLogs->find('forFilters', params: $params);
+        $service->applyDefaultDateRange($query, $dateFrom, $dateTo, $hasOtherFilters);
 
         $service->assertWithinHardCap($service->estimate($query));
 

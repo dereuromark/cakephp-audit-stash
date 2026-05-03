@@ -11,6 +11,10 @@
 $this->assign('title', __('Export Audit Logs'));
 
 // Filters that are already in effect (carried from the index page query string).
+// Whitelist must stay in sync with `AuditLogsController::resolveFilterParams()`,
+// otherwise the form's hidden inputs / "Back to browse" link silently drop
+// filters and the streamed export sees a different filter set than the
+// preview the user just confirmed.
 $activeFilters = array_filter([
     'source' => $queryParams['source'] ?? null,
     'user_id' => $queryParams['user_id'] ?? null,
@@ -19,6 +23,11 @@ $activeFilters = array_filter([
     'primary_key' => $queryParams['primary_key'] ?? null,
     'date_from' => $queryParams['date_from'] ?? null,
     'date_to' => $queryParams['date_to'] ?? null,
+    'changed_field' => $queryParams['changed_field'] ?? null,
+    'field_name' => $queryParams['field_name'] ?? null,
+    'field_value' => $queryParams['field_value'] ?? null,
+    'bulk_filter' => $queryParams['bulk_filter'] ?? null,
+    'min_records' => $queryParams['min_records'] ?? null,
 ], static fn ($v): bool => $v !== null && $v !== '');
 
 $exceedsCap = $rowCount > $hardCap;

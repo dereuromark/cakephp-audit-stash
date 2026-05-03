@@ -126,6 +126,122 @@ class AuditLogsTable extends Table
     }
 
     /**
+     * Apply the full UI filter set to a query in a single call.
+     *
+     * Single source of truth for the index / export filter logic. The
+     * controller previously applied base filters via a private helper
+     * and re-applied them after each advanced finder; the export action
+     * only ran the base filters, which silently dropped `changed_field`,
+     * `field_name+value`, and `bulk_filter` from any export. Routing
+     * everything through this finder makes the two actions consistent
+     * and the filter rules unit-testable without HTTP setup.
+     *
+     * Filters compose — supplying multiple advanced filters narrows the
+     * result further (e.g. `changed_field=title` + `bulk_filter=yes` →
+     * bulk transactions that changed `title`).
+     *
+     * Recognized keys (all optional):
+     *
+     * - `source`, `user_id`, `type`, `transaction_key`, `primary_key` (string)
+     * - `date_from`, `date_to` (`Y-m-d`)
+     * - `changed_field` (identifier-shaped token)
+     * - `field_name` + `field_value` (identifier-shaped token + arbitrary scalar)
+     * - `bulk_filter` (`yes`|`no`), `min_records` (int, default 5)
+     *
+     * `user_id` is matched with a wildcard LIKE so callers can pass a
+     * substring; the value is escaped for `%` / `_` / `\` so a literal
+     * wildcard from user input cannot turn the query into a match-all.
+     *
+     * The caller is responsible for validating `changed_field` and
+     * `field_name` as identifier-shaped tokens before passing them in
+     * (see {@see \AuditStash\Database\JsonQueryHelper}, which also
+     * rejects path meta characters as defense in depth).
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query The query to modify
+     * @param array<string, mixed> $params Filter values keyed by request name
+     *
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findForFilters(SelectQuery $query, array $params): SelectQuery
+    {
+        $source = $this->stringFilter($params, 'source');
+        if ($source !== null) {
+            $query->where(['AuditLogs.source' => $source]);
+        }
+
+        $userId = $this->stringFilter($params, 'user_id');
+        if ($userId !== null) {
+            $needle = addcslashes($userId, '%_\\');
+            $query->where(['AuditLogs.user_id LIKE' => '%' . $needle . '%']);
+        }
+
+        $type = $this->stringFilter($params, 'type');
+        if ($type !== null) {
+            $query->where(['AuditLogs.type' => $type]);
+        }
+
+        $transactionKey = $this->stringFilter($params, 'transaction_key');
+        if ($transactionKey !== null) {
+            $query->where(['AuditLogs.transaction_key' => $transactionKey]);
+        }
+
+        $primaryKey = $this->stringFilter($params, 'primary_key');
+        if ($primaryKey !== null) {
+            $query->where(['AuditLogs.primary_key' => $primaryKey]);
+        }
+
+        $dateFrom = $this->stringFilter($params, 'date_from');
+        if ($dateFrom !== null) {
+            $query->where(['AuditLogs.created >=' => $dateFrom . ' 00:00:00']);
+        }
+
+        $dateTo = $this->stringFilter($params, 'date_to');
+        if ($dateTo !== null) {
+            $query->where(['AuditLogs.created <=' => $dateTo . ' 23:59:59']);
+        }
+
+        $changedField = $this->stringFilter($params, 'changed_field');
+        if ($changedField !== null) {
+            $query = $this->findByChangedField($query, $changedField);
+        }
+
+        $fieldName = $this->stringFilter($params, 'field_name');
+        $fieldValue = $params['field_value'] ?? null;
+        if ($fieldName !== null && $fieldValue !== null && $fieldValue !== '') {
+            $query = $this->findByChangedFieldValue($query, $fieldName, $fieldValue);
+        }
+
+        $bulk = $params['bulk_filter'] ?? null;
+        if ($bulk === 'yes' || $bulk === 'no') {
+            $rawMin = $params['min_records'] ?? null;
+            $minRecords = is_numeric($rawMin) ? max(1, (int)$rawMin) : 5;
+            $query = $bulk === 'yes'
+                ? $this->findBulkChanges($query, $minRecords)
+                : $this->findNonBulkChanges($query, $minRecords);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Pull a non-empty string from the filter params, or return null.
+     *
+     * @param array<string, mixed> $params
+     * @param string $key
+     *
+     * @return string|null
+     */
+    protected function stringFilter(array $params, string $key): ?string
+    {
+        $value = $params[$key] ?? null;
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
+
+        return null;
+    }
+
+    /**
      * Find logs where a specific field was changed
      *
      * @param \Cake\ORM\Query\SelectQuery $query The query to modify

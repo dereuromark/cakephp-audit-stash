@@ -480,4 +480,262 @@ class AuditLogsTableTest extends TestCase
 
         $this->assertCount(2, $results);
     }
+
+    /**
+     * Empty filter set must be a pass-through — every audit log row is
+     * returned and the helper does not silently inject WHERE clauses.
+     *
+     * @return void
+     */
+    public function testFindForFiltersWithEmptyParamsReturnsAll(): void
+    {
+        $this->seedForFilterTests();
+
+        $results = $this->getAuditLogsTable()->find('forFilters', params: [])->toArray();
+
+        $this->assertCount(6, $results);
+    }
+
+    /**
+     * Base filters (source / type / transaction_key / primary_key) compose
+     * with WHERE clauses; mirrors the previous controller-side
+     * `applyBaseFilters` behavior so the refactor is observably equivalent
+     * for the simple cases.
+     *
+     * @return void
+     */
+    public function testFindForFiltersAppliesBaseFilters(): void
+    {
+        $this->seedForFilterTests();
+
+        $results = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['source' => 'Articles'])
+            ->toArray();
+
+        $this->assertCount(4, $results);
+        foreach ($results as $row) {
+            $this->assertSame('Articles', $row->source);
+        }
+    }
+
+    /**
+     * `user_id` is a substring LIKE match — preserved from the original
+     * helper. Wildcards in the input must be escaped so a literal `%`
+     * cannot turn the filter into a match-all.
+     *
+     * @return void
+     */
+    public function testFindForFiltersUserIdIsEscapedSubstringMatch(): void
+    {
+        $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-user-a',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => 1,
+            'user_id' => 'admin-42',
+            'created' => new DateTime(),
+        ]));
+        $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-user-b',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => 2,
+            'user_id' => 'editor-9',
+            'created' => new DateTime(),
+        ]));
+
+        $hit = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['user_id' => 'admin'])
+            ->toArray();
+        $this->assertCount(1, $hit);
+
+        // A literal `%` must not match all rows.
+        $miss = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['user_id' => '%'])
+            ->toArray();
+        $this->assertCount(0, $miss);
+    }
+
+    /**
+     * `date_from` / `date_to` are inclusive day boundaries.
+     *
+     * @return void
+     */
+    public function testFindForFiltersDateRangeIsInclusive(): void
+    {
+        $today = DateTime::now();
+        $oneMonthAgo = $today->subMonths(1);
+        $sixMonthsAgo = $today->subMonths(6);
+
+        foreach ([$today, $oneMonthAgo, $sixMonthsAgo] as $i => $when) {
+            $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+                'transaction_key' => 'tx-date-' . $i,
+                'type' => 'update',
+                'source' => 'Articles',
+                'primary_key' => $i + 1,
+                'created' => $when,
+            ]));
+        }
+
+        // Floor at 2 months ago: keeps today + one-month-ago, drops six-months-ago.
+        $results = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['date_from' => $today->subMonths(2)->format('Y-m-d')])
+            ->toArray();
+
+        $this->assertCount(2, $results);
+    }
+
+    /**
+     * `changed_field` filter routes through {@see findByChangedField}.
+     *
+     * @return void
+     */
+    public function testFindForFiltersAppliesChangedFieldFilter(): void
+    {
+        $this->seedForFilterTests();
+
+        $results = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['changed_field' => 'title'])
+            ->toArray();
+
+        $this->assertCount(2, $results);
+    }
+
+    /**
+     * `field_name` + `field_value` route through
+     * {@see findByChangedFieldValue}; both must be set for the filter to fire.
+     *
+     * @return void
+     */
+    public function testFindForFiltersAppliesFieldNameValueFilter(): void
+    {
+        $this->seedForFilterTests();
+
+        $hit = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['field_name' => 'status', 'field_value' => 'published'])
+            ->toArray();
+        $this->assertCount(1, $hit);
+
+        // `field_name` alone does NOT trigger the value finder — empty
+        // `field_value` is a no-op (matches the index-page UX where the
+        // user has typed a name but not yet a value).
+        $unfiltered = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['field_name' => 'status'])
+            ->toArray();
+        $this->assertCount(6, $unfiltered);
+    }
+
+    /**
+     * `bulk_filter=yes/no` route through {@see findBulkChanges} /
+     * {@see findNonBulkChanges} with `min_records` honored.
+     *
+     * @return void
+     */
+    public function testFindForFiltersAppliesBulkFilter(): void
+    {
+        // Bulk transaction (≥5 rows).
+        for ($i = 1; $i <= 6; $i++) {
+            $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+                'transaction_key' => 'bulk-tx',
+                'type' => 'create',
+                'source' => 'Articles',
+                'primary_key' => $i,
+                'created' => new DateTime(),
+            ]));
+        }
+        // Non-bulk transaction.
+        $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'small-tx',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => 99,
+            'created' => new DateTime(),
+        ]));
+
+        $bulk = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['bulk_filter' => 'yes'])
+            ->toArray();
+        $this->assertCount(6, $bulk);
+
+        $nonBulk = $this->getAuditLogsTable()
+            ->find('forFilters', params: ['bulk_filter' => 'no'])
+            ->toArray();
+        $this->assertCount(1, $nonBulk);
+    }
+
+    /**
+     * The whole point of routing through one finder: filters compose. The
+     * old controller code applied finders by re-assigning `$query`, which
+     * silently dropped earlier filters when more than one advanced filter
+     * was set.
+     *
+     * @return void
+     */
+    public function testFindForFiltersComposesBaseAndAdvancedFilters(): void
+    {
+        // Bulk transaction on Articles, all changing `title`.
+        for ($i = 1; $i <= 6; $i++) {
+            $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+                'transaction_key' => 'bulk-articles',
+                'type' => 'update',
+                'source' => 'Articles',
+                'primary_key' => $i,
+                'changed' => ['title' => 'New ' . $i],
+                'created' => new DateTime(),
+            ]));
+        }
+        // Bulk transaction on Comments, none changing `title`.
+        for ($i = 1; $i <= 6; $i++) {
+            $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+                'transaction_key' => 'bulk-comments',
+                'type' => 'update',
+                'source' => 'Comments',
+                'primary_key' => $i,
+                'changed' => ['body' => 'New ' . $i],
+                'created' => new DateTime(),
+            ]));
+        }
+
+        $results = $this->getAuditLogsTable()
+            ->find('forFilters', params: [
+                'source' => 'Articles',
+                'changed_field' => 'title',
+                'bulk_filter' => 'yes',
+            ])
+            ->toArray();
+
+        $this->assertCount(6, $results);
+        foreach ($results as $row) {
+            $this->assertSame('Articles', $row->source);
+            $this->assertSame('bulk-articles', $row->transaction_key);
+        }
+    }
+
+    /**
+     * Seed six logs covering Articles + Comments and a small set of
+     * `changed` fields, used by the simpler `findForFilters` tests.
+     *
+     * @return void
+     */
+    private function seedForFilterTests(): void
+    {
+        $rows = [
+            ['source' => 'Articles', 'changed' => ['title' => 'A1']],
+            ['source' => 'Articles', 'changed' => ['title' => 'A2']],
+            ['source' => 'Articles', 'changed' => ['body' => 'B1']],
+            ['source' => 'Articles', 'changed' => ['status' => 'published']],
+            ['source' => 'Comments', 'changed' => ['body' => 'C1']],
+            ['source' => 'Comments', 'changed' => ['author' => 'D1']],
+        ];
+        foreach ($rows as $i => $row) {
+            $this->getAuditLogsTable()->saveOrFail($this->getAuditLogsTable()->newEntity([
+                'transaction_key' => 'seed-tx-' . $i,
+                'type' => 'update',
+                'source' => $row['source'],
+                'primary_key' => $i + 1,
+                'changed' => $row['changed'],
+                'created' => new DateTime(),
+            ]));
+        }
+    }
 }
