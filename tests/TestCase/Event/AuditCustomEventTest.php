@@ -6,6 +6,8 @@ namespace AuditStash\Test\TestCase\Event;
 
 use AuditStash\Event\AuditCustomEvent;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class AuditCustomEventTest extends TestCase
 {
@@ -56,5 +58,36 @@ class AuditCustomEventTest extends TestCase
         $event->setMetaInfo(['user_id' => 7, 'ip' => '10.0.0.1']);
 
         $this->assertSame(['user_id' => 7, 'ip' => '10.0.0.1'], $event->getMetaInfo());
+    }
+
+    /**
+     * @return array<array{0: string}>
+     */
+    public static function emptyEventTypeProvider(): array
+    {
+        return [
+            [''],
+            [' '],
+            ["\t\n"],
+        ];
+    }
+
+    /**
+     * @param string $eventType
+     *
+     * @return void
+     */
+    #[DataProvider('emptyEventTypeProvider')]
+    public function testEmptyEventTypeIsRejected(string $eventType): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('non-empty string');
+
+        new AuditCustomEvent(
+            $eventType,
+            '00000000-0000-4000-a000-000000000004',
+            null,
+            'Users',
+        );
     }
 }

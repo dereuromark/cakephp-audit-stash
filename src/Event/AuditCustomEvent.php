@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Event;
 
 use Cake\Datasource\EntityInterface;
+use InvalidArgumentException;
 
 /**
  * Represents an audit log event for a custom action that does not map to
@@ -29,6 +30,8 @@ class AuditCustomEvent extends BaseEvent
      * @param array|null $original Optional prior state. Stored in `original`.
      * @param \Cake\Datasource\EntityInterface|null $entity Related entity, if any.
      * @param string|null $displayValue Human-friendly label for the row.
+     *
+     * @throws \InvalidArgumentException When `$eventType` is empty or whitespace-only.
      */
     public function __construct(
         string $eventType,
@@ -40,6 +43,10 @@ class AuditCustomEvent extends BaseEvent
         ?EntityInterface $entity = null,
         ?string $displayValue = null,
     ) {
+        if (trim($eventType) === '') {
+            throw new InvalidArgumentException('Custom audit event type must be a non-empty string.');
+        }
+
         parent::__construct($transactionId, $id, $source, $data, $original, $entity, $displayValue);
         $this->eventType = $eventType;
     }
