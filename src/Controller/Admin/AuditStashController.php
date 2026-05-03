@@ -86,7 +86,7 @@ class AuditStashController extends AppController
         $connection = $this->AuditLogs->getConnection();
         $connection->execute('TRUNCATE TABLE ' . $connection->getDriver()->quoteIdentifier($this->AuditLogs->getTable()));
 
-        $this->Flash->success(__('All audit logs have been deleted.'));
+        $this->Flash->success(__d('audit_stash', 'All audit logs have been deleted.'));
 
         return $this->redirect(['action' => 'index']);
     }

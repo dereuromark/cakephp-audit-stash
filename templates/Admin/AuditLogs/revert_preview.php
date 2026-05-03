@@ -10,9 +10,9 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 ?>
 <div class="auditLogs revert content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><?= __('Revert Preview') ?></h3>
+        <h3><?= __d('audit_stash', 'Revert Preview') ?></h3>
         <div>
-            <?= $this->Html->link(__('Cancel'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-secondary']) ?>
+            <?= $this->Html->link(__d('audit_stash', 'Cancel'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-secondary']) ?>
         </div>
     </div>
 
@@ -42,17 +42,17 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 
     <?php if (empty($diff)) { ?>
         <div class="alert alert-info">
-            <?= __('No differences found. Record is already in this state.') ?>
+            <?= __d('audit_stash', 'No differences found. Record is already in this state.') ?>
         </div>
     <?php } else { ?>
         <?= $this->Form->create(null, [
             'url' => ['action' => 'revert', $auditLog->id],
-            'data-confirm-message' => __('Are you sure you want to revert the selected fields?'),
+            'data-confirm-message' => __d('audit_stash', 'Are you sure you want to revert the selected fields?'),
         ]) ?>
 
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><?= __('Fields to Revert') ?></h5>
+                <h5 class="mb-0"><?= __d('audit_stash', 'Fields to Revert') ?></h5>
             </div>
             <div class="card-body">
                 <table class="table table-bordered">
@@ -86,14 +86,14 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
             <div class="card-footer d-flex justify-content-between">
                 <div>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-select-all">
-                        <?= __('Select All') ?>
+                        <?= __d('audit_stash', 'Select All') ?>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-select-none">
-                        <?= __('Select None') ?>
+                        <?= __d('audit_stash', 'Select None') ?>
                     </button>
                 </div>
                 <div>
-                    <?= $this->Form->button(__('Revert Selected'), [
+                    <?= $this->Form->button(__d('audit_stash', 'Revert Selected'), [
                         'class' => 'btn btn-primary',
                     ]) ?>
                 </div>

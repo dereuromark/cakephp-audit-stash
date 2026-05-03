@@ -13,8 +13,8 @@
 $value = $value ?? false;
 $options = $options ?? [];
 
-$yesLabel = $options['yesLabel'] ?? __('Yes');
-$noLabel = $options['noLabel'] ?? __('No');
+$yesLabel = $options['yesLabel'] ?? __d('audit_stash', 'Yes');
+$noLabel = $options['noLabel'] ?? __d('audit_stash', 'No');
 
 // Try Templating plugin's helper
 if ($this->helpers()->has('Templating')) {

@@ -23,7 +23,7 @@ $this->Paginator->setTemplates([
 	'current' => '<li class="page-item active"><span class="page-link">{{text}}</span></li>',
 ]);
 ?>
-<nav class="mt-3" aria-label="<?= __('Page navigation') ?>">
+<nav class="mt-3" aria-label="<?= __d('audit_stash', 'Page navigation') ?>">
 	<ul class="pagination justify-content-center mb-2">
 		<?= $this->Paginator->first('<i class="fas fa-angle-double-left"></i>', ['escape' => false]) ?>
 		<?= $this->Paginator->prev('<i class="fas fa-angle-left"></i>', ['escape' => false]) ?>
@@ -32,6 +32,6 @@ $this->Paginator->setTemplates([
 		<?= $this->Paginator->last('<i class="fas fa-angle-double-right"></i>', ['escape' => false]) ?>
 	</ul>
 	<p class="text-center text-muted small mb-0">
-		<?= $this->Paginator->counter(__('Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')) ?>
+		<?= $this->Paginator->counter(__d('audit_stash', 'Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')) ?>
 	</p>
 </nav>

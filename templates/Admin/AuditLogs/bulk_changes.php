@@ -6,18 +6,18 @@
  */
 ?>
 <div class="auditLogs bulk-changes content">
-    <h3><?= __('Bulk Change Transactions') ?></h3>
+    <h3><?= __d('audit_stash', 'Bulk Change Transactions') ?></h3>
 
     <div class="alert alert-info">
         <p class="mb-0">
-            <?= __('Showing transactions that affected {0} or more records.', $minRecords) ?>
-            <?= __('These may indicate bulk operations, imports, or mass updates.') ?>
+            <?= __d('audit_stash', 'Showing transactions that affected {0} or more records.', $minRecords) ?>
+            <?= __d('audit_stash', 'These may indicate bulk operations, imports, or mass updates.') ?>
         </p>
     </div>
 
     <div class="mb-3">
         <?= $this->Html->link(
-            __('Back to Index'),
+            __d('audit_stash', 'Back to Index'),
             ['action' => 'index'],
             ['class' => 'btn btn-secondary']
         ) ?>
@@ -31,14 +31,14 @@
                 <div class="col-md-3">
                     <?= $this->Form->control('min_records', [
                         'type' => 'number',
-                        'label' => __('Minimum Records'),
+                        'label' => __d('audit_stash', 'Minimum Records'),
                         'default' => $minRecords,
                         'min' => 2,
                         'class' => 'form-control',
                     ]) ?>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <?= $this->Form->button(__('Filter'), ['class' => 'btn btn-primary']) ?>
+                    <?= $this->Form->button(__d('audit_stash', 'Filter'), ['class' => 'btn btn-primary']) ?>
                 </div>
             </div>
             <?= $this->Form->end() ?>
@@ -47,19 +47,19 @@
 
     <?php if (empty($bulkStats)) { ?>
         <div class="alert alert-warning">
-            <?= __('No bulk change transactions found with {0} or more records.', $minRecords) ?>
+            <?= __d('audit_stash', 'No bulk change transactions found with {0} or more records.', $minRecords) ?>
         </div>
     <?php } else { ?>
         <div class="table-responsive">
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
-                        <th><?= __('Transaction ID') ?></th>
-                        <th><?= __('Records') ?></th>
-                        <th><?= __('Tables Affected') ?></th>
-                        <th><?= __('User') ?></th>
-                        <th><?= __('Date/Time') ?></th>
-                        <th><?= __('Actions') ?></th>
+                        <th><?= __d('audit_stash', 'Transaction ID') ?></th>
+                        <th><?= __d('audit_stash', 'Records') ?></th>
+                        <th><?= __d('audit_stash', 'Tables Affected') ?></th>
+                        <th><?= __d('audit_stash', 'User') ?></th>
+                        <th><?= __d('audit_stash', 'Date/Time') ?></th>
+                        <th><?= __d('audit_stash', 'Actions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,7 +80,7 @@
                             <td><small><?= h($stat['created']) ?></small></td>
                             <td>
                                 <?= $this->Html->link(
-                                    __('View All'),
+                                    __d('audit_stash', 'View All'),
                                     ['action' => 'index', '?' => ['transaction_key' => $stat['transaction_key']]],
                                     ['class' => 'btn btn-sm btn-outline-primary']
                                 ) ?>
@@ -92,10 +92,10 @@
         </div>
 
         <div class="alert alert-secondary mt-3">
-            <strong><?= __('Legend:') ?></strong>
-            <span class="badge bg-info ms-2">&lt; 20</span> <?= __('records') ?>
-            <span class="badge bg-warning ms-2">20-99</span> <?= __('records') ?>
-            <span class="badge bg-danger ms-2">100+</span> <?= __('records') ?>
+            <strong><?= __d('audit_stash', 'Legend:') ?></strong>
+            <span class="badge bg-info ms-2">&lt; 20</span> <?= __d('audit_stash', 'records') ?>
+            <span class="badge bg-warning ms-2">20-99</span> <?= __d('audit_stash', 'records') ?>
+            <span class="badge bg-danger ms-2">100+</span> <?= __d('audit_stash', 'records') ?>
         </div>
     <?php } ?>
 </div>

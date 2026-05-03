@@ -52,9 +52,10 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
 <div class="auditlogs coverage">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-0"><?= __('Audit Coverage') ?></h3>
+            <h3 class="mb-0"><?= __d('audit_stash', 'Audit Coverage') ?></h3>
             <p class="text-muted mb-0 small">
-                <?= __(
+                <?= __d(
+                    'audit_stash',
                     '{0} of {1} discoverable tables have AuditLog behavior attached.',
                     '<strong>' . h((string)$summary['tracked']) . '</strong>',
                     '<strong>' . h((string)$summary['total']) . '</strong>',
@@ -62,17 +63,17 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
             </p>
         </div>
         <div>
-            <?= $this->Html->link(__('← Dashboard'), ['controller' => 'AuditStash', 'action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
+            <?= $this->Html->link(__d('audit_stash', '← Dashboard'), ['controller' => 'AuditStash', 'action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>
     </div>
 
     <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
         <?php
         $allCount = $summary['tracked'] + $summary['missing'] + $summary['empirical'];
-        echo $chip('all', __('All'), $allCount);
-        echo $chip('tracked', __('Tracked'), $summary['tracked']);
-        echo $chip('missing', __('Missing'), $summary['missing']);
-        echo $chip('empirical', __('Empirical'), $summary['empirical']);
+        echo $chip('all', __d('audit_stash', 'All'), $allCount);
+        echo $chip('tracked', __d('audit_stash', 'Tracked'), $summary['tracked']);
+        echo $chip('missing', __d('audit_stash', 'Missing'), $summary['missing']);
+        echo $chip('empirical', __d('audit_stash', 'Empirical'), $summary['empirical']);
         ?>
 
         <div class="form-check form-switch ms-3">
@@ -89,7 +90,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
             <input class="form-check-input" type="checkbox" role="switch"
                    id="includeInternal" <?= $includeInternal ? 'checked' : '' ?>
                    onclick="window.location='<?= h($toggleUrl) ?>'">
-            <label class="form-check-label small" for="includeInternal"><?= __('Include internal tables') ?></label>
+            <label class="form-check-label small" for="includeInternal"><?= __d('audit_stash', 'Include internal tables') ?></label>
         </div>
     </div>
 
@@ -98,11 +99,11 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
             <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th><?= __('Status') ?></th>
-                        <th><?= __('Alias') ?></th>
-                        <th><?= __('Plugin') ?></th>
-                        <th><?= __('Class') ?></th>
-                        <th class="text-end"><?= __('Events (30d)') ?></th>
+                        <th><?= __d('audit_stash', 'Status') ?></th>
+                        <th><?= __d('audit_stash', 'Alias') ?></th>
+                        <th><?= __d('audit_stash', 'Plugin') ?></th>
+                        <th><?= __d('audit_stash', 'Class') ?></th>
+                        <th class="text-end"><?= __d('audit_stash', 'Events (30d)') ?></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -110,7 +111,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                     <?php if (!$rows) { ?>
                         <tr>
                             <td colspan="6" class="text-center text-muted py-4">
-                                <?= __('No tables match this filter.') ?>
+                                <?= __d('audit_stash', 'No tables match this filter.') ?>
                             </td>
                         </tr>
                     <?php } ?>
@@ -121,7 +122,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                                 <code><?= h($row['alias']) ?></code>
                                 <?php if (!empty($row['source']) && $row['source'] !== $row['alias']) { ?>
                                     <div class="small text-muted">
-                                        <?= __('audit source: {0}', '<code>' . h($row['source']) . '</code>') ?>
+                                        <?= __d('audit_stash', 'audit source: {0}', '<code>' . h($row['source']) . '</code>') ?>
                                     </div>
                                 <?php } ?>
                             </td>
@@ -130,7 +131,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                                 <?php if ($row['class']) { ?>
                                     <code class="small text-muted"><?= h($row['class']) ?></code>
                                 <?php } else { ?>
-                                    <span class="text-muted small"><?= __('No class found') ?></span>
+                                    <span class="text-muted small"><?= __d('audit_stash', 'No class found') ?></span>
                                 <?php } ?>
                                 <?php if ($row['instantiation_error']) { ?>
                                     <div class="text-danger small">⚠️ <?= h($row['instantiation_error']) ?></div>
@@ -140,7 +141,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                             <td class="text-end">
                                 <?php if ($row['events_30d'] > 0) { ?>
                                     <?= $this->Html->link(
-                                        __('View activity'),
+                                        __d('audit_stash', 'View activity'),
                                         ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['source'] ?? $row['alias']]],
                                         ['class' => 'btn btn-sm btn-outline-primary'],
                                     ) ?>
@@ -154,19 +155,19 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
     </div>
 
     <details class="mt-3 small text-muted">
-        <summary><?= __('Status legend') ?></summary>
+        <summary><?= __d('audit_stash', 'Status legend') ?></summary>
         <dl class="row mb-0 mt-2">
-            <dt class="col-sm-2"><?= __('Tracked') ?></dt>
-            <dd class="col-sm-10"><?= __('Class exists, AuditLog behavior attached.') ?></dd>
+            <dt class="col-sm-2"><?= __d('audit_stash', 'Tracked') ?></dt>
+            <dd class="col-sm-10"><?= __d('audit_stash', 'Class exists, AuditLog behavior attached.') ?></dd>
 
-            <dt class="col-sm-2"><?= __('Missing') ?></dt>
-            <dd class="col-sm-10"><?= __('Class exists, behavior NOT attached — coverage gap.') ?></dd>
+            <dt class="col-sm-2"><?= __d('audit_stash', 'Missing') ?></dt>
+            <dd class="col-sm-10"><?= __d('audit_stash', 'Class exists, behavior NOT attached — coverage gap.') ?></dd>
 
-            <dt class="col-sm-2"><?= __('Empirical') ?></dt>
-            <dd class="col-sm-10"><?= __("Events recorded for a source we couldn't map to a class — custom event source, renamed table, or plugin uninstalled.") ?></dd>
+            <dt class="col-sm-2"><?= __d('audit_stash', 'Empirical') ?></dt>
+            <dd class="col-sm-10"><?= __d('audit_stash', "Events recorded for a source we couldn't map to a class — custom event source, renamed table, or plugin uninstalled.") ?></dd>
 
-            <dt class="col-sm-2"><?= __('Internal') ?></dt>
-            <dd class="col-sm-10"><?= __('Hidden by deny-list — toggle above to include.') ?></dd>
+            <dt class="col-sm-2"><?= __d('audit_stash', 'Internal') ?></dt>
+            <dd class="col-sm-10"><?= __d('audit_stash', 'Hidden by deny-list — toggle above to include.') ?></dd>
         </dl>
     </details>
 </div>

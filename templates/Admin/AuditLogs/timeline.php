@@ -11,14 +11,14 @@ use AuditStash\AuditLogType;
 <div class="auditLogs timeline content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3><?= __('Audit Timeline') ?></h3>
+            <h3><?= __d('audit_stash', 'Audit Timeline') ?></h3>
             <p class="text-muted mb-0">
                 <strong>Source:</strong> <code><?= h($source) ?></code> |
                 <strong>Record:</strong> <?= $this->Audit->formatRecord($source, $primaryKey) ?>
             </p>
         </div>
         <div>
-            <?= $this->Html->link(__('Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+            <?= $this->Html->link(__d('audit_stash', 'Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
         </div>
     </div>
 
@@ -80,7 +80,7 @@ use AuditStash\AuditLogType;
                                     </div>
                                     <div>
                                         <?= $this->Html->link(
-                                            __('View Details'),
+                                            __d('audit_stash', 'View Details'),
                                             ['action' => 'view', $auditLog->id],
                                             ['class' => 'btn btn-sm btn-outline-primary']
                                         ) ?>

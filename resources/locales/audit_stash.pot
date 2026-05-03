@@ -1,0 +1,519 @@
+# LANGUAGE translation of CakePHP Application
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2026-05-04 01:53+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+msgid "Record reverted successfully."
+msgstr ""
+
+msgid "Failed to revert record."
+msgstr ""
+
+msgid "Record restored successfully."
+msgstr ""
+
+msgid "Failed to restore record."
+msgstr ""
+
+msgid "All audit logs have been deleted."
+msgstr ""
+
+msgid "User #{0}"
+msgstr ""
+
+msgid "Revert"
+msgstr ""
+
+msgid "Restore"
+msgstr ""
+
+msgid "No metadata available"
+msgstr ""
+
+msgid "No data available"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Bulk Change Transactions"
+msgstr ""
+
+msgid "Showing transactions that affected {0} or more records."
+msgstr ""
+
+msgid "These may indicate bulk operations, imports, or mass updates."
+msgstr ""
+
+msgid "Back to Index"
+msgstr ""
+
+msgid "Minimum Records"
+msgstr ""
+
+msgid "Filter"
+msgstr ""
+
+msgid "No bulk change transactions found with {0} or more records."
+msgstr ""
+
+msgid "Transaction ID"
+msgstr ""
+
+msgid "Records"
+msgstr ""
+
+msgid "Tables Affected"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Date/Time"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "View All"
+msgstr ""
+
+msgid "Legend:"
+msgstr ""
+
+msgid "records"
+msgstr ""
+
+msgid "Export Audit Logs"
+msgstr ""
+
+msgid "Pick a format and (optionally) narrow the date range. The export streams directly to your browser — large result sets are paginated server-side, but the hard cap of {0} rows applies. Narrow your filters if your set exceeds it."
+msgstr ""
+
+msgid "Result set"
+msgstr ""
+
+msgid "Your filters match {0} rows, which exceeds the hard cap of {1}. Add a narrower date range, source, or user filter and reload this page."
+msgstr ""
+
+msgid "No rows match the current filters — nothing to export."
+msgstr ""
+
+msgid "rows match the current filters."
+msgstr ""
+
+msgid "No date range supplied — defaulting the lower bound to {0} (configurable via {1})."
+msgstr ""
+
+msgid "Active filters"
+msgstr ""
+
+msgid "No filters set. Use the index page filter panel to narrow the export, then click \"Export\" again."
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "CSV for spreadsheet imports, JSON for one-shot machine reads, NDJSON (one JSON object per line) for streaming pipelines."
+msgstr ""
+
+msgid "Export {0} rows"
+msgstr ""
+
+msgid "Back to browse"
+msgstr ""
+
+msgid "About this export"
+msgstr ""
+
+msgid "Output is streamed — your browser starts receiving rows immediately, and the server uses constant memory regardless of result-set size."
+msgstr ""
+
+msgid "The hard cap of {0} rows is enforced server-side; if your filters match more, the request is rejected before any download begins."
+msgstr ""
+
+msgid "Without an explicit date range, the export defaults to the last {0} days. Set {1} or {2} on the index page to override."
+msgstr ""
+
+msgid "JSON-typed columns ({0}) are decoded into nested objects for JSON / NDJSON; CSV cells contain the raw JSON string."
+msgstr ""
+
+msgid "Audit Logs"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Advanced Filters"
+msgstr ""
+
+msgid "Changed Field"
+msgstr ""
+
+msgid "Find records where this field was modified"
+msgstr ""
+
+msgid "Value Search"
+msgstr ""
+
+msgid "Find where field changed to specific value (both required)"
+msgstr ""
+
+msgid "Bulk Filter"
+msgstr ""
+
+msgid "Filter by transaction size (5+ records = bulk)"
+msgstr ""
+
+msgid "– All –"
+msgstr ""
+
+msgid "Bulk only"
+msgstr ""
+
+msgid "Non-bulk only"
+msgstr ""
+
+msgid "Export…"
+msgstr ""
+
+msgid "View Bulk Changes"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Timeline"
+msgstr ""
+
+msgid "Related"
+msgstr ""
+
+msgid "Related Changes"
+msgstr ""
+
+msgid "Record:"
+msgstr ""
+
+msgid "Showing all audit logs for this record and related records (via foreign keys)."
+msgstr ""
+
+msgid "View Timeline"
+msgstr ""
+
+msgid "No related changes found."
+msgstr ""
+
+msgid "Transaction:"
+msgstr ""
+
+msgid "Event"
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Record"
+msgstr ""
+
+msgid "Changes"
+msgstr ""
+
+msgid "Main"
+msgstr ""
+
+msgid "New"
+msgstr ""
+
+msgid "{0} record in this transaction"
+msgid_plural "{0} records in this transaction"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Restore Deleted Record"
+msgstr ""
+
+msgid "Back to List"
+msgstr ""
+
+msgid "Warning:"
+msgstr ""
+
+msgid "This will restore the record with the data shown above. If a record with this ID already exists, the restore will fail."
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Restore Record"
+msgstr ""
+
+msgid "Are you sure you want to restore this record?"
+msgstr ""
+
+msgid "No record data available to restore."
+msgstr ""
+
+msgid "No deletion record found for this record."
+msgstr ""
+
+msgid "Revert Preview"
+msgstr ""
+
+msgid "No differences found. Record is already in this state."
+msgstr ""
+
+msgid "Are you sure you want to revert the selected fields?"
+msgstr ""
+
+msgid "Fields to Revert"
+msgstr ""
+
+msgid "Select All"
+msgstr ""
+
+msgid "Select None"
+msgstr ""
+
+msgid "Revert Selected"
+msgstr ""
+
+msgid "Audit Timeline"
+msgstr ""
+
+msgid "View Details"
+msgstr ""
+
+msgid "Audit Log Details"
+msgstr ""
+
+msgid "Event Information"
+msgstr ""
+
+msgid "Event Type"
+msgstr ""
+
+msgid "Parent Source"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Metadata"
+msgstr ""
+
+msgid "New Record"
+msgstr ""
+
+msgid "Deleted Record"
+msgstr ""
+
+msgid "Inline"
+msgstr ""
+
+msgid "Side-by-side"
+msgstr ""
+
+msgid "Created with values:"
+msgstr ""
+
+msgid "Deleted record had these values:"
+msgstr ""
+
+msgid "Event payload:"
+msgstr ""
+
+msgid "Audit Coverage"
+msgstr ""
+
+msgid "{0} of {1} discoverable tables have AuditLog behavior attached."
+msgstr ""
+
+msgid "← Dashboard"
+msgstr ""
+
+msgid "All"
+msgstr ""
+
+msgid "Tracked"
+msgstr ""
+
+msgid "Missing"
+msgstr ""
+
+msgid "Empirical"
+msgstr ""
+
+msgid "Include internal tables"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Alias"
+msgstr ""
+
+msgid "Plugin"
+msgstr ""
+
+msgid "Class"
+msgstr ""
+
+msgid "Events (30d)"
+msgstr ""
+
+msgid "No tables match this filter."
+msgstr ""
+
+msgid "audit source: {0}"
+msgstr ""
+
+msgid "No class found"
+msgstr ""
+
+msgid "View activity"
+msgstr ""
+
+msgid "Status legend"
+msgstr ""
+
+msgid "Class exists, AuditLog behavior attached."
+msgstr ""
+
+msgid "Class exists, behavior NOT attached — coverage gap."
+msgstr ""
+
+msgid "Events recorded for a source we couldn't map to a class — custom event source, renamed table, or plugin uninstalled."
+msgstr ""
+
+msgid "Internal"
+msgstr ""
+
+msgid "Hidden by deny-list — toggle above to include."
+msgstr ""
+
+msgid "Audit Dashboard"
+msgstr ""
+
+msgid "Activity, coverage, and integrity at a glance."
+msgstr ""
+
+msgid "Browse all logs"
+msgstr ""
+
+msgid "Events today"
+msgstr ""
+
+msgid "vs yesterday"
+msgstr ""
+
+msgid "Active users today"
+msgstr ""
+
+msgid "Active sources (7d)"
+msgstr ""
+
+msgid "distinct tables/sources with activity"
+msgstr ""
+
+msgid "Coverage"
+msgstr ""
+
+msgid "tables with AuditLog behavior"
+msgstr ""
+
+msgid "Events over time (last 30 days)"
+msgstr ""
+
+msgid "Other"
+msgstr ""
+
+msgid "Top sources (7 days)"
+msgstr ""
+
+msgid "No activity yet."
+msgstr ""
+
+msgid "Top users (7 days)"
+msgstr ""
+
+msgid "No user-attributed activity yet."
+msgstr ""
+
+msgid "(anonymous)"
+msgstr ""
+
+msgid "Recent activity"
+msgstr ""
+
+msgid "Open full log"
+msgstr ""
+
+msgid "When"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Navigation"
+msgstr ""
+
+msgid "Dashboard"
+msgstr ""
+
+msgid "Bulk Changes"
+msgstr ""
+
+msgid "Quick Filters"
+msgstr ""
+
+msgid "Creates"
+msgstr ""
+
+msgid "Updates"
+msgstr ""
+
+msgid "Deletes"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Debug"
+msgstr ""
+
+msgid "Reset (truncate)"
+msgstr ""
+
+msgid "This wipes ALL audit log rows. Continue?"
+msgstr ""
+
+msgid "Page navigation"
+msgstr ""
+
+msgid "Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "Server Time"
+msgstr ""
+
