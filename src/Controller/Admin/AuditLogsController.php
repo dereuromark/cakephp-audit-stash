@@ -325,9 +325,9 @@ class AuditLogsController extends AppController
         }
 
         if ($entity) {
-            $this->Flash->success(__('Record reverted successfully.'));
+            $this->Flash->success(__d('audit_stash', 'Record reverted successfully.'));
         } else {
-            $this->Flash->error(__('Failed to revert record.'));
+            $this->Flash->error(__d('audit_stash', 'Failed to revert record.'));
         }
 
         $redirect = $this->redirect(['action' => 'view', $id]);
@@ -357,12 +357,12 @@ class AuditLogsController extends AppController
             $entity = $revertService->restoreDeleted($source, $primaryKey);
 
             if ($entity) {
-                $this->Flash->success(__('Record restored successfully.'));
+                $this->Flash->success(__d('audit_stash', 'Record restored successfully.'));
 
                 return $this->redirect(['action' => 'timeline', $source, $primaryKey]);
             }
 
-            $this->Flash->error(__('Failed to restore record.'));
+            $this->Flash->error(__d('audit_stash', 'Failed to restore record.'));
         }
 
         // Find DELETE audit entry for preview

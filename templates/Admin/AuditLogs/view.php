@@ -8,12 +8,12 @@ use AuditStash\AuditLogType;
 ?>
 <div class="auditLogs view content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><?= __('Audit Log Details') ?></h3>
+        <h3><?= __d('audit_stash', 'Audit Log Details') ?></h3>
         <div>
-            <?= $this->Html->link(__('Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+            <?= $this->Html->link(__d('audit_stash', 'Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
             <?php if ($auditLog->primary_key) { ?>
                 <?= $this->Html->link(
-                    __('View Timeline'),
+                    __d('audit_stash', 'View Timeline'),
                     ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
                     ['class' => 'btn btn-primary']
                 ) ?>
@@ -25,20 +25,20 @@ use AuditStash\AuditLogType;
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><?= __('Event Information') ?></h5>
+                    <h5 class="mb-0"><?= __d('audit_stash', 'Event Information') ?></h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
                         <tr>
-                            <th><?= __('Event Type') ?></th>
+                            <th><?= __d('audit_stash', 'Event Type') ?></th>
                             <td><?= $this->Audit->eventTypeBadge($auditLog->type) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('Source') ?></th>
+                            <th><?= __d('audit_stash', 'Source') ?></th>
                             <td><code><?= h($auditLog->source) ?></code></td>
                         </tr>
                         <tr>
-                            <th><?= __('Record') ?></th>
+                            <th><?= __d('audit_stash', 'Record') ?></th>
                             <td>
                                 <?php if ($auditLog->primary_key) { ?>
                                     <?= $this->Audit->formatRecord($auditLog->source, $auditLog->primary_key, $auditLog->display_value) ?>
@@ -48,19 +48,19 @@ use AuditStash\AuditLogType;
                             </td>
                         </tr>
                         <tr>
-                            <th><?= __('Parent Source') ?></th>
+                            <th><?= __d('audit_stash', 'Parent Source') ?></th>
                             <td><?= h($auditLog->parent_source) ?: '<em class="text-muted">N/A</em>' ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('Transaction ID') ?></th>
+                            <th><?= __d('audit_stash', 'Transaction ID') ?></th>
                             <td><?= $this->Audit->transactionId($auditLog->transaction_key, true) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('User') ?></th>
+                            <th><?= __d('audit_stash', 'User') ?></th>
                             <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                         </tr>
                         <tr>
-                            <th><?= __('Created') ?></th>
+                            <th><?= __d('audit_stash', 'Created') ?></th>
                             <td><?= h($auditLog->created) ?></td>
                         </tr>
                     </table>
@@ -71,7 +71,7 @@ use AuditStash\AuditLogType;
         <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><?= __('Metadata') ?></h5>
+                    <h5 class="mb-0"><?= __d('audit_stash', 'Metadata') ?></h5>
                 </div>
                 <div class="card-body">
                     <?= $this->Audit->metadata($auditLog->meta) ?>
@@ -83,25 +83,25 @@ use AuditStash\AuditLogType;
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                <?= __('Changes') ?>
+                <?= __d('audit_stash', 'Changes') ?>
                 <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
-                    <span class="badge bg-info"><?= __('New Record') ?></span>
+                    <span class="badge bg-info"><?= __d('audit_stash', 'New Record') ?></span>
                 <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
-                    <span class="badge bg-danger"><?= __('Deleted Record') ?></span>
+                    <span class="badge bg-danger"><?= __d('audit_stash', 'Deleted Record') ?></span>
                 <?php } ?>
             </h5>
             <?php if ($auditLog->type === AuditLogType::Update->value) { ?>
             <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff"><?= __('Inline') ?></button>
-                <button type="button" class="btn btn-outline-secondary" id="btn-side-diff"><?= __('Side-by-side') ?></button>
+                <button type="button" class="btn btn-outline-secondary active" id="btn-inline-diff"><?= __d('audit_stash', 'Inline') ?></button>
+                <button type="button" class="btn btn-outline-secondary" id="btn-side-diff"><?= __d('audit_stash', 'Side-by-side') ?></button>
             </div>
             <?php } ?>
         </div>
         <div class="card-body">
             <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
-                <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Created with values:')) ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->changed, __d('audit_stash', 'Created with values:')) ?>
             <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
-                <?= $this->Audit->fieldValuesTable($auditLog->original, __('Deleted record had these values:')) ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->original, __d('audit_stash', 'Deleted record had these values:')) ?>
             <?php } elseif (in_array($auditLog->type, [AuditLogType::Update->value, AuditLogType::Revert->value], true)) { ?>
                 <div id="inline-diff-view">
                     <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>
@@ -110,7 +110,7 @@ use AuditStash\AuditLogType;
                     <?= $this->Audit->diff($auditLog->original, $auditLog->changed) ?>
                 </div>
             <?php } else { ?>
-                <?= $this->Audit->fieldValuesTable($auditLog->changed, __('Event payload:')) ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->changed, __d('audit_stash', 'Event payload:')) ?>
             <?php } ?>
         </div>
     </div>

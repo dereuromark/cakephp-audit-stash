@@ -489,7 +489,7 @@ class AuditHelper extends Helper
         $isNumeric = ctype_digit($user);
 
         if ($isUuid || $isNumeric) {
-            return __('User #{0}', $user);
+            return __d('audit_stash', 'User #{0}', $user);
         }
 
         // Looks like a username/email, use as-is
@@ -615,7 +615,7 @@ class AuditHelper extends Helper
         $options += ['class' => 'btn btn-sm btn-warning'];
 
         return $this->Html->link(
-            __('Revert'),
+            __d('audit_stash', 'Revert'),
             ['action' => 'revertPreview', $auditLogId],
             $options,
         );
@@ -635,7 +635,7 @@ class AuditHelper extends Helper
         $options += ['class' => 'btn btn-sm btn-success'];
 
         return $this->Html->link(
-            __('Restore'),
+            __d('audit_stash', 'Restore'),
             ['action' => 'restore', $source, $primaryKey],
             $options,
         );
@@ -654,7 +654,7 @@ class AuditHelper extends Helper
             $meta = json_decode($meta, true);
         }
         if (!$meta || !is_array($meta)) {
-            return '<p class="text-muted">' . __('No metadata available') . '</p>';
+            return '<p class="text-muted">' . __d('audit_stash', 'No metadata available') . '</p>';
         }
 
         $rows = '';
@@ -684,7 +684,7 @@ class AuditHelper extends Helper
             $data = json_decode($data, true);
         }
         if (!$data || !is_array($data)) {
-            return '<p class="text-muted">' . __('No data available') . '</p>';
+            return '<p class="text-muted">' . __d('audit_stash', 'No data available') . '</p>';
         }
 
         $output = '';
@@ -693,7 +693,7 @@ class AuditHelper extends Helper
         }
 
         $output .= '<table class="table table-sm table-bordered">';
-        $output .= '<thead><tr><th style="width: 30%;">' . __('Field') . '</th><th>' . __('Value') . '</th></tr></thead>';
+        $output .= '<thead><tr><th style="width: 30%;">' . __d('audit_stash', 'Field') . '</th><th>' . __d('audit_stash', 'Value') . '</th></tr></thead>';
         $output .= '<tbody>';
 
         foreach ($data as $field => $value) {

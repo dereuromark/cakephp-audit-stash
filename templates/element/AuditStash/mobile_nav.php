@@ -35,61 +35,61 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
     <div class="offcanvas-body">
         <!-- Navigation -->
         <div class="mb-4">
-            <div class="text-white-50 small text-uppercase mb-2"><?= __('Navigation') ?></div>
+            <div class="text-white-50 small text-uppercase mb-2"><?= __d('audit_stash', 'Navigation') ?></div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white-50 <?= $isActive('AuditStash', ['index']) ? 'text-white fw-bold' : '' ?>"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'index']) ?>">
                     <i class="fas fa-gauge me-2"></i>
-                    <?= __('Dashboard') ?>
+                    <?= __d('audit_stash', 'Dashboard') ?>
                 </a>
                 <a class="nav-link text-white-50 <?= $isActive('AuditLogs', ['index']) ? 'text-white fw-bold' : '' ?>"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
                     <i class="fas fa-list me-2"></i>
-                    <?= __('Audit Logs') ?>
+                    <?= __d('audit_stash', 'Audit Logs') ?>
                 </a>
                 <a class="nav-link text-white-50 <?= $isActive('AuditLogs', ['bulkChanges']) ? 'text-white fw-bold' : '' ?>"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'bulkChanges']) ?>">
                     <i class="fas fa-layer-group me-2"></i>
-                    <?= __('Bulk Changes') ?>
+                    <?= __d('audit_stash', 'Bulk Changes') ?>
                 </a>
                 <a class="nav-link text-white-50 <?= $isActive('AuditStash', ['coverage']) ? 'text-white fw-bold' : '' ?>"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'coverage']) ?>">
                     <i class="fas fa-shield-halved me-2"></i>
-                    <?= __('Coverage') ?>
+                    <?= __d('audit_stash', 'Coverage') ?>
                 </a>
             </nav>
         </div>
 
         <!-- Quick Filters -->
         <div class="mb-4">
-            <div class="text-white-50 small text-uppercase mb-2"><?= __('Quick Filters') ?></div>
+            <div class="text-white-50 small text-uppercase mb-2"><?= __d('audit_stash', 'Quick Filters') ?></div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white-50"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index', '?' => ['type' => 'create']]) ?>">
                     <i class="fas fa-plus-circle me-2"></i>
-                    <?= __('Creates') ?>
+                    <?= __d('audit_stash', 'Creates') ?>
                 </a>
                 <a class="nav-link text-white-50"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index', '?' => ['type' => 'update']]) ?>">
                     <i class="fas fa-edit me-2"></i>
-                    <?= __('Updates') ?>
+                    <?= __d('audit_stash', 'Updates') ?>
                 </a>
                 <a class="nav-link text-white-50"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index', '?' => ['type' => 'delete']]) ?>">
                     <i class="fas fa-trash me-2"></i>
-                    <?= __('Deletes') ?>
+                    <?= __d('audit_stash', 'Deletes') ?>
                 </a>
             </nav>
         </div>
 
         <!-- Export -->
         <div class="mb-4">
-            <div class="text-white-50 small text-uppercase mb-2"><?= __('Export') ?></div>
+            <div class="text-white-50 small text-uppercase mb-2"><?= __d('audit_stash', 'Export') ?></div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white-50"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export']) ?>">
                     <i class="fas fa-file-export me-2"></i>
-                    <?= __('Export…') ?>
+                    <?= __d('audit_stash', 'Export…') ?>
                 </a>
             </nav>
         </div>

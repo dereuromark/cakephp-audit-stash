@@ -8,7 +8,7 @@
  */
 ?>
 <div class="auditLogs index content">
-    <h3><?= __('Audit Logs') ?></h3>
+    <h3><?= __d('audit_stash', 'Audit Logs') ?></h3>
 
     <?php
     $hasAdvancedFilters = $this->request->getQuery('changed_field')
@@ -83,9 +83,9 @@
                     ]) ?>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <?= $this->Form->button(__('Filter'), ['class' => 'btn btn-primary me-2']) ?>
+                    <?= $this->Form->button(__d('audit_stash', 'Filter'), ['class' => 'btn btn-primary me-2']) ?>
                     <?php if ($this->request->getQueryParams()) { ?>
-                        <?= $this->Html->link(__('Clear'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+                        <?= $this->Html->link(__d('audit_stash', 'Clear'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
                     <?php } ?>
                 </div>
             </div>
@@ -93,13 +93,13 @@
             <!-- Advanced Filters (collapsible) -->
             <div class="mt-3">
                 <a class="text-decoration-none" data-toggle="collapse" data-bs-toggle="collapse" href="#advancedFilters" role="button" aria-expanded="<?= $hasAdvancedFilters ? 'true' : 'false' ?>" aria-controls="advancedFilters">
-                    <small><?= __('Advanced Filters') ?> <span class="collapse-icon"><?= $hasAdvancedFilters ? '&#9660;' : '&#9654;' ?></span></small>
+                    <small><?= __d('audit_stash', 'Advanced Filters') ?> <span class="collapse-icon"><?= $hasAdvancedFilters ? '&#9660;' : '&#9654;' ?></span></small>
                 </a>
                 <div class="collapse<?= $hasAdvancedFilters ? ' show' : '' ?>" id="advancedFilters">
                     <div class="row g-3 mt-2">
                         <div class="col-md-3">
-                            <label class="form-label"><?= __('Changed Field') ?></label>
-                            <small class="text-muted d-block mb-1"><?= __('Find records where this field was modified') ?></small>
+                            <label class="form-label"><?= __d('audit_stash', 'Changed Field') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __d('audit_stash', 'Find records where this field was modified') ?></small>
                             <?= $this->Form->control('changed_field', [
                                 'type' => 'text',
                                 'label' => false,
@@ -114,8 +114,8 @@
                             </datalist>
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label"><?= __('Value Search') ?></label>
-                            <small class="text-muted d-block mb-1"><?= __('Find where field changed to specific value (both required)') ?></small>
+                            <label class="form-label"><?= __d('audit_stash', 'Value Search') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __d('audit_stash', 'Find where field changed to specific value (both required)') ?></small>
                             <div class="row g-2">
                                 <div class="col-6">
                                     <?= $this->Form->control('field_name', [
@@ -137,15 +137,15 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label"><?= __('Bulk Filter') ?></label>
-                            <small class="text-muted d-block mb-1"><?= __('Filter by transaction size (5+ records = bulk)') ?></small>
+                            <label class="form-label"><?= __d('audit_stash', 'Bulk Filter') ?></label>
+                            <small class="text-muted d-block mb-1"><?= __d('audit_stash', 'Filter by transaction size (5+ records = bulk)') ?></small>
                             <?= $this->Form->control('bulk_filter', [
                                 'type' => 'select',
                                 'label' => false,
                                 'options' => [
-                                    '' => __('– All –'),
-                                    'yes' => __('Bulk only'),
-                                    'no' => __('Non-bulk only'),
+                                    '' => __d('audit_stash', '– All –'),
+                                    'yes' => __d('audit_stash', 'Bulk only'),
+                                    'no' => __d('audit_stash', 'Non-bulk only'),
                                 ],
                                 'class' => 'form-select',
                             ]) ?>
@@ -163,12 +163,12 @@
         $queryParams = $this->request->getQueryParams();
         ?>
         <?= $this->Html->link(
-            __('Export…'),
+            __d('audit_stash', 'Export…'),
             ['action' => 'export', '?' => $queryParams],
             ['class' => 'btn btn-sm btn-outline-primary']
         ) ?>
         <?= $this->Html->link(
-            __('View Bulk Changes'),
+            __d('audit_stash', 'View Bulk Changes'),
             ['action' => 'bulkChanges'],
             ['class' => 'btn btn-sm btn-outline-secondary']
         ) ?>
@@ -185,7 +185,7 @@
                     <th><?= $this->Paginator->sort('primary_key', 'Record') ?></th>
                     <th><?= $this->Paginator->sort('user_id', 'User') ?></th>
                     <th>Changes</th>
-                    <th class="actions"><?= __('Actions') ?></th>
+                    <th class="actions"><?= __d('audit_stash', 'Actions') ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -204,15 +204,15 @@
                     <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">
-                        <?= $this->Html->link(__('View'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-sm btn-outline-primary']) ?>
+                        <?= $this->Html->link(__d('audit_stash', 'View'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-sm btn-outline-primary']) ?>
                         <?php if ($auditLog->primary_key) { ?>
                             <?= $this->Html->link(
-                                __('Timeline'),
+                                __d('audit_stash', 'Timeline'),
                                 ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
                                 ['class' => 'btn btn-sm btn-outline-secondary']
                             ) ?>
                             <?= $this->Html->link(
-                                __('Related'),
+                                __d('audit_stash', 'Related'),
                                 ['action' => 'relatedChanges', $auditLog->source, $auditLog->primary_key],
                                 ['class' => 'btn btn-sm btn-outline-info']
                             ) ?>

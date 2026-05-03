@@ -61,12 +61,12 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
 <div class="auditlogs dashboard">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="mb-0"><?= __('Audit Dashboard') ?></h3>
-            <p class="text-muted mb-0 small"><?= __('Activity, coverage, and integrity at a glance.') ?></p>
+            <h3 class="mb-0"><?= __d('audit_stash', 'Audit Dashboard') ?></h3>
+            <p class="text-muted mb-0 small"><?= __d('audit_stash', 'Activity, coverage, and integrity at a glance.') ?></p>
         </div>
         <div>
             <?= $this->Html->link(
-                __('Browse all logs') . ' →',
+                __d('audit_stash', 'Browse all logs') . ' →',
                 ['controller' => 'AuditLogs', 'action' => 'index'],
                 ['class' => 'btn btn-primary'],
             ) ?>
@@ -77,11 +77,11 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase"><?= __('Events today') ?></div>
+                    <div class="text-muted small text-uppercase"><?= __d('audit_stash', 'Events today') ?></div>
                     <div class="d-flex align-items-baseline gap-2">
                         <div class="display-6 fw-bold"><?= h(number_format($kpis['events_today'])) ?></div>
                         <div class="<?= h($eventsDelta['class']) ?> small">
-                            <?= h($eventsDelta['label']) ?> <?= __('vs yesterday') ?>
+                            <?= h($eventsDelta['label']) ?> <?= __d('audit_stash', 'vs yesterday') ?>
                         </div>
                     </div>
                 </div>
@@ -90,11 +90,11 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase"><?= __('Active users today') ?></div>
+                    <div class="text-muted small text-uppercase"><?= __d('audit_stash', 'Active users today') ?></div>
                     <div class="d-flex align-items-baseline gap-2">
                         <div class="display-6 fw-bold"><?= h(number_format($kpis['active_users_today'])) ?></div>
                         <div class="<?= h($usersDelta['class']) ?> small">
-                            <?= h($usersDelta['label']) ?> <?= __('vs yesterday') ?>
+                            <?= h($usersDelta['label']) ?> <?= __d('audit_stash', 'vs yesterday') ?>
                         </div>
                     </div>
                 </div>
@@ -103,9 +103,9 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
         <div class="col">
             <div class="card h-100">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase"><?= __('Active sources (7d)') ?></div>
+                    <div class="text-muted small text-uppercase"><?= __d('audit_stash', 'Active sources (7d)') ?></div>
                     <div class="display-6 fw-bold"><?= h(number_format($kpis['sources_7d'])) ?></div>
-                    <div class="small text-muted"><?= __('distinct tables/sources with activity') ?></div>
+                    <div class="small text-muted"><?= __d('audit_stash', 'distinct tables/sources with activity') ?></div>
                 </div>
             </div>
         </div>
@@ -117,10 +117,10 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                     . '<div class="display-6 fw-bold">%s / %s</div>'
                     . '<div class="small text-muted">%s</div>'
                     . '</div></div>',
-                    h(__('Coverage')),
+                    h(__d('audit_stash', 'Coverage')),
                     h(number_format($coverage['tracked'])),
                     h(number_format($coverage['total'])),
-                    h(__('tables with AuditLog behavior')),
+                    h(__d('audit_stash', 'tables with AuditLog behavior')),
                 ),
                 ['controller' => 'AuditStash', 'action' => 'coverage'],
                 ['escapeTitle' => false, 'class' => 'text-decoration-none text-reset'],
@@ -130,7 +130,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
 
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= __('Events over time (last 30 days)') ?></h5>
+            <h5 class="mb-0"><?= __d('audit_stash', 'Events over time (last 30 days)') ?></h5>
             <div class="small text-muted d-flex gap-3">
                 <?php foreach ($typeColor as $type => $color) { ?>
                     <span class="d-inline-flex align-items-center gap-1">
@@ -140,7 +140,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                 <?php } ?>
                 <span class="d-inline-flex align-items-center gap-1">
                     <span style="display: inline-block; width: 10px; height: 10px; background: #6c757d; border-radius: 2px;"></span>
-                    <?= __('Other') ?>
+                    <?= __d('audit_stash', 'Other') ?>
                 </span>
             </div>
         </div>
@@ -176,10 +176,10 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header"><h5 class="mb-0"><?= __('Top sources (7 days)') ?></h5></div>
+                <div class="card-header"><h5 class="mb-0"><?= __d('audit_stash', 'Top sources (7 days)') ?></h5></div>
                 <div class="card-body">
                     <?php if (!$topSources) { ?>
-                        <p class="text-muted mb-0"><?= __('No activity yet.') ?></p>
+                        <p class="text-muted mb-0"><?= __d('audit_stash', 'No activity yet.') ?></p>
                     <?php } else { ?>
                         <?php foreach ($topSources as $row) {
                             $widthPct = ($row['count'] / $topSourceMax) * 100;
@@ -204,14 +204,14 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
         </div>
         <div class="col-md-6">
             <div class="card h-100">
-                <div class="card-header"><h5 class="mb-0"><?= __('Top users (7 days)') ?></h5></div>
+                <div class="card-header"><h5 class="mb-0"><?= __d('audit_stash', 'Top users (7 days)') ?></h5></div>
                 <div class="card-body">
                     <?php if (!$topUsers) { ?>
-                        <p class="text-muted mb-0"><?= __('No user-attributed activity yet.') ?></p>
+                        <p class="text-muted mb-0"><?= __d('audit_stash', 'No user-attributed activity yet.') ?></p>
                     <?php } else { ?>
                         <?php foreach ($topUsers as $row) {
                             $widthPct = ($row['count'] / $topUserMax) * 100;
-                            $label = $row['user_display'] ?: ($row['user_id'] ?: __('(anonymous)'));
+                            $label = $row['user_display'] ?: ($row['user_id'] ?: __d('audit_stash', '(anonymous)'));
                             ?>
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between small mb-1">
@@ -235,9 +235,9 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= __('Recent activity') ?></h5>
+            <h5 class="mb-0"><?= __d('audit_stash', 'Recent activity') ?></h5>
             <?= $this->Html->link(
-                __('Open full log') . ' →',
+                __d('audit_stash', 'Open full log') . ' →',
                 ['controller' => 'AuditLogs', 'action' => 'index'],
                 ['class' => 'btn btn-sm btn-outline-secondary'],
             ) ?>
@@ -246,11 +246,11 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
             <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th><?= __('When') ?></th>
-                        <th><?= __('Type') ?></th>
-                        <th><?= __('Source') ?></th>
-                        <th><?= __('Record') ?></th>
-                        <th><?= __('User') ?></th>
+                        <th><?= __d('audit_stash', 'When') ?></th>
+                        <th><?= __d('audit_stash', 'Type') ?></th>
+                        <th><?= __d('audit_stash', 'Source') ?></th>
+                        <th><?= __d('audit_stash', 'Record') ?></th>
+                        <th><?= __d('audit_stash', 'User') ?></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -270,7 +270,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                             <td class="small"><?= $this->Audit->formatUser($log->user_id, $log->user_display) ?></td>
                             <td class="text-end">
                                 <?= $this->Html->link(
-                                    __('View'),
+                                    __d('audit_stash', 'View'),
                                     ['controller' => 'AuditLogs', 'action' => 'view', $log->id],
                                     ['class' => 'btn btn-sm btn-outline-primary'],
                                 ) ?>

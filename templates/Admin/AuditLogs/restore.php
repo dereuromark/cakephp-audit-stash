@@ -8,9 +8,9 @@
 ?>
 <div class="auditLogs restore content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><?= __('Restore Deleted Record') ?></h3>
+        <h3><?= __d('audit_stash', 'Restore Deleted Record') ?></h3>
         <div>
-            <?= $this->Html->link(__('Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+            <?= $this->Html->link(__d('audit_stash', 'Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
         </div>
     </div>
 
@@ -71,25 +71,25 @@
 
             <?= $this->Form->create(null, ['url' => ['action' => 'restore', $source, $primaryKey]]) ?>
             <div class="alert alert-warning">
-                <strong><?= __('Warning:') ?></strong>
-                <?= __('This will restore the record with the data shown above. If a record with this ID already exists, the restore will fail.') ?>
+                <strong><?= __d('audit_stash', 'Warning:') ?></strong>
+                <?= __d('audit_stash', 'This will restore the record with the data shown above. If a record with this ID already exists, the restore will fail.') ?>
             </div>
             <div class="d-flex justify-content-end gap-2">
-                <?= $this->Html->link(__('Cancel'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
-                <?= $this->Form->button(__('Restore Record'), [
+                <?= $this->Html->link(__d('audit_stash', 'Cancel'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
+                <?= $this->Form->button(__d('audit_stash', 'Restore Record'), [
                     'class' => 'btn btn-primary',
-                    'confirm' => __('Are you sure you want to restore this record?'),
+                    'confirm' => __d('audit_stash', 'Are you sure you want to restore this record?'),
                 ]) ?>
             </div>
             <?= $this->Form->end() ?>
         <?php } else { ?>
             <div class="alert alert-danger">
-                <?= __('No record data available to restore.') ?>
+                <?= __d('audit_stash', 'No record data available to restore.') ?>
             </div>
         <?php } ?>
     <?php } else { ?>
         <div class="alert alert-danger">
-            <?= __('No deletion record found for this record.') ?>
+            <?= __d('audit_stash', 'No deletion record found for this record.') ?>
         </div>
     <?php } ?>
 </div>
