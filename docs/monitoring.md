@@ -213,24 +213,8 @@ Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/bl
 
 Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
 
-### TeamsChannel
-
-Posts alerts to a Microsoft Teams incoming webhook as a [MessageCard](https://learn.microsoft.com/en-us/outlook/actionable-messages/message-card-reference) with severity-colored accent and a fact list. Works with classic incoming-webhook URLs without the Power Automate Workflows pipeline.
-
-**Configuration:**
-- `url` (string, required): Teams incoming webhook URL
-- `theme_colors` (array): Override per-severity hex colors (without leading `#`). Defaults: critical `DC3545`, high `FD7E14`, medium `FFC107`, low `0D6EFD`.
-- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
-
-```php
-'teams' => [
-    'class' => \AuditStash\Monitor\Channel\TeamsChannel::class,
-    'url' => 'https://outlook.office.com/webhook/.../IncomingWebhook/...',
-    'theme_colors' => [
-        'critical' => 'C0392B',
-    ],
-],
-```
+> [!NOTE]
+> No bundled Microsoft Teams channel: Microsoft is deprecating MessageCard incoming webhooks in favor of Adaptive Cards delivered via Power Automate Workflows, which has a different setup and trigger model. Wire Teams up via a custom subclass of `AbstractWebhookChannel` that emits the schema your tenant accepts.
 
 ### DiscordChannel
 
@@ -255,7 +239,7 @@ Discord webhooks normally return `204 No Content` on success — the channel acc
 
 ### Building your own channel
 
-`SlackChannel`, `TeamsChannel`, and `DiscordChannel` all extend `AbstractWebhookChannel`, which handles the HTTP/retry/error-logging plumbing. To add a fourth platform, subclass it and implement just `formatPayload()`:
+`SlackChannel` and `DiscordChannel` both extend `AbstractWebhookChannel`, which handles the HTTP/retry/error-logging plumbing. To add another platform (Microsoft Teams, Mattermost, Rocket.Chat, etc.), subclass it and implement just `formatPayload()`:
 
 ```php
 namespace App\Monitor\Channel;

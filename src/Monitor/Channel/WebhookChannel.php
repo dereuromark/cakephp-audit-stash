@@ -12,8 +12,8 @@ use AuditStash\Monitor\Alert;
  * Posts the raw `Alert::toArray()` payload as JSON to the configured URL.
  * Use this when the receiving service is custom or wants the un-massaged
  * AuditStash event shape. For the major chat platforms there are dedicated
- * subclasses (`SlackChannel`, `TeamsChannel`, `DiscordChannel`) that
- * format the payload into each service's native message shape.
+ * subclasses (`SlackChannel`, `DiscordChannel`) that format the payload
+ * into each service's native message shape.
  */
 class WebhookChannel extends AbstractWebhookChannel
 {
