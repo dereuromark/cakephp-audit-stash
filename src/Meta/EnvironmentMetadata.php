@@ -17,6 +17,15 @@ use Cake\Http\ServerRequest;
  * - 'api' - API request (based on Accept header or URL pattern)
  * - 'queue' - Queue worker (when explicitly set)
  *
+ * Optionally captures request-derived forensic fields when a request is
+ * provided and the field is opted into via `capture`:
+ * - 'user_agent' - User-Agent header
+ * - 'referer' - Referer header
+ * - 'session_id' - PHP session id (only included if a session is active)
+ *
+ * These are off by default — they often contain PII / fingerprintable data
+ * and may have GDPR implications, so consumers must opt in explicitly.
+ *
  * Usage in Application.php or bootstrap:
  *
  * ```php
@@ -31,10 +40,23 @@ use Cake\Http\ServerRequest;
  *     'deployment' => 'production',
  *     'server' => gethostname(),
  * ]));
+ *
+ * // Capture forensic fields from the request
+ * EventManager::instance()->on(new EnvironmentMetadata(
+ *     request: $this->getRequest(),
+ *     capture: ['user_agent', 'referer', 'session_id'],
+ * ));
  * ```
  */
 class EnvironmentMetadata implements EventListenerInterface
 {
+    /**
+     * Request-derived fields that can be opted into via `capture`.
+     *
+     * @var array<string>
+     */
+    public const SUPPORTED_CAPTURE_FIELDS = ['user_agent', 'referer', 'session_id'];
+
     /**
      * The request source type.
      */
@@ -53,20 +75,32 @@ class EnvironmentMetadata implements EventListenerInterface
     protected ?ServerRequest $request;
 
     /**
+     * Request-derived field names to capture into meta.
+     *
+     * @var array<string>
+     */
+    protected array $capture;
+
+    /**
      * Constructor.
      *
      * @param string|null $source Explicit source type, or null for auto-detection
      * @param array<string, mixed> $extraData Additional metadata to include
-     * @param \Cake\Http\ServerRequest|null $request Optional request for API detection
+     * @param \Cake\Http\ServerRequest|null $request Optional request for API detection / forensic capture
+     * @param array<string> $capture Request-derived fields to include in meta. Supported:
+     *   `user_agent`, `referer`, `session_id`. Ignored when `$request` is null.
+     *   Off by default because these fields can carry PII.
      */
     public function __construct(
         ?string $source = null,
         array $extraData = [],
         ?ServerRequest $request = null,
+        array $capture = [],
     ) {
         $this->request = $request;
         $this->extraData = $extraData;
         $this->source = $source ?? $this->detectSource();
+        $this->capture = array_values(array_intersect($capture, self::SUPPORTED_CAPTURE_FIELDS));
     }
 
     /**
@@ -91,11 +125,63 @@ class EnvironmentMetadata implements EventListenerInterface
     {
         $meta = [
             'request_source' => $this->source,
-        ] + $this->extraData;
+        ] + $this->captureRequestFields() + $this->extraData;
 
         foreach ($logs as $log) {
             $log->setMetaInfo($log->getMetaInfo() + $meta);
         }
+    }
+
+    /**
+     * Build the request-derived meta entries for the configured capture set.
+     * Skips fields that have no value (empty headers, no active session) so
+     * the audit row does not store useless empty strings.
+     *
+     * @return array<string, mixed>
+     */
+    protected function captureRequestFields(): array
+    {
+        if ($this->request === null || !$this->capture) {
+            return [];
+        }
+
+        $captured = [];
+        foreach ($this->capture as $field) {
+            $value = match ($field) {
+                'user_agent' => $this->request->getHeaderLine('User-Agent'),
+                'referer' => $this->request->getHeaderLine('Referer'),
+                'session_id' => $this->resolveSessionId(),
+                default => '',
+            };
+
+            if ($value !== '' && $value !== null) {
+                $captured[$field] = $value;
+            }
+        }
+
+        return $captured;
+    }
+
+    /**
+     * Returns the active session id, or null when no session has been started
+     * (CLI requests, queue workers, anonymous API hits).
+     *
+     * @return string|null
+     */
+    protected function resolveSessionId(): ?string
+    {
+        if ($this->request === null) {
+            return null;
+        }
+
+        $session = $this->request->getSession();
+        if (!$session->started()) {
+            return null;
+        }
+
+        $id = $session->id();
+
+        return $id !== '' ? $id : null;
     }
 
     /**

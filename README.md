@@ -147,6 +147,7 @@ through the same persister, hash chain, and viewer as entity events.
 - **[Retention](docs/retention.md)** - Automated log cleanup and retention policies
 - **[Monitoring](docs/monitoring.md)** - Real-time alerting for suspicious activities
 - **[Tamper-Evidence](docs/tamper-evidence.md)** - Optional SHA-256 hash chain for GoBD / SOX / HIPAA integrity
+- **[Testing](docs/testing.md)** - `AuditAssertionsTrait` for asserting audit logs in your own test suite
 
 ## Demo
 
@@ -169,3 +170,32 @@ For Elasticsearch tests, set the environment variable:
 ```bash
 elastic_dsn="Cake\ElasticSearch\Datasource\Connection://127.0.0.1:9200?driver=Cake\ElasticSearch\Datasource\Connection" vendor/bin/phpunit
 ```
+
+### Asserting audit logs in your own tests
+
+Mix `AuditStash\TestSuite\AuditAssertionsTrait` into any `TestCase` that
+loads `plugin.AuditStash.AuditLogs` to assert on what was actually persisted:
+
+```php
+use AuditStash\TestSuite\AuditAssertionsTrait;
+
+class ArticlesControllerTest extends TestCase
+{
+    use AuditAssertionsTrait;
+
+    protected array $fixtures = ['plugin.AuditStash.AuditLogs', 'app.Articles'];
+
+    public function testArticleCreateIsAudited(): void
+    {
+        $this->post('/articles/add', ['title' => 'Hello']);
+
+        $this->assertAuditLogged('Articles', 'create');
+        $this->assertAuditFieldChanged('Articles', 'title', 'Hello');
+        $this->assertAuditCount(1, 'Articles');
+    }
+}
+```
+
+Available assertions: `assertAuditLogged()`, `assertAuditNotLogged()`,
+`assertAuditCount()`, `assertAuditFieldChanged()`. See [Testing
+Documentation](docs/testing.md) for full signatures and usage tips.

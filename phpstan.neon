@@ -7,3 +7,7 @@ parameters:
 	ignoreErrors:
 		- identifier: missingType.iterableValue
 		- identifier: missingType.generics
+		# TestSuite traits are consumed by downstream apps' test cases, not by this package's own src/.
+		-
+			identifier: trait.unused
+			path: src/TestSuite/*
