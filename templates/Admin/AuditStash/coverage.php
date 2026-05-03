@@ -144,11 +144,20 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
         </div>
     </div>
 
-    <div class="alert alert-light border mt-3 small">
-        <strong><?= __('Status legend') ?></strong>:
-        <strong><?= __('Tracked') ?></strong> — <?= __('class exists, AuditLog behavior attached') ?>.
-        <strong><?= __('Missing') ?></strong> — <?= __('class exists, behavior NOT attached (coverage gap)') ?>.
-        <strong><?= __('Empirical') ?></strong> — <?= __('events recorded for a source we couldn\'t map to a class (custom event source, renamed table, plugin uninstalled)') ?>.
-        <strong><?= __('Internal') ?></strong> — <?= __('hidden by deny-list (toggle above to include)') ?>.
-    </div>
+    <details class="mt-3 small text-muted">
+        <summary><?= __('Status legend') ?></summary>
+        <dl class="row mb-0 mt-2">
+            <dt class="col-sm-2"><?= __('Tracked') ?></dt>
+            <dd class="col-sm-10"><?= __('Class exists, AuditLog behavior attached.') ?></dd>
+
+            <dt class="col-sm-2"><?= __('Missing') ?></dt>
+            <dd class="col-sm-10"><?= __('Class exists, behavior NOT attached — coverage gap.') ?></dd>
+
+            <dt class="col-sm-2"><?= __('Empirical') ?></dt>
+            <dd class="col-sm-10"><?= __("Events recorded for a source we couldn't map to a class — custom event source, renamed table, or plugin uninstalled.") ?></dd>
+
+            <dt class="col-sm-2"><?= __('Internal') ?></dt>
+            <dd class="col-sm-10"><?= __('Hidden by deny-list — toggle above to include.') ?></dd>
+        </dl>
+    </details>
 </div>
