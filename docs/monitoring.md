@@ -284,6 +284,83 @@ class SlackChannel implements ChannelInterface
 }
 ```
 
+## Hooking Into the Monitor Lifecycle
+
+Channels are the happy-path delivery mechanism. For everything else — per-context suppression, alert mutation, custom incident store, paging integration, error routing — the monitor dispatches three CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
+
+| Event | When | What you can do |
+|---|---|---|
+| `AuditStash.Monitor.beforeAlert` | After a rule matches and the `Alert` has been built, before any channel runs. Carries `rule`, `auditLog`, `alert`. | Call `$event->stopPropagation()` to suppress the alert (channels are skipped, `afterAlert` is not dispatched). Or replace the alert via `$event->setData('alert', $newAlert)` — the channels and `afterAlert` will see the replaced instance. |
+| `AuditStash.Monitor.afterAlert` | After every channel for the rule has been called. Carries `rule`, `auditLog`, `alert`, and `results` (a `[channelName => bool]` map of per-channel success). | React on success / failure — write to your own incident store, page on partial failures, emit telemetry. |
+| `AuditStash.Monitor.ruleException` | When a rule's `matches()` (or `createAlert()`) throws. Carries `rule`, `auditLog`, `exception`. | Forward the exception to Sentry / your error pipeline; today it is otherwise only logged. |
+
+### Suppress an alert under specific conditions
+
+```php
+EventManager::instance()->on(
+    'AuditStash.Monitor.beforeAlert',
+    function (EventInterface $event): void {
+        $alert = $event->getData('alert');
+        // Don't page during the migration window for tenant 42.
+        if ($alert->getAuditLog()->meta['tenant_id'] ?? null === 42) {
+            $event->stopPropagation();
+        }
+    },
+);
+```
+
+### Redact PII before delivery
+
+```php
+EventManager::instance()->on(
+    'AuditStash.Monitor.beforeAlert',
+    function (EventInterface $event): void {
+        $alert = $event->getData('alert');
+        $event->setData('alert', new Alert(
+            $alert->getRuleName(),
+            $alert->getSeverity(),
+            $alert->getMessage(),
+            $alert->getAuditLog(),
+            // Strip user_email from the alert context before any channel sees it.
+            array_diff_key($alert->getContext(), ['user_email' => 1]),
+        ));
+    },
+);
+```
+
+### Route to a non-channel target after delivery
+
+```php
+EventManager::instance()->on(
+    'AuditStash.Monitor.afterAlert',
+    function (EventInterface $event) use ($incidentStore): void {
+        if (in_array(false, $event->getData('results'), true)) {
+            // At least one channel failed. Persist the alert to a fallback table
+            // so on-call has something to triage even if Slack/email were down.
+            $incidentStore->writeFallback($event->getData('alert'));
+        }
+    },
+);
+```
+
+### Forward rule exceptions to your error reporter
+
+```php
+EventManager::instance()->on(
+    'AuditStash.Monitor.ruleException',
+    function (EventInterface $event) use ($sentry): void {
+        $sentry->captureException($event->getData('exception'), [
+            'extra' => [
+                'rule' => $event->getData('rule'),
+                'auditLog' => $event->getData('auditLog')->toArray(),
+            ],
+        ]);
+    },
+);
+```
+
+The events fire on the global `EventManager` (the same one CakePHP uses for everything else), so you can wire them up from `Application::bootstrap()`, a dedicated listener class, or anywhere else that runs at request boot time.
+
 ## Disabling Monitoring
 
 To disable monitoring entirely:
