@@ -133,7 +133,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                                     <?= $this->Html->link(
                                         __('View activity'),
                                         ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['alias']]],
-                                        ['class' => 'btn btn-sm btn-link p-0'],
+                                        ['class' => 'btn btn-sm btn-outline-primary'],
                                     ) ?>
                                 <?php } ?>
                             </td>

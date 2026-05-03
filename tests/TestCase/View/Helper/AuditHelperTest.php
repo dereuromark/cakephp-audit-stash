@@ -186,10 +186,10 @@ class AuditHelperTest extends TestCase
     public function testChangeSummaryNoChanges(): void
     {
         $result = $this->Audit->changeSummary(null);
-        $this->assertSame('No changes', $result);
+        $this->assertSame('—', $result);
 
         $result = $this->Audit->changeSummary('[]');
-        $this->assertSame('No changes', $result);
+        $this->assertSame('—', $result);
     }
 
     /**

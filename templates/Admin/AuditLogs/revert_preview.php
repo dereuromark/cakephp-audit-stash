@@ -30,10 +30,10 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
                     <th>Reverting to</th>
                     <td><?= h($auditLog->created) ?></td>
                 </tr>
-                <?php if ($auditLog->user) { ?>
+                <?php if ($auditLog->user_id || $auditLog->user_display) { ?>
                 <tr>
                     <th>Originally changed by</th>
-                    <td><?= $this->Audit->formatUser($auditLog->user) ?></td>
+                    <td><?= $this->Audit->formatUser($auditLog->user_id, $auditLog->user_display) ?></td>
                 </tr>
                 <?php } ?>
             </table>

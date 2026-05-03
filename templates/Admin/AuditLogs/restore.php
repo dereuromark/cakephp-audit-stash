@@ -29,10 +29,10 @@
                     <th>Deleted</th>
                     <td><?= h($deleteLog->created) ?></td>
                 </tr>
-                <?php if ($deleteLog->user) { ?>
+                <?php if ($deleteLog->user_id || $deleteLog->user_display) { ?>
                 <tr>
                     <th>Deleted by</th>
-                    <td><?= $this->Audit->formatUser($deleteLog->user) ?></td>
+                    <td><?= $this->Audit->formatUser($deleteLog->user_id, $deleteLog->user_display) ?></td>
                 </tr>
                 <?php } ?>
                 <?php } ?>

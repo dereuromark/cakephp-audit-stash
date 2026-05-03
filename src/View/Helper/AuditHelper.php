@@ -412,7 +412,9 @@ class AuditHelper extends Helper
         $changed = $changed ?: [];
 
         if (!$changed) {
-            return 'No changes';
+            // Empty payload — could be an empty Audit::log() data array, or
+            // an entity event whose changeset filtered down to nothing.
+            return '—';
         }
 
         $count = count($changed);

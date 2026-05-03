@@ -272,7 +272,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                                 <?= $this->Html->link(
                                     __('View'),
                                     ['controller' => 'AuditLogs', 'action' => 'view', $log->id],
-                                    ['class' => 'btn btn-sm btn-link p-0'],
+                                    ['class' => 'btn btn-sm btn-outline-primary'],
                                 ) ?>
                             </td>
                         </tr>
