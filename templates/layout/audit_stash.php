@@ -341,7 +341,7 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
         <button class="mobile-nav-toggle me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#auditMobileNav">
             <i class="fas fa-bars"></i>
         </button>
-        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
+        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'dashboard']) ?>">
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>
