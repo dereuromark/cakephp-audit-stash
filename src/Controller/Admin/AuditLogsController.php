@@ -179,7 +179,24 @@ class AuditLogsController extends AppController
             ->orderBy(['source' => 'ASC'])
             ->toArray();
 
-        $eventTypes = ['create', 'update', 'delete'];
+        // Built-in CRUD types plus any custom action event types (e.g.
+        // "user.login") that have actually been recorded.
+        $distinctTypes = $this->AuditLogs->find()
+            ->select(['type'])
+            ->distinct(['type'])
+            ->orderBy(['type' => 'ASC'])
+            ->all()
+            ->extract('type')
+            ->toList();
+        $eventTypes = array_values(array_unique(array_merge(
+            [
+                AuditLogType::Create->value,
+                AuditLogType::Update->value,
+                AuditLogType::Delete->value,
+                AuditLogType::Revert->value,
+            ],
+            $distinctTypes,
+        )));
 
         // Get distinct changed fields for autocomplete
         $changedFields = $this->AuditLogs->getDistinctChangedFields();
