@@ -76,14 +76,9 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
         <div class="nav-section-title"><?= __('Export') ?></div>
         <nav class="nav flex-column">
             <a class="nav-link"
-               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export', '_ext' => 'csv']) ?>">
-                <?= $this->element('AuditStash.icon', ['name' => 'file-csv', 'fallback' => 'fas fa-file-csv']) ?>
-                <?= __('Export CSV') ?>
-            </a>
-            <a class="nav-link"
-               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export', '_ext' => 'json']) ?>">
-                <?= $this->element('AuditStash.icon', ['name' => 'file-code', 'fallback' => 'fas fa-file-code']) ?>
-                <?= __('Export JSON') ?>
+               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export']) ?>">
+                <?= $this->element('AuditStash.icon', ['name' => 'file-export', 'fallback' => 'fas fa-file-export']) ?>
+                <?= __('Export…') ?>
             </a>
         </nav>
     </div>

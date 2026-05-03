@@ -87,14 +87,9 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
             <div class="text-white-50 small text-uppercase mb-2"><?= __('Export') ?></div>
             <nav class="nav flex-column">
                 <a class="nav-link text-white-50"
-                   href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export', '_ext' => 'csv']) ?>">
-                    <i class="fas fa-file-csv me-2"></i>
-                    <?= __('Export CSV') ?>
-                </a>
-                <a class="nav-link text-white-50"
-                   href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export', '_ext' => 'json']) ?>">
-                    <i class="fas fa-file-code me-2"></i>
-                    <?= __('Export JSON') ?>
+                   href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'export']) ?>">
+                    <i class="fas fa-file-export me-2"></i>
+                    <?= __('Export…') ?>
                 </a>
             </nav>
         </div>

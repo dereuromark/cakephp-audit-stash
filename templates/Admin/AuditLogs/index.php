@@ -168,11 +168,6 @@
             ['class' => 'btn btn-sm btn-outline-primary']
         ) ?>
         <?= $this->Html->link(
-            __('Export CSV'),
-            ['action' => 'export', '_ext' => 'csv', '?' => $queryParams],
-            ['class' => 'btn btn-sm btn-outline-secondary', 'title' => __('Quick CSV export of the current filter view, default last 30 days')]
-        ) ?>
-        <?= $this->Html->link(
             __('View Bulk Changes'),
             ['action' => 'bulkChanges'],
             ['class' => 'btn btn-sm btn-outline-secondary']
