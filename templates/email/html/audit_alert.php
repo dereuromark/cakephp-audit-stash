@@ -107,10 +107,12 @@ $severityColor = $severityColors[$alert->getSeverity()] ?? '#6c757d';
                         <td>Table</td>
                         <td><code><?= h($auditLog->source) ?></code></td>
                     </tr>
-                    <tr>
-                        <td>Primary Key</td>
-                        <td><?= h($auditLog->primary_key) ?></td>
-                    </tr>
+                    <?php if ($auditLog->primary_key) { ?>
+                        <tr>
+                            <td>Primary Key</td>
+                            <td><?= h($auditLog->primary_key) ?></td>
+                        </tr>
+                    <?php } ?>
                     <tr>
                         <td>Transaction</td>
                         <td><code><?= h($auditLog->transaction_key) ?></code></td>

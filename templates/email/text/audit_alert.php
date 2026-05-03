@@ -26,8 +26,10 @@ Type: <?= ucfirst($auditLog->type) ?>
 
 Table: <?= $auditLog->source ?>
 
+<?php if ($auditLog->primary_key) { ?>
 Primary Key: <?= $auditLog->primary_key ?>
 
+<?php } ?>
 Transaction: <?= $auditLog->transaction_key ?>
 
 Timestamp: <?= $auditLog->created ? $auditLog->created->format('Y-m-d H:i:s') : 'N/A' ?>
