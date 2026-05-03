@@ -51,6 +51,44 @@ class ExportServiceTest extends TestCase
         $this->assertNull($floor);
     }
 
+    public function testApplyDefaultDateRangeIsNoOpWhenOtherFiltersSet(): void
+    {
+        // Caller already narrowed the export with another filter (source,
+        // primary_key, ...), so the floor would just hide rows that the
+        // index page shows for the same filter set. Hard cap remains the
+        // safety net for unbounded result sets.
+        $service = new ExportService();
+        $query = $this->fetchTable('AuditStash.AuditLogs')->find();
+
+        $floor = $service->applyDefaultDateRange($query, null, null, hasOtherFilters: true);
+
+        $this->assertNull($floor);
+    }
+
+    public function testApplyDefaultDateRangeStillCountsRowsOlderThanFloorWhenOtherFiltersSet(): void
+    {
+        // Regression: a row created beyond the default 30-day floor must
+        // still be counted by the export estimate when the caller has
+        // pinned the query with another filter (here: `source`).
+        $oldRow = $this->fetchTable('AuditStash.AuditLogs')->newEntity([
+            'transaction_key' => 'tx-old',
+            'type' => 'create',
+            'source' => 'articles',
+            'primary_key' => 1,
+            'created' => DateTime::now()->subMonths(6),
+        ]);
+        $this->fetchTable('AuditStash.AuditLogs')->saveOrFail($oldRow);
+
+        $service = new ExportService();
+        $query = $this->fetchTable('AuditStash.AuditLogs')
+            ->find()
+            ->where(['AuditLogs.source' => 'articles']);
+
+        $service->applyDefaultDateRange($query, null, null, hasOtherFilters: true);
+
+        $this->assertSame(1, $service->estimate($query));
+    }
+
     public function testHardCapFromConfigOverridesDefault(): void
     {
         Configure::write('AuditStash.export.hardCap', 42);

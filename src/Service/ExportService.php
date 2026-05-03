@@ -88,20 +88,37 @@ class ExportService
 
     /**
      * Apply a default date floor to the query when neither `date_from` nor
-     * `date_to` was supplied. Consumers should call this before
-     * {@see assertWithinHardCap()} so the cap check sees the narrowed
-     * query, not the unbounded one.
+     * `date_to` was supplied AND the caller has not narrowed the export
+     * with another filter (`source`, `primary_key`, ...). Consumers should
+     * call this before {@see assertWithinHardCap()} so the cap check sees
+     * the narrowed query, not the unbounded one.
+     *
+     * Why `$hasOtherFilters`: the floor exists to keep an UNFILTERED export
+     * from getting slower with every passing month. When the caller has
+     * already pinned the export to a specific source / row / transaction,
+     * the floor stops being load-protective and just hides rows the user
+     * could see on the index page — same filters, different result count.
+     * The hard cap remains the safety net for accidentally huge exports.
      *
      * @param \Cake\ORM\Query\SelectQuery $query
      * @param string|null $dateFrom Caller-supplied lower bound (`Y-m-d`).
      * @param string|null $dateTo Caller-supplied upper bound (`Y-m-d`).
+     * @param bool $hasOtherFilters Whether the caller already narrowed the
+     *   query with another filter. When true, the floor is skipped.
      *
      * @return \Cake\I18n\DateTime|null The applied default floor, or null
      *   when the caller's filters were honored as-is.
      */
-    public function applyDefaultDateRange(SelectQuery $query, ?string $dateFrom, ?string $dateTo): ?DateTime
-    {
+    public function applyDefaultDateRange(
+        SelectQuery $query,
+        ?string $dateFrom,
+        ?string $dateTo,
+        bool $hasOtherFilters = false,
+    ): ?DateTime {
         if (($dateFrom !== null && $dateFrom !== '') || ($dateTo !== null && $dateTo !== '')) {
+            return null;
+        }
+        if ($hasOtherFilters) {
             return null;
         }
 

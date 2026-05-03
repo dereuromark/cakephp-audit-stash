@@ -169,6 +169,29 @@ class AuditLogsController extends AppController
     }
 
     /**
+     * Whether the request carries at least one non-date filter that
+     * narrows the export.
+     *
+     * Used by {@see export()} to decide whether the default 30-day floor
+     * still adds value: if the caller already pinned the export to a
+     * specific source / row / transaction / user / type, the floor would
+     * silently drop rows the index page shows for the same filters.
+     *
+     * @return bool
+     */
+    protected function hasNarrowingFilters(): bool
+    {
+        foreach (['source', 'user_id', 'type', 'transaction_key', 'primary_key'] as $key) {
+            $value = $this->request->getQuery($key);
+            if ($value !== null && $value !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Validate a filter input that will be interpolated into a JSON path
      * expression (`$.<key>`).
      *
@@ -458,6 +481,7 @@ class AuditLogsController extends AppController
     {
         $service = new ExportService();
         $format = $this->resolveExportFormat();
+        $hasOtherFilters = $this->hasNarrowingFilters();
 
         if ($format === null) {
             $query = $this->AuditLogs->find();
@@ -466,6 +490,7 @@ class AuditLogsController extends AppController
                 $query,
                 $this->request->getQuery('date_from'),
                 $this->request->getQuery('date_to'),
+                $hasOtherFilters,
             );
 
             $rowCount = $service->estimate($query);
@@ -484,6 +509,7 @@ class AuditLogsController extends AppController
             $query,
             $this->request->getQuery('date_from'),
             $this->request->getQuery('date_to'),
+            $hasOtherFilters,
         );
 
         $service->assertWithinHardCap($service->estimate($query));
