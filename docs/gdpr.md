@@ -71,8 +71,10 @@ What gets anonymized:
 | `user_id` | `123` | `anon_a1b2c3d4` |
 | `user_display` | `John Doe` | `ANONYMIZED` |
 | `meta.user` | `john@example.com` | `ANONYMIZED` |
-| `meta.ip` | `192.168.1.100` | `0.0.0.0` |
+| `meta.username` | `johndoe` | `ANONYMIZED` |
 | `meta.email` | `john@example.com` | `deleted@anonymized.local` |
+| `meta.ip` | `192.168.1.100` | `0.0.0.0` |
+| `meta.user_agent` | `Mozilla/5.0 ...` | `ANONYMIZED` |
 | `original.email` | `old@example.com` | `[REDACTED]` |
 | `changed.name` | `John Doe` | `[REDACTED]` |
 
@@ -225,8 +227,8 @@ Combine GDPR operations with retention policies for a complete data lifecycle:
     'retention' => [
         'default' => 90,        // Keep logs for 90 days
         'tables' => [
-            'users' => 365,     // Keep user logs for 1 year
-            'orders' => 2555,   // Keep order logs for 7 years (compliance)
+            'Users' => 365,     // Keep user logs for 1 year
+            'Orders' => 2555,   // Keep order logs for 7 years (compliance)
         ],
     ],
     'gdpr' => [
