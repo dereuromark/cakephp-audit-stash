@@ -172,6 +172,30 @@ return [
         ],
 
         /**
+         * Admin-UI export tuning.
+         *
+         * The /admin/audit-stash/audit-logs/export page (and the inline
+         * "Export CSV" quick button on the index) stream CSV / JSON / NDJSON
+         * downloads with a hard row cap and a default date-range floor.
+         *
+         * - `hardCap`: maximum number of rows the streaming export will
+         *   produce. Pre-flighted with a count() before any download starts;
+         *   exceeding sets returns 400 with a "narrow your filters" message
+         *   rather than silently truncating.
+         * - `defaultDays`: when neither `date_from` nor `date_to` is
+         *   supplied, the export defaults the lower bound to "now minus N
+         *   days" so an unbounded export does not get slower with every
+         *   passing month. An explicit `date_from` overrides this.
+         * - `batchSize`: rows iterated and flushed per batch during the
+         *   stream. Memory is roughly O(batchSize × row size).
+         */
+        'export' => [
+            'hardCap' => 100000,
+            'defaultDays' => 30,
+            'batchSize' => 1000,
+        ],
+
+        /**
          * Real-time monitoring & alerting.
          *
          * The plugin ships a passive `AuditMonitor` that listens to persisted
