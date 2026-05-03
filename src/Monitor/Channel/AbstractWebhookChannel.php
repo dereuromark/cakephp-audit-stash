@@ -7,8 +7,10 @@ namespace AuditStash\Monitor\Channel;
 use AuditStash\Monitor\Alert;
 use Cake\Http\Client;
 use Cake\Http\Client\Response;
+use Cake\Routing\Router;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
+use Throwable;
 
 /**
  * Common base for webhook-style channels.
@@ -141,5 +143,42 @@ abstract class AbstractWebhookChannel implements ChannelInterface
         }
 
         return substr($body, 0, 197) . '...';
+    }
+
+    /**
+     * Builds an absolute URL to the admin view of the audit log entry that
+     * triggered the alert, so chat recipients can click through to the
+     * record. Uses `Router::url()` and therefore respects
+     * `AuditStash.routePath` and `App.fullBaseUrl`.
+     *
+     * Returns `null` when the URL cannot be resolved (e.g. the audit row
+     * has no `id`, the plugin's routes aren't loaded in the current
+     * runtime, or routing throws). Subclasses can use that as the signal
+     * to omit the link from the rendered payload.
+     *
+     * @param \AuditStash\Monitor\Alert $alert
+     *
+     * @return string|null
+     */
+    protected function viewUrl(Alert $alert): ?string
+    {
+        // Use `get()` rather than the typed `->id` property so we cover the
+        // pre-save / unhydrated case as well as a hydrated row.
+        $id = $alert->getAuditLog()->get('id');
+        if (!$id) {
+            return null;
+        }
+
+        try {
+            return Router::url([
+                'prefix' => 'Admin',
+                'plugin' => 'AuditStash',
+                'controller' => 'AuditLogs',
+                'action' => 'view',
+                $id,
+            ], true);
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

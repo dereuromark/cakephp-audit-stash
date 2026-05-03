@@ -55,39 +55,52 @@ class SlackChannel extends AbstractWebhookChannel
         $auditLog = $alert->getAuditLog();
         $severity = $alert->getSeverity();
 
+        $blocks = [
+            [
+                'type' => 'header',
+                'text' => [
+                    'type' => 'plain_text',
+                    'text' => sprintf(
+                        '[%s] %s',
+                        strtoupper($severity),
+                        $alert->getRuleName(),
+                    ),
+                ],
+            ],
+            [
+                'type' => 'section',
+                'text' => [
+                    'type' => 'mrkdwn',
+                    'text' => $alert->getMessage(),
+                ],
+            ],
+            [
+                'type' => 'section',
+                'fields' => [
+                    $this->mrkdwnField('Source', $auditLog->source ?? null),
+                    $this->mrkdwnField('Event', $auditLog->type ?? null),
+                    $this->mrkdwnField('Primary key', $auditLog->primary_key ?? null),
+                    $this->mrkdwnField('User', $auditLog->user_display ?? $auditLog->user_id ?? null),
+                ],
+            ],
+        ];
+
+        $url = $this->viewUrl($alert);
+        if ($url !== null) {
+            $blocks[] = [
+                'type' => 'section',
+                'text' => [
+                    'type' => 'mrkdwn',
+                    'text' => sprintf('<%s|View entry in admin →>', $url),
+                ],
+            ];
+        }
+
         $payload = [
             'attachments' => [
                 [
                     'color' => self::SEVERITY_COLORS[$severity] ?? '#6c757d',
-                    'blocks' => [
-                        [
-                            'type' => 'header',
-                            'text' => [
-                                'type' => 'plain_text',
-                                'text' => sprintf(
-                                    '[%s] %s',
-                                    strtoupper($severity),
-                                    $alert->getRuleName(),
-                                ),
-                            ],
-                        ],
-                        [
-                            'type' => 'section',
-                            'text' => [
-                                'type' => 'mrkdwn',
-                                'text' => $alert->getMessage(),
-                            ],
-                        ],
-                        [
-                            'type' => 'section',
-                            'fields' => [
-                                $this->mrkdwnField('Source', $auditLog->source ?? null),
-                                $this->mrkdwnField('Event', $auditLog->type ?? null),
-                                $this->mrkdwnField('Primary key', $auditLog->primary_key ?? null),
-                                $this->mrkdwnField('User', $auditLog->user_display ?? $auditLog->user_id ?? null),
-                            ],
-                        ],
-                    ],
+                    'blocks' => $blocks,
                 ],
             ],
         ];

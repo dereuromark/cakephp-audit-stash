@@ -213,6 +213,8 @@ Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/bl
 
 Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
 
+Each alert ends with a `View entry in admin →` link to the audit log row that triggered it. The URL is built via `Router::url()` and respects `AuditStash.routePath` and `App.fullBaseUrl`, so make sure `App.fullBaseUrl` is set to the externally-reachable host you want recipients to land on. To omit or customize the link, subclass `SlackChannel` and override `formatPayload()`.
+
 ### DiscordChannel
 
 Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/docs/resources/channel#embed-object) with title, color sidebar (decimal RGB derived from severity), and inline fields.
@@ -233,6 +235,8 @@ Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/d
 ```
 
 Discord webhooks normally return `204 No Content` on success — the channel accepts both that and any other 2xx status.
+
+The embed title is rendered as a clickable link to the audit log row that triggered the alert, built from `Router::url()` and therefore respecting `AuditStash.routePath` and `App.fullBaseUrl`. To omit or customize the link, subclass `DiscordChannel` and override `formatPayload()`.
 
 ### Building your own channel
 

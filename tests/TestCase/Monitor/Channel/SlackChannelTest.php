@@ -5,17 +5,30 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Monitor\Channel;
 
 use AuditStash\AuditLogType;
+use AuditStash\AuditStashPlugin;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\SlackChannel;
 use AuditStash\Test\CapturingAdapter;
+use Cake\Core\Configure;
 use Cake\Http\Client;
 use Cake\Http\Client\Response;
+use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 class SlackChannelTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Pin a known fullBaseUrl + load the plugin's routes so
+        // `viewUrl()` resolves to a deterministic absolute URL.
+        Configure::write('App.fullBaseUrl', 'https://example.com');
+        Router::reload();
+        (new AuditStashPlugin())->routes(Router::createRouteBuilder('/'));
+    }
+
     public function testFormatsAsBlockKitWithSeverityColor(): void
     {
         $channel = $this->buildChannel(
@@ -106,6 +119,48 @@ class SlackChannelTest extends TestCase
     {
         $channel = new SlackChannel([]);
         $this->assertFalse($channel->send($this->buildAlert('high')));
+    }
+
+    public function testAppendsBacklinkSectionWithViewUrl(): void
+    {
+        $channel = $this->buildChannel(
+            ['url' => 'https://hooks.slack.com/services/T/B/secret'],
+            new Response(['HTTP/1.1 200 OK'], 'ok'),
+        );
+        $channel->send($this->buildAlert('high'));
+
+        $payload = $this->decode($channel->adapter->captured);
+        $blocks = $payload['attachments'][0]['blocks'];
+        $linkBlock = end($blocks);
+
+        $this->assertSame('section', $linkBlock['type']);
+        $this->assertSame('mrkdwn', $linkBlock['text']['type']);
+        $this->assertStringContainsString(
+            '<https://example.com/admin/audit-stash/audit-logs/view/7|View entry in admin →>',
+            $linkBlock['text']['text'],
+        );
+    }
+
+    public function testOmitsBacklinkWhenAuditLogHasNoId(): void
+    {
+        $log = new AuditLog([
+            'type' => AuditLogType::Update->value,
+            'source' => 'Users',
+            'primary_key' => 42,
+        ]);
+        $alert = new Alert('Test', 'high', 'm', $log, []);
+
+        $channel = $this->buildChannel(
+            ['url' => 'https://hooks.slack.com/services/T/B/secret'],
+            new Response(['HTTP/1.1 200 OK'], 'ok'),
+        );
+        $channel->send($alert);
+
+        $payload = $this->decode($channel->adapter->captured);
+        $blocks = $payload['attachments'][0]['blocks'];
+        $this->assertCount(3, $blocks, 'expected only header / message / fields, no link block');
+        // Last block is the fields grid, not a backlink section.
+        $this->assertArrayHasKey('fields', end($blocks));
     }
 
     /**

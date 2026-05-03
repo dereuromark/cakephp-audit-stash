@@ -5,17 +5,28 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Monitor\Channel;
 
 use AuditStash\AuditLogType;
+use AuditStash\AuditStashPlugin;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\DiscordChannel;
 use AuditStash\Test\CapturingAdapter;
+use Cake\Core\Configure;
 use Cake\Http\Client;
 use Cake\Http\Client\Response;
+use Cake\Routing\Router;
 use Cake\TestSuite\TestCase;
 use Psr\Http\Message\RequestInterface;
 
 class DiscordChannelTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Configure::write('App.fullBaseUrl', 'https://example.com');
+        Router::reload();
+        (new AuditStashPlugin())->routes(Router::createRouteBuilder('/'));
+    }
+
     public function testFormatsAsEmbedWithSeverityColorAsDecimal(): void
     {
         $channel = $this->buildChannel(
@@ -86,6 +97,40 @@ class DiscordChannelTest extends TestCase
     {
         $channel = new DiscordChannel([]);
         $this->assertFalse($channel->send($this->buildAlert('high')));
+    }
+
+    public function testEmbedUrlPointsAtAdminView(): void
+    {
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($this->buildAlert('high'));
+
+        $payload = $this->decode($channel->adapter->captured);
+        $this->assertSame(
+            'https://example.com/admin/audit-stash/audit-logs/view/7',
+            $payload['embeds'][0]['url'],
+        );
+    }
+
+    public function testOmitsEmbedUrlWhenAuditLogHasNoId(): void
+    {
+        $log = new AuditLog([
+            'type' => AuditLogType::Update->value,
+            'source' => 'Users',
+            'primary_key' => 42,
+        ]);
+        $alert = new Alert('Test', 'high', 'm', $log, []);
+
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($alert);
+
+        $payload = $this->decode($channel->adapter->captured);
+        $this->assertArrayNotHasKey('url', $payload['embeds'][0]);
     }
 
     /**

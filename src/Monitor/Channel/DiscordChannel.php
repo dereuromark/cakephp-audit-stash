@@ -66,6 +66,12 @@ class DiscordChannel extends AbstractWebhookChannel
             'timestamp' => $auditLog->created?->toIso8601String(),
         ];
 
+        $url = $this->viewUrl($alert);
+        if ($url !== null) {
+            // Discord makes the embed title clickable when the embed has a `url`.
+            $embed['url'] = $url;
+        }
+
         $payload = ['embeds' => [$embed]];
 
         foreach (['username', 'avatar_url'] as $optional) {
