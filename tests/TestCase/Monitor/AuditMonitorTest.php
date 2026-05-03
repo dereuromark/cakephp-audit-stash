@@ -13,12 +13,15 @@ use Cake\Event\Event;
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 use Cake\TestSuite\TestCase;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use TestApp\Monitor\Channel\ExplodingChannel;
 use TestApp\Monitor\Channel\RecordingChannel;
 use TestApp\Monitor\Rule\AlwaysMatchRule;
 use TestApp\Monitor\Rule\ExplodingRule;
 use TestApp\Monitor\Rule\NeverMatchRule;
+use TestApp\Monitor\Rule\TypeErrorRule;
 
 class AuditMonitorTest extends TestCase
 {
@@ -144,9 +147,26 @@ class AuditMonitorTest extends TestCase
         $this->assertSame(['mutated' => true], $delivered->getContext());
     }
 
-    public function testRuleExceptionDispatchesRuleExceptionEventAndDoesNotBreakOtherRules(): void
+    public function testRuleExceptionIsLoggedAndDoesNotBreakOtherRules(): void
     {
-        $caught = null;
+        $captured = [];
+        $logger = new class ($captured) extends AbstractLogger {
+            public function __construct(private array &$captured)
+            {
+            }
+
+            /**
+             * @param mixed $level
+             * @param \Stringable|string $message
+             * @param array<string, mixed> $context
+             *
+             * @return void
+             */
+            public function log($level, $message, array $context = []): void
+            {
+                $this->captured[] = ['level' => $level, 'message' => (string)$message, 'context' => $context];
+            }
+        };
 
         $this->configureMonitor([
             'rules' => [
@@ -156,25 +176,77 @@ class AuditMonitorTest extends TestCase
             'channels' => [
                 'ok' => ['class' => RecordingChannel::class, 'returns' => true],
             ],
-        ]);
-
-        EventManager::instance()->on(
-            'AuditStash.Monitor.ruleException',
-            function (EventInterface $event) use (&$caught): void {
-                $caught = $event->getData('exception');
-            },
-        );
+        ], $logger);
 
         $this->dispatchAuditLog();
 
-        $this->assertInstanceOf(RuntimeException::class, $caught);
-        $this->assertSame('rule blew up', $caught->getMessage());
+        // Good rule still ran after the broken one failed.
         $this->assertCount(1, RecordingChannel::$delivered);
+
+        // The broken rule's failure was logged with the full Throwable in
+        // context (so Sentry / Monolog handlers get the stack).
+        $brokenLog = null;
+        foreach ($captured as $entry) {
+            if (str_contains($entry['message'], 'Rule check failed')) {
+                $brokenLog = $entry;
+
+                break;
+            }
+        }
+        $this->assertNotNull($brokenLog);
+        $this->assertSame('broken', $brokenLog['context']['rule']);
+        $this->assertInstanceOf(RuntimeException::class, $brokenLog['context']['exception']);
+        $this->assertSame('rule blew up', $brokenLog['context']['exception']->getMessage());
+    }
+
+    public function testRuleErrorIsCaughtAsThrowable(): void
+    {
+        // matches() throwing TypeError must not escape the monitor.
+        $this->configureMonitor([
+            'rules' => [
+                'type_error' => ['class' => TypeErrorRule::class],
+                'good' => ['class' => AlwaysMatchRule::class, 'channels' => ['ok']],
+            ],
+            'channels' => [
+                'ok' => ['class' => RecordingChannel::class, 'returns' => true],
+            ],
+        ]);
+
+        $this->dispatchAuditLog();
+
+        // No exception escaped; the good rule still delivered.
+        $this->assertCount(1, RecordingChannel::$delivered);
+    }
+
+    public function testListenerExceptionPropagatesAndIsNotMisclassifiedAsRuleFailure(): void
+    {
+        $this->configureMonitor([
+            'rules' => [
+                'test' => ['class' => AlwaysMatchRule::class, 'channels' => ['ok']],
+            ],
+            'channels' => [
+                'ok' => ['class' => RecordingChannel::class, 'returns' => true],
+            ],
+        ]);
+
+        EventManager::instance()->on(
+            'AuditStash.Monitor.beforeAlert',
+            function (): void {
+                throw new RuntimeException('listener bug');
+            },
+        );
+
+        // Listener bug propagates rather than being silently swallowed —
+        // hidden listener failures are worse than loud ones.
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('listener bug');
+
+        $this->dispatchAuditLog();
     }
 
     public function testNonMatchingRuleFiresNoEvents(): void
     {
-        $beforeFired = $afterFired = $exceptionFired = false;
+        $beforeFired = $afterFired = false;
 
         $this->configureMonitor([
             'rules' => ['never' => ['class' => NeverMatchRule::class]],
@@ -187,15 +259,11 @@ class AuditMonitorTest extends TestCase
         EventManager::instance()->on('AuditStash.Monitor.afterAlert', function () use (&$afterFired): void {
             $afterFired = true;
         });
-        EventManager::instance()->on('AuditStash.Monitor.ruleException', function () use (&$exceptionFired): void {
-            $exceptionFired = true;
-        });
 
         $this->dispatchAuditLog();
 
         $this->assertFalse($beforeFired);
         $this->assertFalse($afterFired);
-        $this->assertFalse($exceptionFired);
     }
 
     public function testChannelExceptionMarksItFailedButContinuesOtherChannels(): void
@@ -236,13 +304,17 @@ class AuditMonitorTest extends TestCase
 
     /**
      * @param array{rules?: array<string, mixed>, channels?: array<string, mixed>} $monitorConfig
+     * @param \Psr\Log\LoggerInterface|null $logger Optional logger for capturing rule/channel-failure log calls
      */
-    private function configureMonitor(array $monitorConfig): AuditMonitor
+    private function configureMonitor(array $monitorConfig, ?LoggerInterface $logger = null): AuditMonitor
     {
         Configure::write('AuditStash.monitor.rules', $monitorConfig['rules'] ?? []);
         Configure::write('AuditStash.monitor.channels', $monitorConfig['channels'] ?? []);
 
         $monitor = new AuditMonitor();
+        if ($logger !== null) {
+            $monitor->setLogger($logger);
+        }
         EventManager::instance()->on($monitor);
 
         return $monitor;

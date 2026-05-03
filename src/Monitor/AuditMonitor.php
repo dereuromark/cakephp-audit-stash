@@ -13,6 +13,7 @@ use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
 use Exception;
 use Psr\Log\LoggerAwareTrait;
+use Throwable;
 
 /**
  * Monitors audit events and triggers alerts based on configured rules.
@@ -81,18 +82,22 @@ class AuditMonitor implements EventListenerInterface
      *
      * 1. `AuditStash.Monitor.beforeAlert` is dispatched with `rule`,
      *    `auditLog`, and `alert`. Listeners can call `stopPropagation()`
-     *    on the event to suppress the alert — channels are skipped and
-     *    `afterAlert` is not dispatched. Listeners can also mutate the
-     *    `Alert` instance in-place (severity, message, context) before
-     *    delivery.
+     *    on the event to suppress the alert (channels are skipped and
+     *    `afterAlert` is not dispatched), or replace the alert via
+     *    `$event->setData('alert', $newAlert)` — the channels and
+     *    `afterAlert` will see the replacement. The `Alert` value object
+     *    itself is immutable; mutation always goes through `setData`.
      * 2. Channels run.
      * 3. `AuditStash.Monitor.afterAlert` is dispatched with `rule`,
      *    `auditLog`, `alert`, and `results` (a `[channelName => bool]`
      *    map of per-channel success).
      *
-     * Rule exceptions are still caught and logged, but now also
-     * dispatched as `AuditStash.Monitor.ruleException` so user code can
-     * route them somewhere actionable.
+     * Rule exceptions (anything thrown out of `matches()` or
+     * `createAlert()`, including `Error` subclasses like `TypeError`) are
+     * caught and logged with the full `Throwable` in the log context so
+     * Sentry / Monolog handlers can capture the stack. Listener
+     * exceptions are NOT caught — they propagate to the caller, because
+     * silent listener failures hide app bugs.
      *
      * @param \AuditStash\Model\Entity\AuditLog $auditLog The audit log to check
      *
@@ -105,55 +110,71 @@ class AuditMonitor implements EventListenerInterface
                 if (!$rule->matches($auditLog)) {
                     continue;
                 }
-
                 $alert = $rule->createAlert($auditLog);
-
-                $beforeEvent = $this->dispatchEvent('AuditStash.Monitor.beforeAlert', [
-                    'rule' => $ruleName,
-                    'auditLog' => $auditLog,
-                    'alert' => $alert,
-                ]);
-                if ($beforeEvent->isStopped()) {
-                    continue;
-                }
-                // Listeners can swap the alert via $event->setData('alert', ...);
-                // pick that up so mutated alerts reach the channels.
-                $alertFromEvent = $beforeEvent->getData('alert');
-                if ($alertFromEvent instanceof Alert) {
-                    $alert = $alertFromEvent;
-                }
-
-                $results = $this->sendAlert($ruleName, $alert);
-
-                $this->dispatchEvent('AuditStash.Monitor.afterAlert', [
-                    'rule' => $ruleName,
-                    'auditLog' => $auditLog,
-                    'alert' => $alert,
-                    'results' => $results,
-                ]);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $this->logger?->error('AuditMonitor: Rule check failed', [
                     'rule' => $ruleName,
-                    'error' => $e->getMessage(),
-                ]);
-                $this->dispatchEvent('AuditStash.Monitor.ruleException', [
-                    'rule' => $ruleName,
-                    'auditLog' => $auditLog,
                     'exception' => $e,
                 ]);
+
+                continue;
             }
+
+            $beforeEvent = $this->dispatchEvent('AuditStash.Monitor.beforeAlert', [
+                'rule' => $ruleName,
+                'auditLog' => $auditLog,
+                'alert' => $alert,
+            ]);
+            if ($beforeEvent->isStopped()) {
+                continue;
+            }
+            // Listeners can swap the alert via $event->setData('alert', ...);
+            // pick that up so the replacement reaches the channels.
+            $alertFromEvent = $beforeEvent->getData('alert');
+            if ($alertFromEvent instanceof Alert) {
+                $alert = $alertFromEvent;
+            }
+
+            $results = $this->dispatchToChannels($ruleName, $alert);
+
+            $this->dispatchEvent('AuditStash.Monitor.afterAlert', [
+                'rule' => $ruleName,
+                'auditLog' => $auditLog,
+                'alert' => $alert,
+                'results' => $results,
+            ]);
         }
     }
 
     /**
-     * Send alert through configured channels for a rule.
+     * Send an alert through every channel registered for this rule, kept
+     * as the historical no-result entry point so downstream subclasses
+     * that override the protected method continue to load and run.
+     *
+     * Most callers should reach for {@see dispatchToChannels()} instead,
+     * which returns the per-channel success map used by the
+     * `afterAlert` event.
+     *
+     * @param string $ruleName The rule name
+     * @param \AuditStash\Monitor\Alert $alert The alert to send
+     *
+     * @return void
+     */
+    protected function sendAlert(string $ruleName, Alert $alert): void
+    {
+        $this->dispatchToChannels($ruleName, $alert);
+    }
+
+    /**
+     * Send alert through configured channels for a rule and collect a
+     * per-channel success map.
      *
      * @param string $ruleName The rule name
      * @param \AuditStash\Monitor\Alert $alert The alert to send
      *
      * @return array<string, bool> Per-channel success map keyed by channel name
      */
-    protected function sendAlert(string $ruleName, Alert $alert): array
+    protected function dispatchToChannels(string $ruleName, Alert $alert): array
     {
         $results = [];
 
@@ -165,7 +186,7 @@ class AuditMonitor implements EventListenerInterface
                 $this->logger?->error('AuditMonitor: Channel send failed', [
                     'rule' => $ruleName,
                     'channel' => get_class($channel),
-                    'error' => $e->getMessage(),
+                    'exception' => $e,
                 ]);
             }
         }

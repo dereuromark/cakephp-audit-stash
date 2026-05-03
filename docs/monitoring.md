@@ -286,13 +286,17 @@ class SlackChannel implements ChannelInterface
 
 ## Hooking Into the Monitor Lifecycle
 
-Channels are the happy-path delivery mechanism. For everything else — per-context suppression, alert mutation, custom incident store, paging integration, error routing — the monitor dispatches three CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
+Channels are the happy-path delivery mechanism. For everything else — per-context suppression, alert mutation, custom incident store, paging integration — the monitor dispatches two CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
 
 | Event | When | What you can do |
 |---|---|---|
-| `AuditStash.Monitor.beforeAlert` | After a rule matches and the `Alert` has been built, before any channel runs. Carries `rule`, `auditLog`, `alert`. | Call `$event->stopPropagation()` to suppress the alert (channels are skipped, `afterAlert` is not dispatched). Or replace the alert via `$event->setData('alert', $newAlert)` — the channels and `afterAlert` will see the replaced instance. |
+| `AuditStash.Monitor.beforeAlert` | After a rule matches and the `Alert` has been built, before any channel runs. Carries `rule`, `auditLog`, `alert`. | Call `$event->stopPropagation()` to suppress the alert (channels are skipped, `afterAlert` is not dispatched). Or replace the alert via `$event->setData('alert', $newAlert)` — the channels and `afterAlert` will see the replaced instance. The `Alert` value object itself is immutable; mutation always goes through `setData`. |
 | `AuditStash.Monitor.afterAlert` | After every channel for the rule has been called. Carries `rule`, `auditLog`, `alert`, and `results` (a `[channelName => bool]` map of per-channel success). | React on success / failure — write to your own incident store, page on partial failures, emit telemetry. |
-| `AuditStash.Monitor.ruleException` | When a rule's `matches()` (or `createAlert()`) throws. Carries `rule`, `auditLog`, `exception`. | Forward the exception to Sentry / your error pipeline; today it is otherwise only logged. |
+
+> [!NOTE]
+> Listener exceptions are not caught by the monitor — they propagate to the caller. Silent listener failures hide app bugs, so a buggy listener crashes the request loudly rather than masquerading as a rule failure. Wrap your own listener body in `try/catch` if you want different behavior.
+
+For rule failures (anything thrown out of a rule's `matches()` or `createAlert()`, including `Error` subclasses like `TypeError`), the monitor catches the `Throwable`, logs it with the full exception in context (so Sentry / Monolog handlers attached via `Cake\Log\Log` capture the stack), and continues with the next rule. No separate event is emitted — the existing log pipeline handles the routing.
 
 ### Suppress an alert under specific conditions
 
@@ -345,19 +349,19 @@ EventManager::instance()->on(
 
 ### Forward rule exceptions to your error reporter
 
+Rule exceptions go through `Cake\Log\Log` with the full `Throwable` in the log context, so any handler that knows how to unpack `context.exception` (Monolog's `IntrospectionProcessor`, the `sentry/sentry` Cake bridge, etc.) gets the stack for free. Wire your error reporter as a normal log handler:
+
 ```php
-EventManager::instance()->on(
-    'AuditStash.Monitor.ruleException',
-    function (EventInterface $event) use ($sentry): void {
-        $sentry->captureException($event->getData('exception'), [
-            'extra' => [
-                'rule' => $event->getData('rule'),
-                'auditLog' => $event->getData('auditLog')->toArray(),
-            ],
-        ]);
-    },
-);
+'Log' => [
+    'sentry' => [
+        'className' => Sentry\Cake\Log\SentryLog::class,
+        'levels' => ['error', 'critical', 'alert', 'emergency'],
+        // ...
+    ],
+],
 ```
+
+Both rule-evaluation failures and channel-send failures already emit `error`-level log entries with `exception` in the context.
 
 The events fire on the global `EventManager` (the same one CakePHP uses for everything else), so you can wire them up from `Application::bootstrap()`, a dedicated listener class, or anywhere else that runs at request boot time.
 
