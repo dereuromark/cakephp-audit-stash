@@ -133,6 +133,67 @@ class DiscordChannelTest extends TestCase
         $this->assertArrayNotHasKey('url', $payload['embeds'][0]);
     }
 
+    public function testOmitsTimestampWhenCreatedIsNull(): void
+    {
+        // Discord rejects `timestamp: null`; the key must be absent when
+        // there's no created value.
+        $log = new AuditLog([
+            'id' => 7,
+            'type' => AuditLogType::Update->value,
+            'source' => 'Users',
+            'primary_key' => 42,
+            // No `created` set.
+        ]);
+        $alert = new Alert('Test', 'high', 'm', $log, []);
+
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($alert);
+
+        $payload = $this->decode($channel->adapter->captured);
+        $this->assertArrayNotHasKey('timestamp', $payload['embeds'][0]);
+    }
+
+    public function testNormalizesEmptyAndNullFieldValuesToNa(): void
+    {
+        // Discord rejects empty `value`; both null and '' must collapse to
+        // a non-empty placeholder.
+        $log = new AuditLog([
+            'id' => 7,
+            'type' => '',
+            'source' => null,
+            'primary_key' => '',
+            'user_id' => '',
+            'user_display' => '',
+        ]);
+        $alert = new Alert('Test', 'high', 'm', $log, []);
+
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($alert);
+
+        $payload = $this->decode($channel->adapter->captured);
+        foreach ($payload['embeds'][0]['fields'] as $field) {
+            $this->assertSame('n/a', $field['value']);
+        }
+    }
+
+    public function testDisablesMentionParsing(): void
+    {
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($this->buildAlert('high'));
+
+        $payload = $this->decode($channel->adapter->captured);
+        $this->assertSame(['parse' => []], $payload['allowed_mentions']);
+    }
+
     /**
      * @param array<string, mixed> $config
      * @param \Cake\Http\Client\Response $response

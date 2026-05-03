@@ -9,6 +9,7 @@ use Cake\Http\Client;
 use Cake\Http\Client\Response;
 use Cake\Routing\Router;
 use Exception;
+use JsonException;
 use Psr\Log\LoggerAwareTrait;
 use Throwable;
 
@@ -68,7 +69,18 @@ abstract class AbstractWebhookChannel implements ChannelInterface
         $retry = max(1, (int)($this->config['retry'] ?? 1));
 
         $payload = $this->formatPayload($alert);
-        $body = (string)json_encode($payload);
+        try {
+            $body = json_encode($payload, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            // A silent fallback to an empty body would surface as
+            // "Slack returned 400 Bad Request" with no breadcrumb back to
+            // the encoding failure. Log and bail out instead.
+            $this->logger?->error(static::class . ': Payload encoding failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
 
         $client = $this->createClient();
         $options = [

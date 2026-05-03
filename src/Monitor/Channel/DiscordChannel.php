@@ -6,6 +6,7 @@ namespace AuditStash\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
 use Cake\Http\Client\Response;
+use Stringable;
 
 /**
  * Discord notification channel.
@@ -58,13 +59,19 @@ class DiscordChannel extends AbstractWebhookChannel
             'description' => $alert->getMessage(),
             'color' => self::SEVERITY_COLORS[$severity] ?? 0x6C757D,
             'fields' => [
-                ['name' => 'Source', 'value' => (string)($auditLog->source ?? 'n/a'), 'inline' => true],
-                ['name' => 'Event', 'value' => (string)($auditLog->type ?? 'n/a'), 'inline' => true],
-                ['name' => 'Primary key', 'value' => (string)($auditLog->primary_key ?? 'n/a'), 'inline' => true],
-                ['name' => 'User', 'value' => (string)($auditLog->user_display ?? $auditLog->user_id ?? 'n/a'), 'inline' => true],
+                ['name' => 'Source', 'value' => $this->fieldValue($auditLog->source ?? null), 'inline' => true],
+                ['name' => 'Event', 'value' => $this->fieldValue($auditLog->type ?? null), 'inline' => true],
+                ['name' => 'Primary key', 'value' => $this->fieldValue($auditLog->primary_key ?? null), 'inline' => true],
+                ['name' => 'User', 'value' => $this->fieldValue($auditLog->user_display ?? $auditLog->user_id ?? null), 'inline' => true],
             ],
-            'timestamp' => $auditLog->created?->toIso8601String(),
         ];
+
+        // Discord rejects `timestamp: null`; only include the key when there's
+        // an actual ISO 8601 string to ship.
+        $timestamp = $auditLog->created?->toIso8601String();
+        if ($timestamp !== null) {
+            $embed['timestamp'] = $timestamp;
+        }
 
         $url = $this->viewUrl($alert);
         if ($url !== null) {
@@ -72,7 +79,13 @@ class DiscordChannel extends AbstractWebhookChannel
             $embed['url'] = $url;
         }
 
-        $payload = ['embeds' => [$embed]];
+        $payload = [
+            'embeds' => [$embed],
+            // Defense-in-depth: never let an audit log row's source/type/user
+            // value smuggle an `@everyone`/`@here`/`<@user>` mention into the
+            // channel. Disable mention parsing entirely.
+            'allowed_mentions' => ['parse' => []],
+        ];
 
         foreach (['username', 'avatar_url'] as $optional) {
             if (!empty($this->config[$optional])) {
@@ -81,6 +94,26 @@ class DiscordChannel extends AbstractWebhookChannel
         }
 
         return $payload;
+    }
+
+    /**
+     * Normalize a raw audit-log column value for use as a Discord embed
+     * field `value`. Discord rejects empty strings, so both `null` and `''`
+     * collapse to `'n/a'`.
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    protected function fieldValue(mixed $value): string
+    {
+        if (is_scalar($value) || $value instanceof Stringable) {
+            $value = (string)$value;
+        } else {
+            $value = '';
+        }
+
+        return $value === '' ? 'n/a' : $value;
     }
 
     /**

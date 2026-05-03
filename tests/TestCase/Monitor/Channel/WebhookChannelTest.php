@@ -13,6 +13,8 @@ use Cake\Http\Client;
 use Cake\Http\Client\Response;
 use Cake\TestSuite\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\AbstractLogger;
+use Stringable;
 
 /**
  * Pins the existing `WebhookChannel` payload contract — the un-massaged
@@ -68,6 +70,50 @@ class WebhookChannelTest extends TestCase
     {
         $channel = new WebhookChannel([]);
         $this->assertFalse($channel->send($this->buildAlert('low')));
+    }
+
+    public function testReturnsFalseAndLogsWhenPayloadCannotBeJsonEncoded(): void
+    {
+        // Inject a payload value that breaks json_encode (invalid UTF-8 byte
+        // sequence) so we cover the JSON_THROW_ON_ERROR fallback path. The
+        // channel must NOT silently POST an empty body.
+        $channel = new class (['url' => 'https://hooks.example.com/audit']) extends WebhookChannel {
+            public CapturingAdapter $adapter;
+
+            public function __construct(array $config)
+            {
+                parent::__construct($config);
+                $this->adapter = new CapturingAdapter(new Response(['HTTP/1.1 200 OK'], 'ok'));
+            }
+
+            protected function createClient(): Client
+            {
+                return new Client(['adapter' => $this->adapter]);
+            }
+
+            protected function formatPayload(Alert $alert): array
+            {
+                return ['bad' => "\xB1\x31"];
+            }
+        };
+
+        $logger = new class extends AbstractLogger {
+            /**
+             * @var list<array{level: string|\Stringable, message: string}>
+             */
+            public array $records = [];
+
+            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            {
+                $this->records[] = ['level' => $level, 'message' => (string)$message];
+            }
+        };
+        $channel->setLogger($logger);
+
+        $this->assertFalse($channel->send($this->buildAlert('low')));
+        $this->assertNull($channel->adapter->captured, 'no HTTP request should be issued');
+        $this->assertNotEmpty($logger->records);
+        $this->assertStringContainsString('encoding failed', $logger->records[0]['message']);
     }
 
     /**
