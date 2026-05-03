@@ -67,7 +67,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
         <div>
             <?= $this->Html->link(
                 __('Browse all logs') . ' →',
-                ['action' => 'index'],
+                ['controller' => 'AuditLogs', 'action' => 'index'],
                 ['class' => 'btn btn-primary'],
             ) ?>
         </div>
@@ -122,7 +122,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                     h(number_format($coverage['total'])),
                     h(__('tables with AuditLog behavior')),
                 ),
-                ['action' => 'coverage'],
+                ['controller' => 'AuditStash', 'action' => 'coverage'],
                 ['escapeTitle' => false, 'class' => 'text-decoration-none text-reset'],
             ) ?>
         </div>
@@ -188,7 +188,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                                 <div class="d-flex justify-content-between small mb-1">
                                     <?= $this->Html->link(
                                         h($row['source']),
-                                        ['action' => 'index', '?' => ['source' => $row['source']]],
+                                        ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['source']]],
                                         ['escapeTitle' => false],
                                     ) ?>
                                     <span class="text-muted"><?= h(number_format($row['count'])) ?></span>
@@ -217,7 +217,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                                 <div class="d-flex justify-content-between small mb-1">
                                     <?= $this->Html->link(
                                         h($label),
-                                        ['action' => 'index', '?' => ['user_id' => $row['user_id']]],
+                                        ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['user_id' => $row['user_id']]],
                                         ['escapeTitle' => false],
                                     ) ?>
                                     <span class="text-muted"><?= h(number_format($row['count'])) ?></span>
@@ -238,7 +238,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
             <h5 class="mb-0"><?= __('Recent activity') ?></h5>
             <?= $this->Html->link(
                 __('Open full log') . ' →',
-                ['action' => 'index'],
+                ['controller' => 'AuditLogs', 'action' => 'index'],
                 ['class' => 'btn btn-sm btn-outline-secondary'],
             ) ?>
         </div>
@@ -271,7 +271,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                             <td class="text-end">
                                 <?= $this->Html->link(
                                     __('View'),
-                                    ['action' => 'view', $log->id],
+                                    ['controller' => 'AuditLogs', 'action' => 'view', $log->id],
                                     ['class' => 'btn btn-sm btn-link p-0'],
                                 ) ?>
                             </td>

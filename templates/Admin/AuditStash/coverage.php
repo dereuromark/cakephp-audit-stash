@@ -30,6 +30,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
     $active = $filter === $key;
     $class = $active ? 'btn-primary' : 'btn-outline-secondary';
     $url = $this->Url->build([
+        'controller' => 'AuditStash',
         'action' => 'coverage',
         '?' => array_filter([
             'filter' => $key === 'all' ? null : $key,
@@ -59,7 +60,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
             </p>
         </div>
         <div>
-            <?= $this->Html->link(__('← Dashboard'), ['action' => 'dashboard'], ['class' => 'btn btn-outline-secondary']) ?>
+            <?= $this->Html->link(__('← Dashboard'), ['controller' => 'AuditStash', 'action' => 'index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>
     </div>
 
@@ -75,6 +76,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
         <div class="form-check form-switch ms-3">
             <?php
             $toggleUrl = $this->Url->build([
+                'controller' => 'AuditStash',
                 'action' => 'coverage',
                 '?' => array_filter([
                     'filter' => $filter ?: null,
@@ -130,7 +132,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
                                 <?php if ($row['events_30d'] > 0) { ?>
                                     <?= $this->Html->link(
                                         __('View activity'),
-                                        ['action' => 'index', '?' => ['source' => $row['alias']]],
+                                        ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['alias']]],
                                         ['class' => 'btn btn-sm btn-link p-0'],
                                     ) ?>
                                 <?php } ?>

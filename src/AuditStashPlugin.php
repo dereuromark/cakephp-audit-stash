@@ -102,6 +102,7 @@ class AuditStashPlugin extends BasePlugin
                 $routes->setRouteClass(DashedRoute::class);
                 $routes->setExtensions(['csv', 'json']);
                 $routes->connect('/', ['controller' => 'AuditStash', 'action' => 'index']);
+                $routes->connect('/coverage', ['controller' => 'AuditStash', 'action' => 'coverage']);
                 $routes->fallbacks();
             });
         });

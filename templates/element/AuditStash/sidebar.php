@@ -41,8 +41,8 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
                 <?= $this->element('AuditStash.icon', ['name' => 'layer-group', 'fallback' => 'fas fa-layer-group']) ?>
                 <?= __('Bulk Changes') ?>
             </a>
-            <a class="nav-link <?= $isActive('Coverage', ['index']) ?>"
-               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'Coverage', 'action' => 'index']) ?>">
+            <a class="nav-link <?= $isActive('AuditStash', ['coverage']) ?>"
+               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'coverage']) ?>">
                 <?= $this->element('AuditStash.icon', ['name' => 'shield-halved', 'fallback' => 'fas fa-shield-halved']) ?>
                 <?= __('Coverage') ?>
             </a>

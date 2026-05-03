@@ -17,7 +17,9 @@ $controller = $this->getRequest()->getParam('controller');
 $action = $this->getRequest()->getParam('action');
 $plugin = $this->getRequest()->getParam('plugin');
 $prefix = $this->getRequest()->getParam('prefix');
-$isIndex = $controller === 'AuditLogs' && $action === 'index';
+// `dashboardAutoRefresh` originally gated the auto-refresh meta tag on
+// the audit-logs index. Now applies on the dashboard entry page.
+$isIndex = $controller === 'AuditStash' && $action === 'index';
 $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 ?>
 <!DOCTYPE html>
