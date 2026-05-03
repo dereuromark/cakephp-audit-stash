@@ -27,7 +27,8 @@ $badge = function (string $status): string {
 };
 
 $chip = function (string $key, string $label, int $count) use ($filter, $includeInternal): string {
-    $active = $filter === $key;
+    // No `filter` query param → the "All" chip is the active one.
+    $active = $filter === $key || ($key === 'all' && $filter === '');
     $class = $active ? 'btn-primary' : 'btn-outline-secondary';
     $url = $this->Url->build([
         'controller' => 'AuditStash',
