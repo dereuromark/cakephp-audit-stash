@@ -190,6 +190,78 @@ Alerts are written to your configured log with appropriate severity levels:
 - `medium` → WARNING
 - `low` → INFO
 
+### SlackChannel
+
+Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields — instead of the raw JSON dump you'd get from `WebhookChannel`.
+
+**Configuration:**
+- `url` (string, required): Slack incoming webhook URL (`https://hooks.slack.com/services/T.../B.../...`)
+- `username` (string): Override the bot display name
+- `icon_emoji` (string): Override the bot icon (e.g. `:rotating_light:`)
+- `channel` (string): Override the destination channel
+- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
+
+```php
+'slack' => [
+    'class' => \AuditStash\Monitor\Channel\SlackChannel::class,
+    'url' => 'https://hooks.slack.com/services/T/B/secret',
+    'username' => 'AuditStash',
+    'icon_emoji' => ':rotating_light:',
+    'channel' => '#audit-alerts',
+],
+```
+
+Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
+
+Each alert ends with a `View entry in admin →` link to the audit log row that triggered it. The URL is built via `Router::url()` and respects `AuditStash.routePath` and `App.fullBaseUrl`, so make sure `App.fullBaseUrl` is set to the externally-reachable host you want recipients to land on. To omit or customize the link, subclass `SlackChannel` and override `formatPayload()`.
+
+### DiscordChannel
+
+Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/docs/resources/channel#embed-object) with title, color sidebar (decimal RGB derived from severity), and inline fields.
+
+**Configuration:**
+- `url` (string, required): Discord webhook URL (`https://discord.com/api/webhooks/.../...`)
+- `username` (string): Override the bot display name
+- `avatar_url` (string): Override the bot avatar
+- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
+
+```php
+'discord' => [
+    'class' => \AuditStash\Monitor\Channel\DiscordChannel::class,
+    'url' => 'https://discord.com/api/webhooks/.../...',
+    'username' => 'AuditStash',
+    'avatar_url' => 'https://example.com/audit-bot.png',
+],
+```
+
+Discord webhooks normally return `204 No Content` on success — the channel accepts both that and any other 2xx status.
+
+The embed title is rendered as a clickable link to the audit log row that triggered the alert, built from `Router::url()` and therefore respecting `AuditStash.routePath` and `App.fullBaseUrl`. To omit or customize the link, subclass `DiscordChannel` and override `formatPayload()`.
+
+### Building your own channel
+
+`SlackChannel` and `DiscordChannel` both extend `AbstractWebhookChannel`, which handles the HTTP/retry/error-logging plumbing. To add another platform (Microsoft Teams, Mattermost, Rocket.Chat, etc.), subclass it and implement just `formatPayload()`:
+
+```php
+namespace App\Monitor\Channel;
+
+use AuditStash\Monitor\Alert;
+use AuditStash\Monitor\Channel\AbstractWebhookChannel;
+
+class MattermostChannel extends AbstractWebhookChannel
+{
+    protected function formatPayload(Alert $alert): array
+    {
+        return [
+            'text' => sprintf('[%s] %s', strtoupper($alert->getSeverity()), $alert->getMessage()),
+            // ...whatever Mattermost expects
+        ];
+    }
+}
+```
+
+Override `isAcceptable(Response $response)` if the target service uses a non-standard success convention (Slack's `ok` body, Discord's 204 No Content), and `createClient()` if you need to inject a custom HTTP client (e.g. for tests).
+
 ## Creating Custom Rules
 
 Extend `AbstractRule` to create custom monitoring rules:

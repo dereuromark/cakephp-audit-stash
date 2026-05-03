@@ -5,70 +5,23 @@ declare(strict_types=1);
 namespace AuditStash\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
-use Cake\Http\Client;
-use Exception;
-use Psr\Log\LoggerAwareTrait;
 
 /**
- * Webhook notification channel.
+ * Generic webhook notification channel.
+ *
+ * Posts the raw `Alert::toArray()` payload as JSON to the configured URL.
+ * Use this when the receiving service is custom or wants the un-massaged
+ * AuditStash event shape. For the major chat platforms there are dedicated
+ * subclasses (`SlackChannel`, `DiscordChannel`) that format the payload
+ * into each service's native message shape.
  */
-class WebhookChannel implements ChannelInterface
+class WebhookChannel extends AbstractWebhookChannel
 {
-    use LoggerAwareTrait;
-
-    /**
-     * @param array $config Channel configuration
-     */
-    public function __construct(protected array $config = [])
-    {
-    }
-
     /**
      * @inheritDoc
      */
-    public function send(Alert $alert): bool
+    protected function formatPayload(Alert $alert): array
     {
-        $url = $this->config['url'] ?? null;
-        if (!$url) {
-            $this->logger?->warning('WebhookChannel: No URL configured');
-
-            return false;
-        }
-
-        $headers = $this->config['headers'] ?? [];
-        $retry = $this->config['retry'] ?? 1;
-
-        $payload = $alert->toArray();
-
-        $client = new Client();
-        $attempt = 0;
-
-        while ($attempt < $retry) {
-            try {
-                $response = $client->post($url, json_encode($payload), [
-                    'headers' => array_merge([
-                        'Content-Type' => 'application/json',
-                    ], $headers),
-                ]);
-
-                if ($response->isOk()) {
-                    return true;
-                }
-
-                $this->logger?->warning('WebhookChannel: Non-OK response', [
-                    'status' => $response->getStatusCode(),
-                    'attempt' => $attempt + 1,
-                ]);
-            } catch (Exception $e) {
-                $this->logger?->error('WebhookChannel: Request failed', [
-                    'error' => $e->getMessage(),
-                    'attempt' => $attempt + 1,
-                ]);
-            }
-
-            $attempt++;
-        }
-
-        return false;
+        return $alert->toArray();
     }
 }
