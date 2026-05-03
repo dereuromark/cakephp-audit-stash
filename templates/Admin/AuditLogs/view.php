@@ -11,11 +11,13 @@ use AuditStash\AuditLogType;
         <h3><?= __('Audit Log Details') ?></h3>
         <div>
             <?= $this->Html->link(__('Back to List'), ['action' => 'index'], ['class' => 'btn btn-secondary']) ?>
-            <?= $this->Html->link(
-                __('View Timeline'),
-                ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
-                ['class' => 'btn btn-primary']
-            ) ?>
+            <?php if ($auditLog->primary_key) { ?>
+                <?= $this->Html->link(
+                    __('View Timeline'),
+                    ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
+                    ['class' => 'btn btn-primary']
+                ) ?>
+            <?php } ?>
         </div>
     </div>
 

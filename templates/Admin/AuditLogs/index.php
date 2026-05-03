@@ -210,16 +210,18 @@
                     <td><small><?= $this->Audit->changeSummary($auditLog->changed) ?></small></td>
                     <td class="actions">
                         <?= $this->Html->link(__('View'), ['action' => 'view', $auditLog->id], ['class' => 'btn btn-sm btn-outline-primary']) ?>
-                        <?= $this->Html->link(
-                            __('Timeline'),
-                            ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
-                            ['class' => 'btn btn-sm btn-outline-secondary']
-                        ) ?>
-                        <?= $this->Html->link(
-                            __('Related'),
-                            ['action' => 'relatedChanges', $auditLog->source, $auditLog->primary_key],
-                            ['class' => 'btn btn-sm btn-outline-info']
-                        ) ?>
+                        <?php if ($auditLog->primary_key) { ?>
+                            <?= $this->Html->link(
+                                __('Timeline'),
+                                ['action' => 'timeline', $auditLog->source, $auditLog->primary_key],
+                                ['class' => 'btn btn-sm btn-outline-secondary']
+                            ) ?>
+                            <?= $this->Html->link(
+                                __('Related'),
+                                ['action' => 'relatedChanges', $auditLog->source, $auditLog->primary_key],
+                                ['class' => 'btn btn-sm btn-outline-info']
+                            ) ?>
+                        <?php } ?>
                     </td>
                 </tr>
                 <?php } ?>
