@@ -296,27 +296,35 @@ The audit log viewer provides:
 - **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download.
 - **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
 
-## Additional Security
+## Required: `AuditStash.adminAccess`
 
-The audit log viewer is in the Admin prefix by default, which provides a layer of security. However, you should ensure your Admin prefix is properly secured with authentication/authorization. Here are some additional approaches:
+The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure` — same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.
 
-### Option 0 (recommended): `AuditStash.accessCheck`
-
-Set a `Closure` that receives the current request and returns literal `true` to grant access. Anything else (returns `false`, returns a truthy non-bool, throws) yields a `403`. Defense-in-depth on top of the host's existing admin gating; particularly relevant here because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, what fields changed).
+The Closure receives the current request and must return literal `true` to grant access. Anything else (returns `false`, returns a truthy non-bool, throws, isn't a Closure, isn't set at all) yields a `403`.
 
 ```php
 use Cake\Core\Configure;
 use Cake\Http\ServerRequest;
 
-Configure::write('AuditStash.accessCheck', function (ServerRequest $request): bool {
+Configure::write('AuditStash.adminAccess', function (ServerRequest $request): bool {
     $identity = $request->getAttribute('identity');
     return $identity !== null && $identity->role === 'super_admin';
 });
 ```
 
-Unset = no-op (host auth alone applies). The gate is checked in `beforeFilter` and calls `Authorization::skipAuthorization()` when the cakephp/authorization component is loaded, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
+To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true` — that is the "I trust the upstream guard" knob:
 
-### Option 1: Use Authorization Plugin
+```php
+Configure::write('AuditStash.adminAccess', fn () => true);
+```
+
+The gate is checked in `beforeFilter` and calls `Authorization::skipAuthorization()` when the cakephp/authorization component is loaded, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
+
+## Additional Security
+
+The audit log viewer is in the Admin prefix by default, which provides a layer of security. The required `adminAccess` gate above is the canonical opt-in. Beyond that, you should ensure your Admin prefix is properly secured with authentication/authorization. Here are additional layered approaches:
+
+### Use Authorization Plugin
 
 ```php
 // In your Admin\Controller\AppController or src/Controller/AppController.php
@@ -339,7 +347,7 @@ public function beforeFilter(\Cake\Event\EventInterface $event)
 }
 ```
 
-### Option 2: Role-Based Access Control
+### Role-Based Access Control
 
 ```php
 // In your Admin\Controller\AppController

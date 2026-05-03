@@ -34,23 +34,38 @@ class AuditLogsControllerTest extends TestCase
     /**
      * @return void
      */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // The plugin requires AuditStash.adminAccess to be set explicitly.
+        // The general-purpose tests in this class don't care about auth, so
+        // grant blanket access; each access-gate test below overrides this.
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+    }
+
+    /**
+     * @return void
+     */
     protected function tearDown(): void
     {
-        Configure::delete('AuditStash.accessCheck');
+        Configure::delete('AuditStash.adminAccess');
         parent::tearDown();
     }
 
-    public function testAccessCheckUnsetIsNoOp(): void
+    public function testAccessCheckUnsetForbids(): void
     {
-        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+        $this->disableErrorHandlerMiddleware();
+        Configure::delete('AuditStash.adminAccess');
 
-        $this->assertResponseOk();
+        $this->expectException(ForbiddenException::class);
+        $this->expectExceptionMessage('requires `AuditStash.adminAccess`');
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
     }
 
     public function testAccessCheckNonClosureRejects(): void
     {
         $this->disableErrorHandlerMiddleware();
-        Configure::write('AuditStash.accessCheck', 'not a closure');
+        Configure::write('AuditStash.adminAccess', 'not a closure');
 
         $this->expectException(ForbiddenException::class);
         $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
@@ -59,7 +74,7 @@ class AuditLogsControllerTest extends TestCase
     public function testAccessCheckClosureFalseRejects(): void
     {
         $this->disableErrorHandlerMiddleware();
-        Configure::write('AuditStash.accessCheck', fn () => false);
+        Configure::write('AuditStash.adminAccess', fn () => false);
 
         $this->expectException(ForbiddenException::class);
         $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
@@ -68,7 +83,7 @@ class AuditLogsControllerTest extends TestCase
     public function testAccessCheckRequiresStrictTrue(): void
     {
         $this->disableErrorHandlerMiddleware();
-        Configure::write('AuditStash.accessCheck', fn () => 1);
+        Configure::write('AuditStash.adminAccess', fn () => 1);
 
         $this->expectException(ForbiddenException::class);
         $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
@@ -76,7 +91,7 @@ class AuditLogsControllerTest extends TestCase
 
     public function testAccessCheckClosureTrueAllows(): void
     {
-        Configure::write('AuditStash.accessCheck', fn () => true);
+        Configure::write('AuditStash.adminAccess', fn () => true);
 
         $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
 
@@ -86,7 +101,7 @@ class AuditLogsControllerTest extends TestCase
     public function testAccessCheckThrowingYields403(): void
     {
         $this->disableErrorHandlerMiddleware();
-        Configure::write('AuditStash.accessCheck', function (): bool {
+        Configure::write('AuditStash.adminAccess', function (): bool {
             throw new RuntimeException('oops');
         });
 
@@ -97,7 +112,7 @@ class AuditLogsControllerTest extends TestCase
     public function testAccessCheckExplicitForbiddenIsRespected(): void
     {
         $this->disableErrorHandlerMiddleware();
-        Configure::write('AuditStash.accessCheck', function (): bool {
+        Configure::write('AuditStash.adminAccess', function (): bool {
             throw new ForbiddenException('custom denial reason');
         });
 
@@ -109,7 +124,7 @@ class AuditLogsControllerTest extends TestCase
     public function testAccessCheckReceivesRequest(): void
     {
         $received = null;
-        Configure::write('AuditStash.accessCheck', function ($request) use (&$received): bool {
+        Configure::write('AuditStash.adminAccess', function ($request) use (&$received): bool {
             $received = $request;
 
             return true;

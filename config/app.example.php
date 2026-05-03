@@ -5,6 +5,8 @@
  * This file contains configuration options for the AuditStash plugin.
  */
 
+use Cake\Http\ServerRequest;
+
 return [
     'AuditStash' => [
         /**
@@ -38,24 +40,30 @@ return [
         'standalone' => false,
 
         /**
-         * Admin access gate (optional, defense-in-depth).
+         * Admin access gate — REQUIRED.
          *
-         * Unset = no-op; the host AppController's auth is the only gate.
-         * Set to a Closure that receives the current request and returns
-         * literal true to grant access; anything else (non-Closure, returns
-         * false, returns a truthy non-bool, or throws) yields a 403.
+         * The plugin refuses to serve any admin action unless this is set to
+         * a Closure (same posture as `cakephp-queue` / `cakephp-databaselog`),
+         * because audit logs commonly contain sensitive who-did-what records
+         * (PII, IP addresses, before/after field values).
          *
-         * Particularly relevant here because audit logs commonly contain
-         * sensitive who-did-what records — PII, IP addresses, before/after
-         * field values for every change.
+         * The Closure receives the current request and must return literal
+         * `true` to grant access; anything else (returns false, returns a
+         * truthy non-bool, throws, isn't a Closure, isn't set at all) yields
+         * a 403.
+         *
+         * To delegate the decision entirely to your host AppController /
+         * Authorization stack, pass `fn() => true` — that is the explicit
+         * "I trust the upstream guard" knob.
          *
          * Example — restrict to super_admin role on the cakephp/authentication
          * identity:
          */
-        // 'accessCheck' => function (\Cake\Http\ServerRequest $request): bool {
-        //     $identity = $request->getAttribute('identity');
-        //     return $identity !== null && $identity->role === 'super_admin';
-        // },
+        'adminAccess' => function (ServerRequest $request): bool {
+            $identity = $request->getAttribute('identity');
+
+            return $identity !== null && $identity->role === 'super_admin';
+        },
 
         /**
          * Dashboard Auto-Refresh
