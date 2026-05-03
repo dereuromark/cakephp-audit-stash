@@ -40,7 +40,15 @@ class CoverageService
      */
     protected const DEFAULT_HIDE_PLUGINS = [
         'AuditStash',
+        'Bouncer',
+        'DatabaseLog',
         'Migrations',
+        'Feedback',
+        'Queue',
+        'Captcha',
+        'Workflow',
+        'Geo',
+        'QueueScheduler',
         'DebugKit',
     ];
 
