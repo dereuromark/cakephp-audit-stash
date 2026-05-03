@@ -8,4 +8,5 @@ declare(strict_types=1);
  * via `addPlugin('AuditStash', ['routes' => true])`. This file exists
  * only to satisfy `BaseApplication::routes()` which require()s it.
  */
-return function (): void {};
+return function (): void {
+};

@@ -12,7 +12,6 @@ use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Response;
 use InvalidArgumentException;
 use RuntimeException;
-use Throwable;
 
 /**
  * AuditLogs Controller
