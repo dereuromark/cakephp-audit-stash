@@ -11,7 +11,7 @@
  * @var array<int, array{date: string, types: array<string, int>, total: int}> $histogram
  * @var array<int, array{source: string, count: int}> $topSources
  * @var array<int, array{user_id: ?string, user_display: ?string, count: int}> $topUsers
- * @var iterable<\AuditStash\Model\Entity\AuditLog> $recent
+ * @var array<int, \AuditStash\Model\Entity\AuditLog> $recent
  * @var array{tracked: int, missing: int, empirical: int, total: int} $coverage
  */
 

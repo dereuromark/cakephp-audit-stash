@@ -206,13 +206,16 @@ class DashboardService
     }
 
     /**
-     * @return iterable<\AuditStash\Model\Entity\AuditLog>
+     * @return array<int, \AuditStash\Model\Entity\AuditLog>
      */
-    public function recentEvents(int $limit = 20): iterable
+    public function recentEvents(int $limit = 20): array
     {
-        return $this->AuditLogs->find()
+        /** @var array<int, \AuditStash\Model\Entity\AuditLog> $rows */
+        $rows = $this->AuditLogs->find()
             ->orderBy(['AuditLogs.created' => 'DESC'])
             ->limit($limit)
-            ->all();
+            ->toArray();
+
+        return $rows;
     }
 }
