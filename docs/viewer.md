@@ -102,17 +102,17 @@ By default, the user value in audit logs is displayed as plain text. You can con
 ],
 ```
 
-Available placeholders: `{user}` (the linkable part), `{display}` (the display name), `{raw}` (original value).
+Available placeholders: `{user}` (the linkable part, populated from `user_id`), `{display}` (the display name, from `user_display`).
 
 **Callable (recommended for conditional linking):**
 
 ```php
 // In config/app.php
 'AuditStash' => [
-    'linkUser' => function ($id, $displayName, $raw) {
+    'linkUser' => function ($userId, $displayName) {
         // Only link numeric user IDs
-        if (is_numeric($id)) {
-            return '/admin/users/view/' . $id;
+        if (is_numeric($userId)) {
+            return '/admin/users/view/' . $userId;
         }
         // Return null to display without link
         return null;
@@ -134,42 +134,32 @@ Available placeholders: `{user}` (the linkable part), `{display}` (the display n
 ],
 ```
 
-#### Compound User Format (ID + Display Name)
+#### Storing User ID and Display Name
 
-You can store both a linkable ID and a display name in a single value using the compound format `id:displayName`:
+`RequestMetadata` keeps the linkable ID and the human-readable display name in two separate constructor arguments. They land in the dedicated `user_id` and `user_display` columns and feed the `{user}` and `{display}` placeholders independently:
 
 ```php
 // In your AppController
+$identity = $this->getRequest()->getAttribute('identity');
 EventManager::instance()->on(
     new RequestMetadata(
         request: $this->getRequest(),
-        user: $userId ? ($userId . ':' . $username) : null, // e.g., "123:john_doe"
+        userId: $identity?->getIdentifier(),
+        userDisplay: $identity?->get('username'),
     ),
 );
 ```
 
-With this format:
-- The **first part** (before `:`) is used for linking (`{user}` placeholder)
-- The **second part** (after `:`) is displayed to users (`{display}` placeholder)
-
-```php
-// Example: user value "456:Jane Smith"
-'AuditStash' => [
-    'linkUser' => '/admin/users/view/{user}', // Links to /admin/users/view/456
-],
-// Displays: <a href="/admin/users/view/456">Jane Smith</a>
-```
-
-To use a different separator (e.g., if usernames contain `:`):
+With `linkUser` configured:
 
 ```php
 'AuditStash' => [
-    'userSeparator' => '|', // Use pipe instead of colon
-    'linkUser' => '/admin/users/view/{user}',
+    'linkUser' => '/admin/users/view/{user}', // {user} = userId, e.g. /admin/users/view/456
 ],
-
-// Then store as: "456|Jane Smith"
+// Renders: <a href="/admin/users/view/456">Jane Smith</a>  (display = userDisplay)
 ```
+
+`userDisplay` is optional — when omitted, the helper falls back to a `User #<id>` label for numeric / UUID ids or shows the raw `userId` for string identifiers (usernames, emails).
 
 ### Linking Records to Backend
 

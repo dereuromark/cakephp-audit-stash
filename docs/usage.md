@@ -598,7 +598,7 @@ public function execute()
 
 ### Storing Reason in Database (Table Persister)
 
-If using the `TablePersister`, you can extract the reason to a dedicated database column:
+If using the `TablePersister`, you can extract the reason to a dedicated database column. `user_id` and `user_display` are auto-extracted to their dedicated columns out of the box, so only register here for additional custom fields:
 
 ```php
 // In your configuration (e.g., config/app_local.php or bootstrap.php)
@@ -606,7 +606,6 @@ $this->addBehavior('AuditStash.AuditLog');
 $this->behaviors()->get('AuditLog')->persister()->setConfig([
     'extractMetaFields' => [
         'reason' => 'reason', // Extract 'reason' from meta to 'reason' column
-        'user' => 'user_id',
     ],
 ]);
 ```
@@ -746,7 +745,7 @@ if ($success) {
     $this->Bookmarks->behaviors()->get('AuditLog')->afterCommit(
         $event,
         $result,
-        new ArrayObject($auditTrail->toSaveOptions()),
+        new ArrayObject($trail->toSaveOptions()),
     );
 }
 ```
