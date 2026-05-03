@@ -12,6 +12,7 @@ use AuditStash\Event\BaseEvent;
 use AuditStash\Filter\ChangeFilter;
 use AuditStash\Persister\TablePersister;
 use AuditStash\PersisterInterface;
+use BackedEnum;
 use Cake\Core\Configure;
 use Cake\Datasource\EntityInterface;
 use Cake\Event\Event;
@@ -21,6 +22,8 @@ use Cake\ORM\Behavior;
 use Cake\Utility\Inflector;
 use Cake\Utility\Text;
 use SplObjectStorage;
+use Stringable;
+use UnitEnum;
 use function Cake\Collection\collection;
 
 /**
@@ -212,11 +215,7 @@ class AuditLogBehavior extends Behavior
         $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
 
         // Get display field value for human-friendly identification
-        $displayField = $this->_table->getDisplayField();
-        $displayValue = null;
-        if (is_string($displayField) && $entity->has($displayField)) {
-            $displayValue = (string)$entity->get($displayField);
-        }
+        $displayValue = $this->extractDisplayValue($entity, $this->_table->getDisplayField());
 
         return new $auditEvent(
             $transactionId,
@@ -365,11 +364,7 @@ class AuditLogBehavior extends Behavior
         $primary = $entity->extract((array)$this->_table->getPrimaryKey());
 
         // Get display field value for human-friendly identification
-        $displayField = $this->_table->getDisplayField();
-        $displayValue = null;
-        if (is_string($displayField) && $entity->has($displayField)) {
-            $displayValue = (string)$entity->get($displayField);
-        }
+        $displayValue = $this->extractDisplayValue($entity, $this->_table->getDisplayField());
 
         // Capture original values before deletion
         $config = $this->_config;
@@ -430,10 +425,7 @@ class AuditLogBehavior extends Behavior
             $primary = $dependentEntity->extract((array)$primaryKey);
 
             // Get display value
-            $displayValue = null;
-            if (is_string($displayField) && $dependentEntity->has($displayField)) {
-                $displayValue = (string)$dependentEntity->get($displayField);
-            }
+            $displayValue = $this->extractDisplayValue($dependentEntity, $displayField);
 
             // Get original values
             $original = $dependentEntity->toArray();
@@ -493,6 +485,46 @@ class AuditLogBehavior extends Behavior
         $existingPersister = $this->persister;
 
         return $existingPersister;
+    }
+
+    /**
+     * Resolves a human-friendly display value for an entity, tolerating
+     * non-stringable column types (most importantly backed/unit enums and
+     * value objects implementing `Stringable`). Composite display fields,
+     * unsupported value types, and missing fields all yield `null` so the
+     * audit log row is still written.
+     *
+     * @param \Cake\Datasource\EntityInterface $entity Entity to read from
+     * @param array<string>|string|null $displayField Display field name as
+     *   returned by `Table::getDisplayField()`
+     *
+     * @return string|null
+     */
+    protected function extractDisplayValue(EntityInterface $entity, array|string|null $displayField): ?string
+    {
+        if (!is_string($displayField) || !$entity->has($displayField)) {
+            return null;
+        }
+
+        $value = $entity->get($displayField);
+
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof BackedEnum) {
+            return (string)$value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
+        }
+
+        if (is_scalar($value) || $value instanceof Stringable) {
+            return (string)$value;
+        }
+
+        return null;
     }
 
     /**
