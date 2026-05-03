@@ -26,6 +26,11 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
     <div class="nav-section">
         <div class="nav-section-title"><?= __('Navigation') ?></div>
         <nav class="nav flex-column">
+            <a class="nav-link <?= $isActive('AuditStash', ['index']) ?>"
+               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'index']) ?>">
+                <?= $this->element('AuditStash.icon', ['name' => 'gauge', 'fallback' => 'fas fa-gauge']) ?>
+                <?= __('Dashboard') ?>
+            </a>
             <a class="nav-link <?= $isActive('AuditLogs', ['index']) ?>"
                href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
                 <?= $this->element('AuditStash.icon', ['name' => 'list', 'fallback' => 'fas fa-list']) ?>
@@ -35,6 +40,11 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
                href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'bulkChanges']) ?>">
                 <?= $this->element('AuditStash.icon', ['name' => 'layer-group', 'fallback' => 'fas fa-layer-group']) ?>
                 <?= __('Bulk Changes') ?>
+            </a>
+            <a class="nav-link <?= $isActive('AuditStash', ['coverage']) ?>"
+               href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'coverage']) ?>">
+                <?= $this->element('AuditStash.icon', ['name' => 'shield-halved', 'fallback' => 'fas fa-shield-halved']) ?>
+                <?= __('Coverage') ?>
             </a>
         </nav>
     </div>

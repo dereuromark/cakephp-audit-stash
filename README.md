@@ -73,12 +73,15 @@ That's it! Your application is now tracking all creates, updates, and deletes.
 
 ## Features
 
-### Audit Log Viewer
-Browse and search audit logs through a built-in web interface at `/admin/audit-logs`:
-- Filter by table, user, event type, date range, transaction key
-- View detailed before/after comparisons with inline or side-by-side diff
-- Timeline view showing complete history for specific records
-- Export to CSV or JSON
+### Audit Log Admin UI
+Built-in web interface at `/admin/audit-stash` (configurable via `AuditStash.routePath` — set to `/audit-logs` for pre-1.x URLs). Includes:
+
+- **Dashboard** at `/admin/audit-stash` — KPI cards (events today, active users, coverage), daily activity chart, top sources/users, recent events. CSS-only rendering, no chart library dependency.
+- **Coverage report** at `/admin/audit-stash/audit-logs/coverage` — discovers Table classes from the app + loaded plugins, classifies each as Tracked / Missing / Empirical, and surfaces coverage gaps. Configurable deny-list via `AuditStash.coverage.hidePlugins` and `AuditStash.coverage.hideTables`.
+- **Browse / search** at `/admin/audit-stash/audit-logs/index` — filter by table, user, event type, date range, transaction key
+- **View** with detailed before/after comparisons (inline or side-by-side diff)
+- **Timeline view** showing complete history for specific records
+- **Export** to CSV or JSON
 
 See [Viewer Documentation](docs/viewer.md) for details.
 

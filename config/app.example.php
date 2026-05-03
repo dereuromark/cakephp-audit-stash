@@ -8,6 +8,15 @@
 return [
     'AuditStash' => [
         /**
+         * Admin route path
+         *
+         * The path segment mounted under the Admin prefix for the plugin's
+         * admin UI. Defaults to '/audit-stash'. Change to '/audit-logs' to
+         * retain the pre-dashboard URLs after upgrading.
+         */
+        'routePath' => '/audit-stash',
+
+        /**
          * Admin Layout Configuration
          *
          * Controls which layout is used for the admin interface:
@@ -51,10 +60,31 @@ return [
         /**
          * Dashboard Auto-Refresh
          *
-         * Auto-refresh interval in seconds for the index page.
+         * Auto-refresh interval in seconds for the dashboard entry page.
          * Set to 0 to disable auto-refresh.
          */
         'dashboardAutoRefresh' => 0,
+
+        /**
+         * Coverage page configuration
+         *
+         * The coverage report at /admin/audit-stash/coverage walks every
+         * Table class shipped by the app and loaded plugins, classifying
+         * each as Tracked / Missing / Empirical. Operational/internal
+         * tables are filtered out of the default view via this deny-list:
+         *
+         * - `hidePlugins`: plugin names whose Tables are always considered
+         *   internal. Defaults baked in: AuditStash, Migrations, DebugKit.
+         *   Add to extend.
+         * - `hideTables`: specific aliases (e.g. 'Sessions') to hide
+         *   regardless of plugin.
+         *
+         * The "Include internal" toggle on the page bypasses both lists.
+         */
+        'coverage' => [
+            'hidePlugins' => [],
+            'hideTables' => [],
+        ],
 
         /**
          * User Link Configuration

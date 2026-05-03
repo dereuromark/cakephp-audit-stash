@@ -17,7 +17,9 @@ $controller = $this->getRequest()->getParam('controller');
 $action = $this->getRequest()->getParam('action');
 $plugin = $this->getRequest()->getParam('plugin');
 $prefix = $this->getRequest()->getParam('prefix');
-$isIndex = $controller === 'AuditLogs' && $action === 'index';
+// `dashboardAutoRefresh` originally gated the auto-refresh meta tag on
+// the audit-logs index. Now applies on the dashboard entry page.
+$isIndex = $controller === 'AuditStash' && $action === 'index';
 $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
 ?>
 <!DOCTYPE html>
@@ -341,7 +343,7 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
         <button class="mobile-nav-toggle me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#auditMobileNav">
             <i class="fas fa-bars"></i>
         </button>
-        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
+        <a class="navbar-brand" href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'index']) ?>">
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>

@@ -37,6 +37,11 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
         <div class="mb-4">
             <div class="text-white-50 small text-uppercase mb-2"><?= __('Navigation') ?></div>
             <nav class="nav flex-column">
+                <a class="nav-link text-white-50 <?= $isActive('AuditStash', ['index']) ? 'text-white fw-bold' : '' ?>"
+                   href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'index']) ?>">
+                    <i class="fas fa-gauge me-2"></i>
+                    <?= __('Dashboard') ?>
+                </a>
                 <a class="nav-link text-white-50 <?= $isActive('AuditLogs', ['index']) ? 'text-white fw-bold' : '' ?>"
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'index']) ?>">
                     <i class="fas fa-list me-2"></i>
@@ -46,6 +51,11 @@ $isActive = function (string $c, ?array $actions = null) use ($controller, $acti
                    href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditLogs', 'action' => 'bulkChanges']) ?>">
                     <i class="fas fa-layer-group me-2"></i>
                     <?= __('Bulk Changes') ?>
+                </a>
+                <a class="nav-link text-white-50 <?= $isActive('AuditStash', ['coverage']) ? 'text-white fw-bold' : '' ?>"
+                   href="<?= $this->Url->build(['plugin' => $plugin, 'prefix' => $prefix, 'controller' => 'AuditStash', 'action' => 'coverage']) ?>">
+                    <i class="fas fa-shield-halved me-2"></i>
+                    <?= __('Coverage') ?>
                 </a>
             </nav>
         </div>
