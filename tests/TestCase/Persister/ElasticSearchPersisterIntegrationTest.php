@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Persister;
 
-use AuditStash\Action\IndexConfigTrait;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Persister\ElasticSearchPersister;
 use Cake\Datasource\ConnectionManager;
+use Cake\ElasticSearch\Datasource\IndexLocator;
+use Cake\ElasticSearch\Index;
 use Cake\I18n\DateTime;
 use Cake\ORM\Entity;
 use Cake\TestSuite\TestCase;
 
 class ElasticSearchPersisterIntegrationTest extends TestCase
 {
-    use IndexConfigTrait;
-
     /**
      * Fixtures to be loaded.
      *
@@ -290,5 +289,14 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
         $articles = $this->getIndexRepository('Article')->find()->toArray();
         $this->assertCount(1, $articles);
         $this->assertEquals(['a' => 'b', 'c' => 'd'], $articles[0]->meta);
+    }
+
+    protected function getIndexRepository(string $alias): Index
+    {
+        $indexLocator = new IndexLocator();
+        $repository = $indexLocator->get($alias);
+        assert($repository instanceof Index);
+
+        return $repository;
     }
 }
