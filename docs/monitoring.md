@@ -213,9 +213,6 @@ Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/bl
 
 Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
 
-> [!NOTE]
-> No bundled Microsoft Teams channel: Microsoft is deprecating MessageCard incoming webhooks in favor of Adaptive Cards delivered via Power Automate Workflows, which has a different setup and trigger model. Wire Teams up via a custom subclass of `AbstractWebhookChannel` that emits the schema your tenant accepts.
-
 ### DiscordChannel
 
 Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/docs/resources/channel#embed-object) with title, color sidebar (decimal RGB derived from severity), and inline fields.

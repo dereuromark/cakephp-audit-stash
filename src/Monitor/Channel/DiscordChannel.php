@@ -32,15 +32,17 @@ use Cake\Http\Client\Response;
 class DiscordChannel extends AbstractWebhookChannel
 {
     /**
-     * Discord embed color per severity (decimal RGB).
+     * Discord embed color per severity (decimal RGB). Kept in sync with the
+     * Slack palette — the integer values are the decimal form of each Slack
+     * hex value so the two channels render the same severity color.
      *
      * @var array<string, int>
      */
     protected const SEVERITY_COLORS = [
-        'critical' => 14431557, // #DC3545
-        'high' => 16612884, // #FD7E14
-        'medium' => 16763904, // #FFC107
-        'low' => 873452, // #0D6EFD
+        'critical' => 0xDC3545, // 14431557
+        'high' => 0xFD7E14, // 16612884
+        'medium' => 0xFFC107, // 16761095
+        'low' => 0x0D6EFD, // 880381
     ];
 
     /**
@@ -54,7 +56,7 @@ class DiscordChannel extends AbstractWebhookChannel
         $embed = [
             'title' => sprintf('[%s] %s', strtoupper($severity), $alert->getRuleName()),
             'description' => $alert->getMessage(),
-            'color' => self::SEVERITY_COLORS[$severity] ?? 7105644,
+            'color' => self::SEVERITY_COLORS[$severity] ?? 0x6C757D,
             'fields' => [
                 ['name' => 'Source', 'value' => (string)($auditLog->source ?? 'n/a'), 'inline' => true],
                 ['name' => 'Event', 'value' => (string)($auditLog->type ?? 'n/a'), 'inline' => true],

@@ -8,11 +8,10 @@ use AuditStash\AuditLogType;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\WebhookChannel;
+use AuditStash\Test\CapturingAdapter;
 use Cake\Http\Client;
-use Cake\Http\Client\Adapter\Mock as MockAdapter;
 use Cake\Http\Client\Response;
 use Cake\TestSuite\TestCase;
-use Laminas\Diactoros\Request as PsrRequest;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -24,17 +23,15 @@ class WebhookChannelTest extends TestCase
 {
     public function testPostsRawAlertToArrayPayload(): void
     {
-        $captured = null;
         $channel = $this->buildChannel(
             ['url' => 'https://hooks.example.com/audit'],
             new Response(['HTTP/1.1 200 OK'], '{}'),
-            $captured,
         );
 
         $alert = $this->buildAlert('high');
         $this->assertTrue($channel->send($alert));
 
-        $payload = $this->decode($captured);
+        $payload = $this->decode($channel->adapter->captured);
         $this->assertSame($alert->toArray(), $payload);
         $this->assertSame('SensitiveField', $payload['rule_name']);
         $this->assertSame('high', $payload['severity']);
@@ -44,25 +41,17 @@ class WebhookChannelTest extends TestCase
 
     public function testRetriesOnNonOkResponseUntilExhausted(): void
     {
-        $adapter = new MockAdapter();
-        $adapter->addResponse(
-            new PsrRequest('https://hooks.example.com/audit', 'POST'),
-            new Response(['HTTP/1.1 500 Internal Server Error'], 'boom'),
-            ['match' => fn () => true],
-        );
-        $adapter->addResponse(
-            new PsrRequest('https://hooks.example.com/audit', 'POST'),
-            new Response(['HTTP/1.1 500 Internal Server Error'], 'boom'),
-            ['match' => fn () => true],
-        );
-
         $channel = new class (
             ['url' => 'https://hooks.example.com/audit', 'retry' => 2],
-            $adapter,
+            new Response(['HTTP/1.1 500 Internal Server Error'], 'boom'),
+            new Response(['HTTP/1.1 500 Internal Server Error'], 'boom'),
         ) extends WebhookChannel {
-            public function __construct(array $config, private MockAdapter $adapter)
+            public CapturingAdapter $adapter;
+
+            public function __construct(array $config, Response ...$responses)
             {
                 parent::__construct($config);
+                $this->adapter = new CapturingAdapter(...$responses);
             }
 
             protected function createClient(): Client
@@ -72,6 +61,7 @@ class WebhookChannelTest extends TestCase
         };
 
         $this->assertFalse($channel->send($this->buildAlert('low')));
+        $this->assertCount(2, $channel->adapter->requests);
     }
 
     public function testNoUrlReturnsFalse(): void
@@ -83,28 +73,16 @@ class WebhookChannelTest extends TestCase
     /**
      * @param array<string, mixed> $config
      * @param \Cake\Http\Client\Response $response
-     * @param \Psr\Http\Message\RequestInterface|null $captured
      */
-    private function buildChannel(array $config, Response $response, ?RequestInterface &$captured): WebhookChannel
+    private function buildChannel(array $config, Response $response): WebhookChannel
     {
-        $captured = null;
-        $adapter = new MockAdapter();
-        $adapter->addResponse(
-            new PsrRequest('https://hooks.example.com/audit', 'POST'),
-            $response,
-            [
-                'match' => function (RequestInterface $request) use (&$captured): bool {
-                    $captured = $request;
+        return new class ($config, $response) extends WebhookChannel {
+            public CapturingAdapter $adapter;
 
-                    return true;
-                },
-            ],
-        );
-
-        return new class ($config, $adapter) extends WebhookChannel {
-            public function __construct(array $config, private MockAdapter $adapter)
+            public function __construct(array $config, Response $response)
             {
                 parent::__construct($config);
+                $this->adapter = new CapturingAdapter($response);
             }
 
             protected function createClient(): Client

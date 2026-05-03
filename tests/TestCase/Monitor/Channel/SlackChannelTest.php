@@ -8,29 +8,26 @@ use AuditStash\AuditLogType;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\SlackChannel;
+use AuditStash\Test\CapturingAdapter;
 use Cake\Http\Client;
-use Cake\Http\Client\Adapter\Mock as MockAdapter;
 use Cake\Http\Client\Response;
 use Cake\TestSuite\TestCase;
-use Laminas\Diactoros\Request as PsrRequest;
 use Psr\Http\Message\RequestInterface;
 
 class SlackChannelTest extends TestCase
 {
     public function testFormatsAsBlockKitWithSeverityColor(): void
     {
-        $captured = null;
         $channel = $this->buildChannel(
             ['url' => 'https://hooks.slack.com/services/T/B/secret'],
             new Response(['HTTP/1.1 200 OK'], 'ok'),
-            $captured,
         );
 
         $sent = $channel->send($this->buildAlert('critical'));
         $this->assertTrue($sent);
-        $this->assertNotNull($captured);
+        $this->assertNotNull($channel->adapter->captured);
 
-        $payload = $this->decode($captured);
+        $payload = $this->decode($channel->adapter->captured);
         $this->assertArrayHasKey('attachments', $payload);
         $this->assertCount(1, $payload['attachments']);
 
@@ -42,19 +39,53 @@ class SlackChannelTest extends TestCase
         $this->assertSame('Password rotated for user 42', $attachment['blocks'][1]['text']['text']);
     }
 
+    public function testFieldsUseRealNewlineAndEntityEscapeMrkdwn(): void
+    {
+        // Source contains chars Slack mrkdwn would otherwise interpret as
+        // markup / channel mention; the field value must be entity-escaped.
+        $log = new AuditLog([
+            'id' => 7,
+            'type' => AuditLogType::Update->value,
+            'source' => '<Foo & Bar>',
+            'primary_key' => 42,
+            'transaction_key' => 'tx-abc',
+            'user_id' => '7',
+            'user_display' => 'admin@example.com',
+        ]);
+        $alert = new Alert('SensitiveField', 'high', 'm', $log, []);
+
+        $channel = $this->buildChannel(
+            ['url' => 'https://hooks.slack.com/services/T/B/secret'],
+            new Response(['HTTP/1.1 200 OK'], 'ok'),
+        );
+        $channel->send($alert);
+
+        $payload = $this->decode($channel->adapter->captured);
+        $fields = $payload['attachments'][0]['blocks'][2]['fields'];
+        $byLabel = [];
+        foreach ($fields as $field) {
+            [$label, $value] = explode("\n", $field['text'], 2);
+            $byLabel[trim($label, '*')] = $value;
+        }
+
+        $this->assertSame('&lt;Foo &amp; Bar&gt;', $byLabel['Source']);
+        $this->assertSame('update', $byLabel['Event']);
+        $this->assertSame('42', $byLabel['Primary key']);
+        $this->assertSame('admin@example.com', $byLabel['User']);
+    }
+
     public function testIncludesOptionalUsernameIconAndChannelOverrides(): void
     {
-        $captured = null;
         $channel = $this->buildChannel([
             'url' => 'https://hooks.slack.com/services/T/B/secret',
             'username' => 'AuditStash',
             'icon_emoji' => ':rotating_light:',
             'channel' => '#audit-alerts',
-        ], new Response(['HTTP/1.1 200 OK'], 'ok'), $captured);
+        ], new Response(['HTTP/1.1 200 OK'], 'ok'));
 
         $channel->send($this->buildAlert('high'));
 
-        $payload = $this->decode($captured);
+        $payload = $this->decode($channel->adapter->captured);
         $this->assertSame('AuditStash', $payload['username']);
         $this->assertSame(':rotating_light:', $payload['icon_emoji']);
         $this->assertSame('#audit-alerts', $payload['channel']);
@@ -63,11 +94,9 @@ class SlackChannelTest extends TestCase
     public function testRejectsTwoHundredWithNonOkBody(): void
     {
         // Slack returns 200 even when the payload is rejected — body must be 'ok'.
-        $captured = null;
         $channel = $this->buildChannel(
             ['url' => 'https://hooks.slack.com/services/T/B/secret'],
             new Response(['HTTP/1.1 200 OK'], 'invalid_payload'),
-            $captured,
         );
 
         $this->assertFalse($channel->send($this->buildAlert('low')));
@@ -80,30 +109,22 @@ class SlackChannelTest extends TestCase
     }
 
     /**
-     * Builds a SlackChannel with `createClient()` stubbed to return a Client
-     * backed by a Mock adapter. The request that flows through is captured
-     * into `$captured` so the test can assert on the body.
+     * Builds a SlackChannel whose `createClient()` is wired to a
+     * `CapturingAdapter` exposed as `$channel->adapter` so tests can assert
+     * on the captured request body.
      *
      * @param array<string, mixed> $config
      * @param \Cake\Http\Client\Response $response
-     * @param \Psr\Http\Message\RequestInterface|null $captured
      */
-    private function buildChannel(array $config, Response $response, ?RequestInterface &$captured): SlackChannel
+    private function buildChannel(array $config, Response $response): SlackChannel
     {
-        $captured = null;
-        $adapter = new MockAdapter();
-        $adapter->addResponse(new PsrRequest('https://hooks.slack.com/services/T/B/secret', 'POST'), $response, [
-            'match' => function (RequestInterface $request) use (&$captured): bool {
-                $captured = $request;
+        return new class ($config, $response) extends SlackChannel {
+            public CapturingAdapter $adapter;
 
-                return true;
-            },
-        ]);
-
-        return new class ($config, $adapter) extends SlackChannel {
-            public function __construct(array $config, private MockAdapter $adapter)
+            public function __construct(array $config, Response $response)
             {
                 parent::__construct($config);
+                $this->adapter = new CapturingAdapter($response);
             }
 
             protected function createClient(): Client

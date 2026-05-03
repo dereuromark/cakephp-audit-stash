@@ -8,32 +8,29 @@ use AuditStash\AuditLogType;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Monitor\Alert;
 use AuditStash\Monitor\Channel\DiscordChannel;
+use AuditStash\Test\CapturingAdapter;
 use Cake\Http\Client;
-use Cake\Http\Client\Adapter\Mock as MockAdapter;
 use Cake\Http\Client\Response;
 use Cake\TestSuite\TestCase;
-use Laminas\Diactoros\Request as PsrRequest;
 use Psr\Http\Message\RequestInterface;
 
 class DiscordChannelTest extends TestCase
 {
     public function testFormatsAsEmbedWithSeverityColorAsDecimal(): void
     {
-        $captured = null;
         $channel = $this->buildChannel(
             ['url' => 'https://discord.com/api/webhooks/.../...'],
             new Response(['HTTP/1.1 204 No Content'], ''),
-            $captured,
         );
 
         $this->assertTrue($channel->send($this->buildAlert('critical')));
-        $this->assertNotNull($captured);
+        $this->assertNotNull($channel->adapter->captured);
 
-        $payload = $this->decode($captured);
+        $payload = $this->decode($channel->adapter->captured);
         $this->assertCount(1, $payload['embeds']);
 
         $embed = $payload['embeds'][0];
-        $this->assertSame(14431557, $embed['color']);
+        $this->assertSame(0xDC3545, $embed['color']);
         $this->assertStringContainsString('CRITICAL', $embed['title']);
         $this->assertStringContainsString('SensitiveField', $embed['title']);
         $this->assertSame('Password rotated for user 42', $embed['description']);
@@ -45,13 +42,26 @@ class DiscordChannelTest extends TestCase
         $this->assertSame('admin@example.com', $byName['User']);
     }
 
+    public function testLowSeverityColorMatchesSlackPalette(): void
+    {
+        // Sanity check: the decimal must be the integer form of #0d6efd so
+        // Slack and Discord render the same severity color.
+        $channel = $this->buildChannel(
+            ['url' => 'https://discord.com/api/webhooks/.../...'],
+            new Response(['HTTP/1.1 204 No Content'], ''),
+        );
+        $channel->send($this->buildAlert('low'));
+
+        $payload = $this->decode($channel->adapter->captured);
+        $this->assertSame(0x0D6EFD, $payload['embeds'][0]['color']);
+    }
+
     public function testTwoZeroFourCountsAsSuccess(): void
     {
         // Discord's normal success is 204 No Content, which `Response::isOk()` rejects.
         $channel = $this->buildChannel(
             ['url' => 'https://discord.com/api/webhooks/.../...'],
             new Response(['HTTP/1.1 204 No Content'], ''),
-            $captured,
         );
 
         $this->assertTrue($channel->send($this->buildAlert('high')));
@@ -59,16 +69,15 @@ class DiscordChannelTest extends TestCase
 
     public function testIncludesOptionalUsernameAndAvatarOverrides(): void
     {
-        $captured = null;
         $channel = $this->buildChannel([
             'url' => 'https://discord.com/api/webhooks/.../...',
             'username' => 'AuditStash',
             'avatar_url' => 'https://example.com/audit-bot.png',
-        ], new Response(['HTTP/1.1 204 No Content'], ''), $captured);
+        ], new Response(['HTTP/1.1 204 No Content'], ''));
 
         $channel->send($this->buildAlert('medium'));
 
-        $payload = $this->decode($captured);
+        $payload = $this->decode($channel->adapter->captured);
         $this->assertSame('AuditStash', $payload['username']);
         $this->assertSame('https://example.com/audit-bot.png', $payload['avatar_url']);
     }
@@ -82,28 +91,16 @@ class DiscordChannelTest extends TestCase
     /**
      * @param array<string, mixed> $config
      * @param \Cake\Http\Client\Response $response
-     * @param \Psr\Http\Message\RequestInterface|null $captured
      */
-    private function buildChannel(array $config, Response $response, ?RequestInterface &$captured): DiscordChannel
+    private function buildChannel(array $config, Response $response): DiscordChannel
     {
-        $captured = null;
-        $adapter = new MockAdapter();
-        $adapter->addResponse(
-            new PsrRequest('https://discord.com/api/webhooks/.../...', 'POST'),
-            $response,
-            [
-                'match' => function (RequestInterface $request) use (&$captured): bool {
-                    $captured = $request;
+        return new class ($config, $response) extends DiscordChannel {
+            public CapturingAdapter $adapter;
 
-                    return true;
-                },
-            ],
-        );
-
-        return new class ($config, $adapter) extends DiscordChannel {
-            public function __construct(array $config, private MockAdapter $adapter)
+            public function __construct(array $config, Response $response)
             {
                 parent::__construct($config);
+                $this->adapter = new CapturingAdapter($response);
             }
 
             protected function createClient(): Client

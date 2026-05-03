@@ -6,6 +6,7 @@ namespace AuditStash\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
 use Cake\Http\Client\Response;
+use Stringable;
 
 /**
  * Slack notification channel.
@@ -80,10 +81,10 @@ class SlackChannel extends AbstractWebhookChannel
                         [
                             'type' => 'section',
                             'fields' => [
-                                ['type' => 'mrkdwn', 'text' => '*Source*\n' . ($auditLog->source ?? 'n/a')],
-                                ['type' => 'mrkdwn', 'text' => '*Event*\n' . ($auditLog->type ?? 'n/a')],
-                                ['type' => 'mrkdwn', 'text' => '*Primary key*\n' . (string)($auditLog->primary_key ?? 'n/a')],
-                                ['type' => 'mrkdwn', 'text' => '*User*\n' . ($auditLog->user_display ?? $auditLog->user_id ?? 'n/a')],
+                                $this->mrkdwnField('Source', $auditLog->source ?? null),
+                                $this->mrkdwnField('Event', $auditLog->type ?? null),
+                                $this->mrkdwnField('Primary key', $auditLog->primary_key ?? null),
+                                $this->mrkdwnField('User', $auditLog->user_display ?? $auditLog->user_id ?? null),
                             ],
                         ],
                     ],
@@ -98,6 +99,36 @@ class SlackChannel extends AbstractWebhookChannel
         }
 
         return $payload;
+    }
+
+    /**
+     * Builds a Slack `mrkdwn` field with a bold label, a real newline, and an
+     * HTML-entity-escaped value. Slack mrkdwn parses `&`, `<`, and `>` as
+     * markup characters, so user-controlled values must be entity-escaped to
+     * avoid breaking the layout (or rendering as a `<channel>` link).
+     *
+     * @param string $label
+     * @param mixed $value
+     *
+     * @return array{type: string, text: string}
+     */
+    protected function mrkdwnField(string $label, mixed $value): array
+    {
+        if (is_scalar($value) || $value instanceof Stringable) {
+            $value = (string)$value;
+        } else {
+            $value = '';
+        }
+        if ($value === '') {
+            $value = 'n/a';
+        }
+
+        $value = str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $value);
+
+        return [
+            'type' => 'mrkdwn',
+            'text' => sprintf("*%s*\n%s", $label, $value),
+        ];
     }
 
     /**
