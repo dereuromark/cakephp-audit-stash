@@ -190,6 +190,93 @@ Alerts are written to your configured log with appropriate severity levels:
 - `medium` → WARNING
 - `low` → INFO
 
+### SlackChannel
+
+Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields — instead of the raw JSON dump you'd get from `WebhookChannel`.
+
+**Configuration:**
+- `url` (string, required): Slack incoming webhook URL (`https://hooks.slack.com/services/T.../B.../...`)
+- `username` (string): Override the bot display name
+- `icon_emoji` (string): Override the bot icon (e.g. `:rotating_light:`)
+- `channel` (string): Override the destination channel
+- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
+
+```php
+'slack' => [
+    'class' => \AuditStash\Monitor\Channel\SlackChannel::class,
+    'url' => 'https://hooks.slack.com/services/T/B/secret',
+    'username' => 'AuditStash',
+    'icon_emoji' => ':rotating_light:',
+    'channel' => '#audit-alerts',
+],
+```
+
+Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
+
+### TeamsChannel
+
+Posts alerts to a Microsoft Teams incoming webhook as a [MessageCard](https://learn.microsoft.com/en-us/outlook/actionable-messages/message-card-reference) with severity-colored accent and a fact list. Works with classic incoming-webhook URLs without the Power Automate Workflows pipeline.
+
+**Configuration:**
+- `url` (string, required): Teams incoming webhook URL
+- `theme_colors` (array): Override per-severity hex colors (without leading `#`). Defaults: critical `DC3545`, high `FD7E14`, medium `FFC107`, low `0D6EFD`.
+- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
+
+```php
+'teams' => [
+    'class' => \AuditStash\Monitor\Channel\TeamsChannel::class,
+    'url' => 'https://outlook.office.com/webhook/.../IncomingWebhook/...',
+    'theme_colors' => [
+        'critical' => 'C0392B',
+    ],
+],
+```
+
+### DiscordChannel
+
+Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/docs/resources/channel#embed-object) with title, color sidebar (decimal RGB derived from severity), and inline fields.
+
+**Configuration:**
+- `url` (string, required): Discord webhook URL (`https://discord.com/api/webhooks/.../...`)
+- `username` (string): Override the bot display name
+- `avatar_url` (string): Override the bot avatar
+- `headers` (array), `retry` (int), `timeout` (int): see WebhookChannel
+
+```php
+'discord' => [
+    'class' => \AuditStash\Monitor\Channel\DiscordChannel::class,
+    'url' => 'https://discord.com/api/webhooks/.../...',
+    'username' => 'AuditStash',
+    'avatar_url' => 'https://example.com/audit-bot.png',
+],
+```
+
+Discord webhooks normally return `204 No Content` on success — the channel accepts both that and any other 2xx status.
+
+### Building your own channel
+
+`SlackChannel`, `TeamsChannel`, and `DiscordChannel` all extend `AbstractWebhookChannel`, which handles the HTTP/retry/error-logging plumbing. To add a fourth platform, subclass it and implement just `formatPayload()`:
+
+```php
+namespace App\Monitor\Channel;
+
+use AuditStash\Monitor\Alert;
+use AuditStash\Monitor\Channel\AbstractWebhookChannel;
+
+class MattermostChannel extends AbstractWebhookChannel
+{
+    protected function formatPayload(Alert $alert): array
+    {
+        return [
+            'text' => sprintf('[%s] %s', strtoupper($alert->getSeverity()), $alert->getMessage()),
+            // ...whatever Mattermost expects
+        ];
+    }
+}
+```
+
+Override `isAcceptable(Response $response)` if the target service uses a non-standard success convention (Slack's `ok` body, Discord's 204 No Content), and `createClient()` if you need to inject a custom HTTP client (e.g. for tests).
+
 ## Creating Custom Rules
 
 Extend `AbstractRule` to create custom monitoring rules:
