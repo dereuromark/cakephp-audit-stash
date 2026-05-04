@@ -354,6 +354,32 @@ render inside:
 ],
 ```
 
+## Back-to-App link
+
+`AuditStash.adminBackUrl` adds an outline "Back to App" button in the admin
+header, between the brand and the cross-link/clock. Useful when you keep the
+plugin's self-contained layout and need a one-click escape back to the host
+app's admin home.
+
+Accepts anything `Router::url()` accepts: a Cake URL array, a path string, or
+a full URL. Use `'plugin' => false` to anchor the URL builder to the host app
+rather than the plugin's namespace.
+
+```php
+'AuditStash' => [
+    'adminBackUrl' => [
+        'plugin' => false,
+        'prefix' => 'Admin',
+        'controller' => 'Overview',
+        'action' => 'index',
+    ],
+    // optional, defaults to "Back to App"
+    'adminBackLabel' => __('Back to admin'),
+],
+```
+
+When unset (the default), the button is hidden — the header looks unchanged.
+
 ## Required: `AuditStash.adminAccess`
 
 The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure` — same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.
