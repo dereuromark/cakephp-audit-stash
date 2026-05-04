@@ -9,7 +9,9 @@
 [![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-audit-stash/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
 [![Coding Standards](https://img.shields.io/badge/cs-PhpCollective-purple.svg?style=flat-square)](https://github.com/php-collective/code-sniffer)
 
-Audit-trail plugin for **CakePHP 5.3+**: records every create / update / delete on your Table classes, together with who made the change and from which request. See the [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for older Cake/PHP combinations.
+This branch is for **CakePHP 5.3+**. See [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for details.
+
+Audit-trail plugin: records every create / update / delete on your Table classes, together with who made the change and from which request.
 
 ## Features
 
