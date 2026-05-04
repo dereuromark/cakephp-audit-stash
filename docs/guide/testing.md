@@ -100,6 +100,49 @@ $rowsForUser = $this->buildAuditQuery('Articles', 'update')
 $this->assertCount(2, $rowsForUser);
 ```
 
+## Swapping the persister: `Audit::setPersister()`
+
+The `Audit::log()` static facade uses a lazily-resolved persister so that
+custom-event calls work without bootstrap configuration. Tests that want to
+isolate `Audit::log()` from the database — or assert that `log()` was
+called at all — can swap the persister:
+
+```php
+use AuditStash\Audit;
+use AuditStash\PersisterInterface;
+
+protected function setUp(): void
+{
+    parent::setUp();
+
+    $this->spyPersister = $this->createMock(PersisterInterface::class);
+    Audit::setPersister($this->spyPersister);
+}
+
+protected function tearDown(): void
+{
+    Audit::setPersister(null); // reset to default for the next test
+    parent::tearDown();
+}
+
+public function testLoginCallsAuditLog(): void
+{
+    $this->spyPersister
+        ->expects($this->once())
+        ->method('logEvents')
+        ->with($this->callback(fn (array $events) =>
+            $events[0]->getEventType() === 'user.login'
+        ));
+
+    $this->post('/login', ['username' => 'admin', 'password' => '123']);
+}
+```
+
+Pass `null` to `setPersister()` (as in `tearDown` above) to clear the
+override and let the next call resolve the default `TablePersister` again.
+This swap **only** affects `Audit::log()` calls — Table behavior events
+still go through whichever persister is configured for the behavior.
+
 ## Tips
 
 - **`assertAuditLogged()` before `assertAuditFieldChanged()`** in the same test makes the failure mode obvious — if no row was logged at all, `assertAuditFieldChanged()` reports a less helpful "field not in changed payload of latest row" message.

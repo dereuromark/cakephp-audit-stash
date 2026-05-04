@@ -479,6 +479,32 @@ EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $e
 });
 ```
 
+### `AuditStash.beforeLog` vs `AuditStash.afterLog`
+
+The plugin dispatches two events around persistence:
+
+| Event | Fires | Use it for |
+|---|---|---|
+| `AuditStash.beforeLog` | just before the persister writes the rows | mutating each log (add metadata, redact fields, attach extra context) |
+| `AuditStash.afterLog` | just after the persister returns | side effects that need the rows already-stored (notifications, cache busts, derived projections) |
+
+Both events receive the same `array<\AuditStash\EventInterface> $logs`
+payload. `afterLog` listeners must not mutate the log objects — the rows
+have already been persisted, so changes have no effect on what's stored.
+
+```php
+EventManager::instance()->on('AuditStash.afterLog', function (EventInterface $event, array $logs): void {
+    foreach ($logs as $log) {
+        // logs are already in the database; do post-processing
+        Cache::delete('article_' . $log->getId() . '_history');
+    }
+});
+```
+
+The [Monitoring & Alerting](/features/monitoring) feature listens on
+`afterLog` internally, which is why monitor rules see the rows in their
+final, persisted form.
+
 ## Capturing Reasons/Comments For Changes
 
 You can capture user-provided reasons or comments for changes using the metadata system. This is useful for compliance, audit trails, or understanding why changes were made.

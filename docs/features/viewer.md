@@ -296,6 +296,64 @@ The audit log viewer provides:
 - **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download.
 - **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
 
+## Coverage report
+
+The coverage page at `/admin/audit-stash/audit-logs/coverage` walks every
+Table class shipped by your app and loaded plugins, classifying each as
+Tracked / Missing / Empirical (no `AuditLog` behavior, but audit rows exist
+for it anyway). Operational/internal tables — sessions, migrations, the
+plugin's own `audit_logs` table — would dilute the report, so two deny-list
+keys filter them out by default:
+
+```php
+'AuditStash' => [
+    'coverage' => [
+        // Plugin names whose tables are always treated as internal.
+        // Defaults baked in: AuditStash, Bouncer, Migrations, DebugKit.
+        // Add to extend rather than replace.
+        'hidePlugins' => ['Queue', 'Search'],
+
+        // Specific Table aliases to hide regardless of plugin
+        'hideTables'  => ['Sessions', 'PhinxLog'],
+    ],
+],
+```
+
+The "Include internal" toggle on the page bypasses both lists for one-off
+audits.
+
+## Dashboard auto-refresh
+
+The dashboard page (`/admin/audit-stash`) can refresh itself on an interval
+— useful for incident-response or war-room screens. Set
+`AuditStash.dashboardAutoRefresh` to a number of seconds:
+
+```php
+'AuditStash' => [
+    'dashboardAutoRefresh' => 30, // refresh every 30 seconds
+],
+```
+
+The default `0` disables auto-refresh. Only the dashboard index uses this;
+other admin pages don't auto-reload regardless of the value.
+
+## Admin layout
+
+`AuditStash.adminLayout` controls which CakePHP layout the admin pages
+render inside:
+
+| Value | Behavior |
+|---|---|
+| `null` (default) | Use the plugin's self-contained Bootstrap 5 layout (`AuditStash.audit_stash`). No dependency on host-app styling. |
+| `false` | Disable the plugin layout entirely — render inside your app's default layout. |
+| `string` | Use the named layout, e.g. `'Admin.default'` or `'MyTheme.admin'`, to integrate with an existing admin theme. |
+
+```php
+'AuditStash' => [
+    'adminLayout' => 'Admin.default',
+],
+```
+
 ## Required: `AuditStash.adminAccess`
 
 The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure` — same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.

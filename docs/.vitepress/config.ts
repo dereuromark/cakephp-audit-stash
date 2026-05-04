@@ -30,6 +30,7 @@ export default defineConfig({
             { text: 'Getting Started', link: '/guide/' },
             { text: 'Configuration', link: '/guide/configuration' },
             { text: 'Usage', link: '/guide/usage' },
+            { text: 'View Helper', link: '/guide/view-helper' },
             { text: 'Testing', link: '/guide/testing' },
           ],
         },
@@ -40,6 +41,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/features/' },
             { text: 'Admin Viewer', link: '/features/viewer' },
+            { text: 'Revert & Restore', link: '/features/revert' },
             { text: 'Monitoring & Alerting', link: '/features/monitoring' },
             { text: 'Retention & Cleanup', link: '/features/retention' },
             { text: 'Tamper-Evidence', link: '/features/tamper-evidence' },

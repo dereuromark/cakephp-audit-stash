@@ -66,5 +66,6 @@ public function beforeFilter(EventInterface $event)
 
 - [Configuration](./configuration) — persisters, table list, route prefix
 - [Usage](./usage) — behavior options, custom events, metadata, custom persisters
+- [View Helper](./view-helper) — render diffs, badges, and revert buttons in your own templates
 - [Testing](./testing) — `AuditAssertionsTrait` for asserting in your own suite
-- [Features](/features/) — viewer, monitoring, retention, tamper-evidence, GDPR
+- [Features](/features/) — viewer, revert, monitoring, retention, tamper-evidence, GDPR

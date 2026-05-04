@@ -11,6 +11,16 @@ side-by-side and inline diffs, per-record timeline, and CSV/JSON export.
 
 → [Admin Viewer](./viewer)
 
+## Revert & Restore
+
+Use any past audit row to put a record back the way it was — full revert,
+partial revert (selected fields only), or restore of a deleted record.
+Each operation writes its own `revert` audit entry, so undo history is
+itself auditable. Available from the admin UI and via `RevertService` for
+programmatic use.
+
+→ [Revert & Restore](./revert)
+
 ## Monitoring & Alerting
 
 Real-time rule engine that spots mass deletions, off-hours activity, and
