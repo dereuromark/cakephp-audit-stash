@@ -6,11 +6,13 @@ namespace AuditStash\Service;
 
 use AuditStash\AuditLogType;
 use AuditStash\AuditStashPlugin;
+use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Text;
+use RuntimeException;
 
 /**
  * Service for reverting and restoring records
@@ -37,6 +39,8 @@ class RevertService
      */
     public function revertFull(string $source, int|string $primaryKey, int $auditLogId): EntityInterface|false
     {
+        $this->assertEnabled();
+
         /** @var \Cake\Database\Connection $connection */
         $connection = ConnectionManager::get('default');
 
@@ -78,6 +82,8 @@ class RevertService
      */
     public function revertPartial(string $source, int|string $primaryKey, int $auditLogId, array $fields): EntityInterface|false
     {
+        $this->assertEnabled();
+
         /** @var \Cake\Database\Connection $connection */
         $connection = ConnectionManager::get('default');
 
@@ -120,6 +126,8 @@ class RevertService
      */
     public function restoreDeleted(string $source, int|string $primaryKey): EntityInterface|false
     {
+        $this->assertEnabled();
+
         /** @var \Cake\Database\Connection $connection */
         $connection = ConnectionManager::get('default');
 
@@ -202,6 +210,10 @@ class RevertService
         array $currentState,
         array $targetState,
     ): void {
+        if (!Configure::read('AuditStash.revert.auditReverts', true)) {
+            return;
+        }
+
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 
         $auditLog = $auditLogs->newEntity([
@@ -219,5 +231,24 @@ class RevertService
         ]);
 
         $auditLogs->save($auditLog);
+    }
+
+    /**
+     * Refuses to run when `AuditStash.revert.enabled` is `false`.
+     *
+     * Defaults to enabled (the historic behavior). Hosts that want to
+     * disable revert/restore entirely set `AuditStash.revert.enabled => false`
+     * and the three public revert methods will throw instead of mutating
+     * the row, so an accidental admin-side trigger can't take effect.
+     *
+     * @throws \RuntimeException When the feature is disabled.
+     *
+     * @return void
+     */
+    protected function assertEnabled(): void
+    {
+        if (!Configure::read('AuditStash.revert.enabled', true)) {
+            throw new RuntimeException('AuditStash revert/restore is disabled (AuditStash.revert.enabled = false).');
+        }
     }
 }
