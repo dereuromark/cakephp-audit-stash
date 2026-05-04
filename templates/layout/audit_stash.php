@@ -233,6 +233,7 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
         .pagination .page-item.active .page-link {
             background-color: var(--audit-primary);
             border-color: var(--audit-primary);
+            color: #fff;
         }
 
         /* Buttons */
