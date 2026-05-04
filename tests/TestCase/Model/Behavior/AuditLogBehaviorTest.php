@@ -222,7 +222,7 @@ class AuditLogBehaviorTest extends TestCase
 
     /**
      * `AuditStash.persisterConfig` (documented in app.example.php and
-     * docs/tamper-evidence.md) is applied to the lazily-built persister so
+     * docs/features/tamper-evidence.md) is applied to the lazily-built persister so
      * settings like `hashChain` actually take effect via global config.
      *
      * @return void
