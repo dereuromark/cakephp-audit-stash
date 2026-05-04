@@ -102,7 +102,7 @@ create/overwrite in your application if needed.
 ### Table Persister Configuration
 
 The table persister supports various configuration options, please refer to
-[its API documentation](/src/Persister/TablePersister.php) for further information. Generally configuration can be
+[its source — `src/Persister/TablePersister.php`](https://github.com/dereuromark/cakephp-audit-stash/blob/master/src/Persister/TablePersister.php) for further information. Generally configuration can be
 applied via its `setConfig()` method:
 
 ```php
