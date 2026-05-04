@@ -348,13 +348,24 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
             <i class="fas fa-clipboard-list"></i>
             AuditStash Admin
         </a>
+        <?php
+        $adminBackUrl = \Cake\Core\Configure::read('AuditStash.adminBackUrl');
+        $hasAdminBack = $adminBackUrl !== null && $adminBackUrl !== '';
+        $adminBackLabel = (string)\Cake\Core\Configure::read('AuditStash.adminBackLabel', __d('audit_stash', 'Back to App'));
+        ?>
+        <?php if ($hasAdminBack) { ?>
+        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build($adminBackUrl) ?>">
+            <i class="fas fa-arrow-left me-1"></i>
+            <?= h($adminBackLabel) ?>
+        </a>
+        <?php } ?>
         <?php if ($hasBouncerPlugin) { ?>
-        <a class="btn btn-outline-light btn-sm ms-auto" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => $prefix, 'controller' => 'Bouncer', 'action' => 'index']) ?>">
+        <a class="btn btn-outline-light btn-sm <?= $hasAdminBack ? 'ms-2' : 'ms-auto' ?>" href="<?= $this->Url->build(['plugin' => 'Bouncer', 'prefix' => $prefix, 'controller' => 'Bouncer', 'action' => 'index']) ?>">
             <i class="fas fa-shield-alt me-1"></i>
             Bouncer
         </a>
         <?php } ?>
-        <span class="text-light small <?= $hasBouncerPlugin ? 'ms-3' : 'ms-auto' ?>" title="<?= __d('audit_stash', 'Server Time') ?>">
+        <span class="text-light small <?= ($hasAdminBack || $hasBouncerPlugin) ? 'ms-3' : 'ms-auto' ?>" title="<?= __d('audit_stash', 'Server Time') ?>">
             <i class="far fa-clock me-1"></i>
             <?= date('Y-m-d H:i:s') ?>
         </span>
