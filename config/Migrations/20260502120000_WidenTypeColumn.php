@@ -22,11 +22,10 @@ class WidenTypeColumn extends BaseMigration
 
     public function down(): void
     {
-        $this->table('audit_logs')
-            ->changeColumn('type', 'string', [
-                'limit' => 7,
-                'null' => false,
-            ])
-            ->update();
+        // Intentional no-op: shrinking back to VARCHAR(7) would silently
+        // truncate (or hard-reject under strict mode) any custom event
+        // types longer than 7 chars — exactly the values this migration
+        // was added to support. A wider column is forward-compatible, so
+        // leaving it at VARCHAR(64) is a safe rollback.
     }
 }
