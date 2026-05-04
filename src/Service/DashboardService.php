@@ -43,8 +43,17 @@ class DashboardService
      */
     public function kpis(): array
     {
+        // Compare apples-to-apples: today's events from midnight up to NOW vs
+        // yesterday's events from yesterday-midnight up to YESTERDAY at the
+        // same time-of-day. Otherwise at 00:01am the dashboard would always
+        // show "-100% vs yesterday" because today has barely started while
+        // yesterday is a full day's worth of activity.
+        $now = new DateTime('now');
         $todayStart = (new DateTime('today'))->format('Y-m-d H:i:s');
         $yesterdayStart = (new DateTime('yesterday'))->format('Y-m-d H:i:s');
+        $yesterdayUpToNow = (new DateTime('yesterday'))
+            ->setTime((int)$now->format('H'), (int)$now->format('i'), (int)$now->format('s'))
+            ->format('Y-m-d H:i:s');
         $weekAgo = (new DateTime('-7 days'))->format('Y-m-d H:i:s');
 
         $eventsToday = $this->AuditLogs->find()
@@ -54,7 +63,7 @@ class DashboardService
         $eventsYesterday = $this->AuditLogs->find()
             ->where([
                 'AuditLogs.created >=' => $yesterdayStart,
-                'AuditLogs.created <' => $todayStart,
+                'AuditLogs.created <' => $yesterdayUpToNow,
             ])
             ->count();
 
@@ -72,7 +81,7 @@ class DashboardService
             ->select(['AuditLogs.user_id'])
             ->where([
                 'AuditLogs.created >=' => $yesterdayStart,
-                'AuditLogs.created <' => $todayStart,
+                'AuditLogs.created <' => $yesterdayUpToNow,
                 'AuditLogs.user_id IS NOT' => null,
             ])
             ->distinct(['AuditLogs.user_id'])

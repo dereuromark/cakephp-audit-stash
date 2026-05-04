@@ -9,170 +9,43 @@
 [![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-audit-stash/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
 [![Coding Standards](https://img.shields.io/badge/cs-PhpCollective-purple.svg?style=flat-square)](https://github.com/php-collective/code-sniffer)
 
-This branch is for **CakePHP 5.3+**. See [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for details.
+Audit-trail plugin for **CakePHP 5.3+**: records every create / update / delete on your Table classes, together with who made the change and from which request. See the [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for older Cake/PHP combinations.
 
-This plugin implements an "audit trail" for any of your Table classes in your application, that is,
-the ability of recording any creation, modification or delete of the entities of any particular table.
+## Features
 
-By default, this plugin stores audit logs in a database table using the CakePHP ORM. The plugin also includes:
-- Built-in UI for browsing and searching audit logs
-- Real-time monitoring and alerting system
-- Configurable retention policies with automated cleanup
-- Optional Elasticsearch support for high-volume applications
+- **Entity audit trail** — single behavior captures changed fields, before/after values, user, and request context.
+- **Tamper-evidence** — optional SHA-256 hash chain for GoBD / SOX / HIPAA-grade integrity, verifiable via CLI.
+- **Admin viewer** — built-in dashboard, coverage report, search, diffs, timeline, and CSV/JSON export under `/admin/audit-stash`.
+- **Monitoring & alerting** — rules for mass-deletion and off-hours activity, notifications via email, webhook, or log channel.
+- **Retention & cleanup** — per-table retention policies and a dry-run-friendly cleanup CLI.
+- **GDPR helpers** — redaction and subject-access-export tooling.
+- **Custom event types** — log arbitrary actions (logins, exports, permission grants) through the same persister and viewer.
+- **Flexible storage** — database persister out of the box, optional Elasticsearch driver, or plug in your own.
 
 ## Installation
-
-Install via [composer](https://getcomposer.org):
 
 ```bash
 composer require dereuromark/cakephp-audit-stash
 bin/cake plugin load AuditStash
-```
-
-Run the migrations to create the `audit_logs` table:
-
-```bash
 bin/cake migrations migrate -p AuditStash
 ```
 
-## Quick Start
-
-Enable audit logging in any Table class by adding the behavior:
-
-```php
-class ArticlesTable extends Table
-{
-    public function initialize(array $config): void
-    {
-        parent::initialize($config);
-        $this->addBehavior('AuditStash.AuditLog');
-    }
-}
-```
-
-Optionally, track the current user and request info in `AppController`:
-
-```php
-use AuditStash\Meta\RequestMetadata;
-use Cake\Event\EventManager;
-
-public function beforeFilter(EventInterface $event)
-{
-    parent::beforeFilter($event);
-
-    $identity = $this->getRequest()->getAttribute('identity');
-    EventManager::instance()->on(
-        new RequestMetadata(
-            request: $this->getRequest(),
-            userId: $identity?->getIdentifier(),
-            userDisplay: $identity?->get('username'),
-        ),
-    );
-}
-```
-
-That's it! Your application is now tracking all creates, updates, and deletes.
-
-## Features
-
-### Audit Log Admin UI
-Built-in web interface at `/admin/audit-stash` (configurable via `AuditStash.routePath` — set to `/audit-logs` for pre-1.x URLs). Includes:
-
-- **Dashboard** at `/admin/audit-stash` — KPI cards (events today, active users, coverage), daily activity chart, top sources/users, recent events. CSS-only rendering, no chart library dependency.
-- **Coverage report** at `/admin/audit-stash/audit-logs/coverage` — discovers Table classes from the app + loaded plugins, classifies each as Tracked / Missing / Empirical, and surfaces coverage gaps. Configurable deny-list via `AuditStash.coverage.hidePlugins` and `AuditStash.coverage.hideTables`.
-- **Browse / search** at `/admin/audit-stash/audit-logs/index` — filter by table, user, event type, date range, transaction key
-- **View** with detailed before/after comparisons (inline or side-by-side diff)
-- **Timeline view** showing complete history for specific records
-- **Export** to CSV or JSON
-
-See [Viewer Documentation](docs/viewer.md) for details.
-
-### Monitoring & Alerting
-Real-time monitoring system that detects suspicious activities:
-- Mass deletion detection
-- Off-hours activity monitoring
-- Customizable rules and notification channels (email, webhook, logs)
-- Extensible architecture for custom rules
-
-See [Monitoring Documentation](docs/monitoring.md) for setup.
-
-### Log Retention & Cleanup
-Automated cleanup with configurable retention policies:
-- Table-specific retention periods
-- Command-line tool for manual or automated cleanup
-- Cron-friendly with dry-run support
-
-See [Retention Documentation](docs/retention.md) for configuration.
-
-### Tamper-Evidence (Hash Chain)
-Optional SHA-256 hash chain over audit rows for GoBD / SOX / HIPAA-grade
-integrity guarantees:
-- Each row linked to the previous via `prev_hash` + `hash` columns
-- Transparent concurrency via row-level locks — no orphaned links
-- `bin/cake audit_stash verify_chain` to verify end-to-end
-- Off by default, opt-in per persister config
-
-See [Tamper-Evidence Documentation](docs/tamper-evidence.md) for rationale,
-configuration, verification, and anchoring strategies.
-
-### Flexible Storage
-- **Database (default)**: Simple, fast, works out-of-the-box
-- **Elasticsearch**: Optional for high-volume applications
-- **Custom**: Implement your own persister
-
-See [Configuration Documentation](docs/configuration.md) for storage options.
-
-### Custom Action Events
-Beyond entity create/update/delete, log arbitrary actions like logins,
-exports, or permission grants:
-
-```php
-use AuditStash\Audit;
-
-Audit::log(
-    type: 'user.login',
-    source: 'Users',
-    primaryKey: $user->id,
-    data: ['ip' => $request->clientIp()],
-    meta: ['user_id' => $user->id, 'user_display' => $user->name],
-);
-```
-
-The `type` column accepts any string up to 64 chars. Custom events flow
-through the same persister, hash chain, and viewer as entity events.
-Optional `original:` (prior state, for before/after diffs) and
-`displayValue:` (human-friendly row label) round out the signature.
+Then enable the behavior on any Table you want tracked — see the [Getting Started guide](https://dereuromark.github.io/cakephp-audit-stash/guide/) for the full walkthrough.
 
 ## Documentation
 
-- **[Configuration](docs/configuration.md)** - Database and Elasticsearch setup, persister options
-- **[Usage](docs/usage.md)** - Behavior configuration, metadata tracking, custom persisters
-- **[Viewer](docs/viewer.md)** - Web UI for browsing and searching audit logs
-- **[Retention](docs/retention.md)** - Automated log cleanup and retention policies
-- **[Monitoring](docs/monitoring.md)** - Real-time alerting for suspicious activities
-- **[Tamper-Evidence](docs/tamper-evidence.md)** - Optional SHA-256 hash chain for GoBD / SOX / HIPAA integrity
-- **[Testing](docs/testing.md)** - `AuditAssertionsTrait` for asserting audit logs in your own test suite
+Full docs: **<https://dereuromark.github.io/cakephp-audit-stash/>**
+
+- [Getting Started](https://dereuromark.github.io/cakephp-audit-stash/guide/) — installation, behavior setup, request metadata
+- [Configuration](https://dereuromark.github.io/cakephp-audit-stash/guide/configuration) — persisters, table list, route prefix
+- [Usage](https://dereuromark.github.io/cakephp-audit-stash/guide/usage) — behavior options, custom events, custom persisters
+- [Testing](https://dereuromark.github.io/cakephp-audit-stash/guide/testing) — `AuditAssertionsTrait` for your own test suite
+- [Features overview](https://dereuromark.github.io/cakephp-audit-stash/features/) — viewer, monitoring, retention, tamper-evidence, GDPR
 
 ## Demo
 
-https://sandbox.dereuromark.de/sandbox/audit-stash
+<https://sandbox.dereuromark.de/sandbox/audit-stash>
 
 ## Related Plugins
 
-If you need to moderate or approve changes **before** they happen (rather than auditing them after), check out the [Bouncer plugin](https://github.com/dereuromark/cakephp-bouncer). While AuditStash tracks what has already been changed, Bouncer provides approval workflows and change moderation before changes are persisted.
-
-## Testing
-
-Run the test suite:
-
-```bash
-vendor/bin/phpunit
-```
-
-For Elasticsearch tests, set the environment variable:
-
-```bash
-elastic_dsn="Cake\ElasticSearch\Datasource\Connection://127.0.0.1:9200?driver=Cake\ElasticSearch\Datasource\Connection" vendor/bin/phpunit
-```
-
-To assert audit logs from your own test suite, see the [Testing documentation](docs/testing.md) (`AuditStash\TestSuite\AuditAssertionsTrait`).
+If you need to moderate or approve changes **before** they happen (rather than auditing them after), check out the [Bouncer plugin](https://github.com/dereuromark/cakephp-bouncer). AuditStash records what already changed; Bouncer gates changes before they're persisted.

@@ -229,7 +229,7 @@ Return `null` from the callable to display the value without a link.
 
 **Example: Plugin-aware linking via CakePHP convention**
 
-When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias — e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [usage.md](usage.md) for the full rationale.
+When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias — e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [the Usage guide](../guide/usage) for the full rationale.
 
 A small callable resolves both forms via the standard CakePHP `prefix` / `plugin` / `controller` / `action` convention, no per-table mapping required:
 
