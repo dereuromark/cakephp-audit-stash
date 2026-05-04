@@ -106,10 +106,20 @@ restore pass.
 
 ## Configuration
 
-`config/app.example.php` ships placeholder keys under `AuditStash.revert`
-(`enabled`, `auditReverts`). They are documented intent — at present the
-revert/restore actions are always available whenever the admin viewer is
-reachable, and every revert/restore always writes a `revert` audit entry.
-If you need to forbid reverts entirely, gate access via your
-[`adminAccess` callback](./viewer#required-auditstash-adminaccess) or the
-URL prefix in front of the route.
+```php
+'AuditStash' => [
+    'revert' => [
+        'enabled'      => true, // master switch
+        'auditReverts' => true, // log the revert itself as a `revert` row
+    ],
+],
+```
+
+| Key | Default | Effect |
+|---|---|---|
+| `revert.enabled` | `true` | When `false`, the three public `RevertService` methods throw `RuntimeException` ("AuditStash revert/restore is disabled…"). The admin UI still loads but any POST to revert/restore raises a 500. Use this when reverts must be forbidden plugin-wide regardless of who reaches the route. |
+| `revert.auditReverts` | `true` | When `false`, revert/restore operations still mutate the record, but no `revert` audit row is written. Useful for high-volume systems where the revert audit trail itself doubles the row count and isn't needed — accept the loss of "who undid what" history in exchange. |
+
+To gate by *role* rather than ban entirely, leave `revert.enabled = true`
+and use the [`adminAccess` callback](./viewer#required-auditstash-adminaccess)
+or your authorization stack to control who can reach the admin route.
