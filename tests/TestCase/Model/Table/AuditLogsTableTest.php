@@ -482,6 +482,111 @@ class AuditLogsTableTest extends TestCase
     }
 
     /**
+     * Regression: `Categories` must resolve to `category_id`, not the
+     * `categorie_id` the prior naive `rtrim($x, 's')` produced. Without
+     * proper singularization the related-changes finder silently fails to
+     * link child rows to their parent audit entry on every `-ies` plural
+     * (Categories, Stories, Companies, Properties, ...).
+     *
+     * @return void
+     */
+    public function testFindRelatedChangesResolvesIesPluralSource(): void
+    {
+        $mainLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-cat-1',
+            'type' => 'create',
+            'source' => 'Categories',
+            'primary_key' => 7,
+            'changed' => ['name' => 'Books'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($mainLog);
+
+        $relatedLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-cat-1',
+            'type' => 'create',
+            'source' => 'Articles',
+            'primary_key' => 1,
+            'parent_source' => 'Categories',
+            'changed' => ['category_id' => 7, 'title' => 'Hello'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($relatedLog);
+
+        $results = $this->getAuditLogsTable()->find('relatedChanges', source: 'Categories', primaryKey: 7)->toArray();
+
+        $this->assertCount(2, $results, 'Both the direct row and the FK-linked child row must be returned.');
+    }
+
+    /**
+     * Regression: irregular plural — `People` must resolve to `person_id`,
+     * not the `peopl_id` the prior naive trim produced.
+     *
+     * @return void
+     */
+    public function testFindRelatedChangesResolvesIrregularPluralSource(): void
+    {
+        $mainLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-people-1',
+            'type' => 'create',
+            'source' => 'People',
+            'primary_key' => 42,
+            'changed' => ['name' => 'Ada'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($mainLog);
+
+        $relatedLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-people-1',
+            'type' => 'create',
+            'source' => 'Addresses',
+            'primary_key' => 1,
+            'parent_source' => 'People',
+            'changed' => ['person_id' => 42, 'city' => 'London'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($relatedLog);
+
+        $results = $this->getAuditLogsTable()->find('relatedChanges', source: 'People', primaryKey: 42)->toArray();
+
+        $this->assertCount(2, $results);
+    }
+
+    /**
+     * Regression: uncountable / already-singular source — `News` must
+     * resolve to `news_id`, not the `new_id` the prior trim produced.
+     *
+     * @return void
+     */
+    public function testFindRelatedChangesResolvesUncountableSource(): void
+    {
+        $mainLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-news-1',
+            'type' => 'create',
+            'source' => 'News',
+            'primary_key' => 3,
+            'changed' => ['headline' => 'Hi'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($mainLog);
+
+        $relatedLog = $this->getAuditLogsTable()->newEntity([
+            'transaction_key' => 'tx-news-1',
+            'type' => 'create',
+            'source' => 'Comments',
+            'primary_key' => 1,
+            'parent_source' => 'News',
+            'changed' => ['news_id' => 3, 'body' => 'first!'],
+            'created' => new DateTime(),
+        ]);
+        $this->getAuditLogsTable()->save($relatedLog);
+
+        $results = $this->getAuditLogsTable()->find('relatedChanges', source: 'News', primaryKey: 3)->toArray();
+
+        $this->assertCount(2, $results);
+    }
+
+    /**
      * Empty filter set must be a pass-through — every audit log row is
      * returned and the helper does not silently inject WHERE clauses.
      *

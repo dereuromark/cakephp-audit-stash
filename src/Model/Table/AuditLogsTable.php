@@ -7,6 +7,7 @@ namespace AuditStash\Model\Table;
 use AuditStash\Database\JsonQueryHelper;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
+use Cake\Utility\Inflector;
 use Cake\Validation\Validator;
 
 /**
@@ -416,19 +417,20 @@ class AuditLogsTable extends Table
     }
 
     /**
-     * Build a foreign key name from a table/source name
+     * Build a foreign key name from a table/source name.
      *
-     * @param string $source The table/source name (e.g., "Articles", "UserProfiles")
+     * Uses Cake's Inflector for both snake_case conversion and singularization
+     * so irregular plurals (people → person_id), already-singular words
+     * (news → news_id), and `-ies` plurals (categories → category_id) all
+     * resolve correctly. The previous homegrown `rtrim($x, 's')` produced
+     * `peopl_id`, `new_id`, and `categorie_id` respectively.
      *
-     * @return string The foreign key name (e.g., "article_id", "user_profile_id")
+     * @param string $source The table/source name (e.g., "Articles", "UserProfiles", "Categories", "People")
+     *
+     * @return string The foreign key name (e.g., "article_id", "user_profile_id", "category_id", "person_id")
      */
     protected function buildForeignKeyName(string $source): string
     {
-        // Convert CamelCase to snake_case and singularize
-        $underscored = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $source) ?? $source);
-        // Simple singularize - remove trailing 's' if present
-        $singular = rtrim($underscored, 's');
-
-        return $singular . '_id';
+        return Inflector::singularize(Inflector::underscore($source)) . '_id';
     }
 }
