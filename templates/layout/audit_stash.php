@@ -335,6 +335,13 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
             min-height: 20px;
         }
         .timeline-date { padding-top: 0.75rem; }
+
+        /* Lighter placeholder so it doesn't get mistaken for real content */
+        .form-control::placeholder,
+        .form-select::placeholder {
+            color: #adb5bd;
+            opacity: 1;
+        }
     </style>
     <?= $this->fetch('css') ?>
 </head>
