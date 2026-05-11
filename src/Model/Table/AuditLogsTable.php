@@ -13,6 +13,7 @@ use Cake\Validation\Validator;
 /**
  * AuditLogs Model
  *
+ * @extends \Cake\ORM\Table<array{Timestamp: \Cake\ORM\Behavior\TimestampBehavior}>
  * @method \AuditStash\Model\Entity\AuditLog newEmptyEntity()
  * @method \AuditStash\Model\Entity\AuditLog newEntity(array $data, array $options = [])
  * @method array<\AuditStash\Model\Entity\AuditLog> newEntities(array $data, array $options = [])
@@ -27,7 +28,6 @@ use Cake\Validation\Validator;
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog>|false deleteMany(iterable $entities, array $options = [])
  * @method iterable<\AuditStash\Model\Entity\AuditLog>|\Cake\Datasource\ResultSetInterface<\AuditStash\Model\Entity\AuditLog> deleteManyOrFail(iterable $entities, array $options = [])
  * @mixin \Cake\ORM\Behavior\TimestampBehavior
- * @extends \Cake\ORM\Table<array{Timestamp: \Cake\ORM\Behavior\TimestampBehavior}>
  */
 class AuditLogsTable extends Table
 {
