@@ -29,6 +29,15 @@ use function Cake\Collection\collection;
 /**
  * This behavior can be used to log all the creations, modifications and deletions
  * done to a particular table.
+ *
+ * IMPORTANT: this behavior hooks per-entity ORM model events
+ * (`Model.beforeSave` / `afterSave` / `afterSaveCommit`). Bulk-write paths
+ * that bypass those events — `Table::updateAll()`, `Table::deleteAll()`,
+ * `query()->update()->execute()`, `query()->delete()->execute()`, and raw
+ * `Connection::execute()` SQL — are NOT audited. See
+ * `docs/guide/usage.md#operations-that-bypass-the-audit-listener` for the
+ * full list and the compensating-audit pattern for tables where you really
+ * need bulk writes alongside the audit chain.
  */
 class AuditLogBehavior extends Behavior
 {
