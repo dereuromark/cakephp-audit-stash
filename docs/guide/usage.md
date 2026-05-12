@@ -919,3 +919,61 @@ if ($success) {
 This will save all audit info for your objects, as well as audits for any associated data. Please note, `$result` must
 be an instance of an Object. Do not change the text "Model.afterCommit".
 
+## Operations That Bypass The Audit Listener
+
+The behavior hooks `Model.beforeSave` / `Model.afterSave` / `Model.afterSaveCommit`, all of which fire **per entity** through the ORM. Any path that doesn't go through `Table::save($entity)` / `Table::saveMany()` / `Table::delete($entity)` will **not** be audited:
+
+| Bypass path | Audited? | Notes |
+|---|---|---|
+| `Table::save($entity)` | ✅ Yes | Standard ORM path. |
+| `Table::saveMany($entities)` | ✅ Yes | Each entity fires its own events. |
+| `Table::delete($entity)` | ✅ Yes | Including cascade deletes. |
+| `Table::updateAll($fields, $conditions)` | ❌ No | Single SQL UPDATE; no model events. |
+| `Table::deleteAll($conditions)` | ❌ No | Single SQL DELETE; no model events. |
+| `Table::query()->update()->set(...)->execute()` | ❌ No | Direct query builder; no model events. |
+| `Table::query()->delete()->where(...)->execute()` | ❌ No | Direct query builder; no model events. |
+| `Connection::execute('UPDATE ...')` | ❌ No | Raw SQL bypasses the ORM entirely. |
+| `Connection::insert()` / `update()` / `delete()` | ❌ No | Low-level driver methods. |
+
+If you must use a bulk-write path on a table that is otherwise audited, write a compensating audit row explicitly so the chain stays continuous:
+
+```php
+use AuditStash\Event\AuditUpdateEvent;
+use Cake\Datasource\ConnectionManager;
+
+$conn = ConnectionManager::get('default');
+$conn->transactional(function () use ($conn) {
+    // Capture which rows you're about to mutate so the audit row can
+    // record them. Skip this if you're updating millions of rows and
+    // accept "all matching" as the audit subject.
+    $affectedIds = $this->Articles->find()
+        ->select(['id'])
+        ->where(['needs_archive' => true])
+        ->all()
+        ->extract('id')
+        ->toList();
+
+    $this->Articles->updateAll(
+        ['archived' => true],
+        ['needs_archive' => true],
+    );
+
+    $persister = $this->Articles->behaviors()->get('AuditLog')->persister();
+    $persister->logEvents([
+        new AuditUpdateEvent(
+            transactionKey: \Cake\Utility\Text::uuid(),
+            primaryKey: $affectedIds,                // array — bulk subject
+            source: 'Articles',
+            changed: ['archived' => true],
+            original: ['archived' => false],
+            entity: new \Cake\ORM\Entity(),
+        ),
+    ]);
+});
+```
+
+The same caveat applies in reverse: if you have an `AuditLog`-behaved table and call `updateAll()` from a CLI maintenance task to fix a bad batch of data, that fix will not appear in the audit log — by design, but easy to forget. Plan a follow-up "synthetic audit" row, or temporarily switch the fix to a per-entity loop if traceability matters more than throughput.
+
+> [!NOTE]
+> A future opt-in `AuditLog.queryDecorator` config that wraps `Table::updateQuery()` / `deleteQuery()` and emits a synthetic `bulk_update` event with the matched primary keys is on the roadmap. For now the workaround above is the supported path.
+
