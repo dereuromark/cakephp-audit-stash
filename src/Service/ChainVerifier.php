@@ -49,14 +49,31 @@ class ChainVerifier
         $orderField = $table->aliasField($primaryKey);
         $payloadColumns = array_values(array_diff($table->getSchema()->columns(), self::IGNORED_FIELDS));
 
+        // Snapshot the upper bound at the start of verification. Without
+        // this, a concurrent writer inserting new rows mid-stream — or a
+        // rare delete + re-insert that reuses an id on a non-AUTO_INCREMENT
+        // driver — can lead the chunked `WHERE id > $lastId` walk back into
+        // rows whose prev_hash references a chain link the verifier hasn't
+        // seen yet, producing a false "broken" report. Capturing MAX(id)
+        // upfront gives the verifier a stable point-in-time view; new rows
+        // inserted during verification are simply picked up by the next run.
+        $maxId = (int)($table->find()
+            ->select(['max' => $table->find()->func()->max($orderField)])
+            ->first()
+            ?->get('max') ?? 0);
+
         $total = 0;
         $expectedPrev = null;
         $started = false;
         $lastId = 0;
 
+        if ($maxId === 0) {
+            return ChainVerificationResult::intact(0);
+        }
+
         while (true) {
             $rows = $table->find()
-                ->where([$orderField . ' >' => $lastId])
+                ->where([$orderField . ' >' => $lastId, $orderField . ' <=' => $maxId])
                 ->orderByAsc($orderField)
                 ->limit($chunkSize)
                 ->all();

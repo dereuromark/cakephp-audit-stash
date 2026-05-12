@@ -177,6 +177,56 @@ class ChainVerifierTest extends TestCase
         $this->assertSame(1, $result->rowsChecked);
     }
 
+    /**
+     * Regression: verification must snapshot the upper id bound at the
+     * start, otherwise a concurrent writer inserting a fresh row
+     * mid-stream can lead the chunked walk into rows whose prev_hash
+     * references a chain link the verifier hasn't seen yet, producing a
+     * false-broken report (or — rare but possible after a manual delete
+     * + re-insert on a non-AUTO_INCREMENT driver — a re-used id).
+     *
+     * Simulate the concurrent insert with a one-shot `Model.beforeFind`
+     * listener that fires AFTER the verifier has captured its bound but
+     * BEFORE the second chunk runs.
+     */
+    public function testVerifierIgnoresRowsInsertedAfterStart(): void
+    {
+        $table = $this->getTableLocator()->get('AuditLogs');
+
+        $this->persister->logEvents([
+            $this->buildEvent(1, ['title' => 'A']),
+            $this->buildEvent(2, ['title' => 'B']),
+        ]);
+
+        // Drop a third hash-bearing row in DURING verification. The first
+        // `find()` is the MAX(id) snapshot, the second is the chunk walk;
+        // we slip the insert in on the second event so the row exists by
+        // the time chunking starts but is past the snapshot bound.
+        $persister = $this->persister;
+        $self = $this;
+        $listener = function () use ($persister, $self, $table, &$listener): void {
+            static $fired = 0;
+            $fired++;
+            if ($fired !== 2) {
+                return;
+            }
+
+            $persister->logEvents([$self->buildEvent(3, ['title' => 'C-late'])]);
+            $table->getEventManager()->off('Model.beforeFind', $listener);
+        };
+        $table->getEventManager()->on('Model.beforeFind', $listener);
+
+        $result = (new ChainVerifier())->verify($table, 2);
+
+        $this->assertTrue($result->intact, (string)$result->reason);
+        $this->assertSame(
+            2,
+            $result->rowsChecked,
+            'Rows inserted mid-verification (id beyond the captured snapshot) must not be walked.',
+        );
+        $this->assertSame(3, (int)$table->find()->count(), 'The mid-stream insert did actually land in the table.');
+    }
+
     public function testVerifierRejectsNonNumericPrimaryKeys(): void
     {
         $table = $this->getMockBuilder(Table::class)
