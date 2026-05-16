@@ -383,7 +383,7 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
         <?php } ?>
         <span class="text-light small <?= ($hasAdminBack || $hasBouncerPlugin) ? 'ms-3' : 'ms-auto' ?>" title="<?= __d('audit_stash', 'Server Time') ?>">
             <i class="far fa-clock me-1"></i>
-            <?= date('Y-m-d H:i:s') ?>
+            <?= new \Cake\I18n\DateTime() ?>
         </span>
     </header>
 
