@@ -4,6 +4,7 @@ export default defineConfig({
   title: 'cakephp-audit-stash',
   description: 'Audit trail plugin for CakePHP — entity logging, admin viewer, monitoring, retention, and tamper-evident hash chain.',
   base: '/cakephp-audit-stash/',
+  cleanUrls: true,
   head: [
     ['link', { rel: 'icon', href: '/cakephp-audit-stash/favicon.svg', type: 'image/svg+xml' }],
   ],
