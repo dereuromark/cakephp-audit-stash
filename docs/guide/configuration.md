@@ -68,25 +68,33 @@ Notes:
 - If you want to access the timestamp as a `DateTime` object (e.g. in a custom persister) without
   re-parsing the string, use `BaseEvent::getTimestampObject()`.
 
-### UUID Primary Keys
+### Polymorphic Primary Key Type
 
-The default migration creates the `primary_key` column as an integer. If your application uses UUID primary keys,
-you need to copy and adjust the migration on the app side:
-
-```bash
-# Copy the migration to your app
-cp vendor/dereuromark/cakephp-audit-stash/config/Migrations/20171018185609_CreateAuditLogs.php config/Migrations/
-```
-
-Then modify the `primary_key` column definition:
+The `audit_logs.primary_key` column stores the audited record's primary key (a polymorphic foreign key). Its column
+type is controlled by the global `Polymorphic.type` config key (default: `integer`):
 
 ```php
-->addColumn('primary_key', 'string', [
-    'default' => null,
-    'limit' => 36,
-    'null' => true,
-])
+// config/app.php (merged into Configure at bootstrap, including the migrations CLI)
+'Polymorphic' => [
+    'type' => 'uuid', // integer (default) | biginteger | uuid | binaryuuid
+],
 ```
+
+::: warning Fresh installs only
+This config key is read at migration time to decide the column type for `audit_logs.primary_key`.
+Changing it has no effect on existing installs that have already run the migration — the column already exists with its original type.
+To change the column type on an existing install, write an app-side migration that `ALTER`s the column accordingly.
+:::
+
+| Value | Column type | Signedness |
+|---|---|---|
+| `integer` (default) | `INT` | follows `Migrations.unsigned_primary_keys` |
+| `biginteger` | `BIGINT` | follows `Migrations.unsigned_primary_keys` |
+| `uuid` | `CHAR(36)` | n/a |
+| `binaryuuid` | `BINARY(16)` | n/a |
+
+For the `integer` and `biginteger` variants, signedness is inherited from the `Migrations.unsigned_primary_keys`
+config key (same as CakePHP core migrations). For `uuid` and `binaryuuid` no `signed` option is set.
 
 The table persister is configured by default, but you can explicitly set it in your `config/app_local.php` or `config/app.php`:
 

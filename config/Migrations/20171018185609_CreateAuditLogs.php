@@ -14,11 +14,19 @@ class CreateAuditLogs extends BaseMigration
      */
     public function up(): void
     {
-        // primary_key stores the audited record's primary key (polymorphic), so it
-        // follows the application's primary-key signedness. The flag is false
-        // (signed) when unset, so an unset flag yields a signed column matching the
-        // default-signed ids it references. Unsigned only on MySQL.
+        // primary_key stores the audited record's primary key (polymorphic), so its
+        // type follows the global Polymorphic.type config (default: integer). For
+        // integer variants, signedness follows Migrations.unsigned_primary_keys.
+        $type = (string)Configure::read('Polymorphic.type', 'integer');
         $signed = !(bool)Configure::read('Migrations.unsigned_primary_keys', false);
+
+        $polymorphicOptions = [
+            'default' => null,
+            'null' => true,
+        ];
+        if (in_array($type, ['integer', 'biginteger'], true)) {
+            $polymorphicOptions['signed'] = $signed;
+        }
 
         $this->table('audit_logs')
             ->addColumn('id', 'integer', [
@@ -39,12 +47,7 @@ class CreateAuditLogs extends BaseMigration
                 'limit' => 7,
                 'null' => false,
             ])
-            ->addColumn('primary_key', 'integer', [
-                'default' => null,
-                'limit' => 10,
-                'null' => true,
-                'signed' => $signed,
-            ])
+            ->addColumn('primary_key', $type, $polymorphicOptions)
             ->addColumn('display_value', 'string', [
                 'default' => null,
                 'limit' => 255,
