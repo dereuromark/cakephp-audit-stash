@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cake\Core\Configure;
 use Migrations\BaseMigration;
 
 class CreateAuditLogs extends BaseMigration
@@ -13,6 +14,12 @@ class CreateAuditLogs extends BaseMigration
      */
     public function up(): void
     {
+        // primary_key stores the audited record's primary key (polymorphic), so it
+        // follows the application's primary-key signedness. The flag is false
+        // (signed) when unset, so an unset flag yields a signed column matching the
+        // default-signed ids it references. Unsigned only on MySQL.
+        $signed = !(bool)Configure::read('Migrations.unsigned_primary_keys', false);
+
         $this->table('audit_logs')
             ->addColumn('id', 'integer', [
                 'autoIncrement' => true,
@@ -36,7 +43,7 @@ class CreateAuditLogs extends BaseMigration
                 'default' => null,
                 'limit' => 10,
                 'null' => true,
-                'signed' => false,
+                'signed' => $signed,
             ])
             ->addColumn('display_value', 'string', [
                 'default' => null,
