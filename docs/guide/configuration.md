@@ -74,9 +74,17 @@ The `audit_logs.primary_key` column stores the audited record's primary key (a p
 type is controlled by the global `Polymorphic.type` config key (default: `integer`):
 
 ```php
-// config/app.php or config/app_local.php
-Configure::write('Polymorphic.type', 'uuid'); // integer (default) | biginteger | uuid | binaryuuid
+// config/app.php (merged into Configure at bootstrap, including the migrations CLI)
+'Polymorphic' => [
+    'type' => 'uuid', // integer (default) | biginteger | uuid | binaryuuid
+],
 ```
+
+::: warning Fresh installs only
+This config key is read at migration time to decide the column type for `audit_logs.primary_key`.
+Changing it has no effect on existing installs that have already run the migration — the column already exists with its original type.
+To change the column type on an existing install, write an app-side migration that `ALTER`s the column accordingly.
+:::
 
 | Value | Column type | Signedness |
 |---|---|---|
