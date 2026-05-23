@@ -1,0 +1,48 @@
+// cakephp-audit-stash — database schema snapshot (DBML)
+//
+// A merged snapshot of all plugin migrations under config/Migrations/.
+// Hand-maintained: update it when you add a migration that changes these tables.
+// Paste into https://dbdiagram.io (or any DBML tool) to view/diagram.
+// DBML reference: https://dbml.dbdiagram.io/docs
+//
+// Note: primary_key is a *polymorphic* reference to your application's records — each
+// row may point at a different table — so it is intentionally not a real foreign key.
+// It defaults to an integer; configure Polymorphic.type to biginteger, uuid, or
+// binaryuuid to change the stored type.
+
+Project cakephp_audit_stash {
+  database_type: 'Generic'
+  Note: 'Audit-stash plugin tables only. Your own entity tables are referenced loosely via primary_key.'
+}
+
+Table audit_logs {
+  id integer [pk, increment]
+  transaction_key binary(16) [not null, note: 'UUID grouping all changes in one request/transaction']
+  type varchar(64) [not null, note: 'Event type: create, update, delete, revert, or a custom action name']
+  primary_key int [null, note: 'Polymorphic record id; set Polymorphic.type to biginteger/uuid/binaryuuid to change']
+  display_value varchar(255) [null]
+  source varchar(255) [not null, note: 'Table or model name of the audited record']
+  parent_source varchar(255) [null]
+  user_id varchar(36) [null, note: 'Application user id for linking/filtering']
+  user_display varchar(255) [null, note: 'Optional display name of the acting user']
+  original json [null, note: 'Field values before the change']
+  changed json [null, note: 'Field values after the change']
+  meta json [null, note: 'Extra context data (IP, request info, etc.)']
+  prev_hash varchar(64) [null, note: 'SHA-256 of the previous audit log row; null for the first row']
+  hash varchar(64) [null, note: 'SHA-256 over canonical JSON of this row + prev_hash']
+  created datetime [null]
+
+  indexes {
+    transaction_key
+    type
+    primary_key
+    display_value
+    source
+    parent_source
+    user_id
+    created
+    (source, primary_key)
+    (source, created)
+    hash [name: 'idx_hash']
+  }
+}
