@@ -310,7 +310,7 @@ class ExportService
         $written = 0;
         foreach ($iter as $row) {
             $payload = $this->extractRow($row, $fields, jsonEncodeArrays: false);
-            fwrite($output, json_encode($payload) . "\n");
+            fwrite($output, (string)json_encode($payload) . "\n");
             $written++;
             if ($written % $batchSize === 0) {
                 $this->flush($output);
