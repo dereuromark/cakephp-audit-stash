@@ -183,17 +183,17 @@ class GdprServiceTest extends TestCase
         $this->assertSame('ANONYMIZED', $anonymized->user_display);
 
         // Check meta is anonymized
-        $meta = json_decode((string) $anonymized->meta, true);
+        $meta = json_decode((string)$anonymized->meta, true);
         $this->assertSame('ANONYMIZED', $meta['user']);
         $this->assertSame('0.0.0.0', $meta['ip']);
         $this->assertSame('deleted@anonymized.local', $meta['email']);
 
         // Check PII is redacted
-        $original = json_decode((string) $anonymized->original, true);
+        $original = json_decode((string)$anonymized->original, true);
         $this->assertSame('[REDACTED]', $original['email']);
         $this->assertSame('[REDACTED]', $original['name']);
 
-        $changed = json_decode((string) $anonymized->changed, true);
+        $changed = json_decode((string)$anonymized->changed, true);
         $this->assertSame('[REDACTED]', $changed['email']);
         $this->assertSame('[REDACTED]', $changed['name']);
     }
@@ -278,11 +278,11 @@ class GdprServiceTest extends TestCase
 
         $anonymized = $auditLogsTable->get($log->id);
 
-        $original = json_decode((string) $anonymized->original, true);
+        $original = json_decode((string)$anonymized->original, true);
         $this->assertSame('[REDACTED]', $original['ssn']);
         $this->assertSame('Manager', $original['title']); // Not PII
 
-        $changed = json_decode((string) $anonymized->changed, true);
+        $changed = json_decode((string)$anonymized->changed, true);
         $this->assertSame('[REDACTED]', $changed['ssn']);
         $this->assertSame('Director', $changed['title']); // Not PII
     }
@@ -424,7 +424,7 @@ class GdprServiceTest extends TestCase
         $this->service->anonymize(123);
 
         $anonymized = $auditLogsTable->get($log->id);
-        $meta = json_decode((string) $anonymized->meta, true);
+        $meta = json_decode((string)$anonymized->meta, true);
         $this->assertSame('CUSTOM_ANONYMIZED', $meta['custom_field']);
 
         Configure::delete('AuditStash.gdpr.anonymizeFields');
@@ -455,7 +455,7 @@ class GdprServiceTest extends TestCase
         $this->service->anonymize(123);
 
         $anonymized = $auditLogsTable->get($log->id);
-        $original = json_decode((string) $anonymized->original, true);
+        $original = json_decode((string)$anonymized->original, true);
         $this->assertSame('[REDACTED]', $original['custom_pii']);
         $this->assertSame('visible', $original['other']);
 

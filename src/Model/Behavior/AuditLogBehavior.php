@@ -474,7 +474,7 @@ class AuditLogBehavior extends Behavior
      */
     public function persister(?PersisterInterface $persister = null): PersisterInterface
     {
-        if (!$persister instanceof \AuditStash\PersisterInterface && !$this->persister instanceof \AuditStash\PersisterInterface) {
+        if (!$persister instanceof PersisterInterface && !$this->persister instanceof PersisterInterface) {
             $class = Configure::read('AuditStash.persister') ?: TablePersister::class;
             $index = $this->getConfig('index') ?: $this->_table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);

@@ -179,7 +179,7 @@ class ElasticSearchPersister implements PersisterInterface
      */
     public function getConnection(): Connection
     {
-        if (!$this->connection instanceof \Cake\ElasticSearch\Datasource\Connection) {
+        if (!$this->connection instanceof Connection) {
             /**
              * @var \Cake\ElasticSearch\Datasource\Connection $connection
              */

@@ -516,7 +516,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertContentType('application/json');
         $this->assertHeaderContains('Content-Disposition', 'attachment');
 
-        $data = json_decode((string) $this->_response->getBody()->__toString(), true);
+        $data = json_decode((string)$this->_response->getBody()->__toString(), true);
         $this->assertIsArray($data);
         $this->assertNotEmpty($data);
         $this->assertArrayHasKey('id', $data[0]);
@@ -565,7 +565,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertContentType('application/json');
 
-        $data = json_decode((string) $this->_response->getBody()->__toString(), true);
+        $data = json_decode((string)$this->_response->getBody()->__toString(), true);
         $this->assertCount(1, $data);
         $this->assertSame('articles', $data[0]['source']);
     }

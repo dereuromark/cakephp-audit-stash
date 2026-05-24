@@ -141,9 +141,9 @@ class DiffLib
                 $newNum++;
                 $html .= '<tr class="unchanged">';
                 $html .= '<td class="line-num">' . $oldNum . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) $row['old']) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string)$row['old']) . '</td>';
                 $html .= '<td class="line-num">' . $newNum . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) $row['new']) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string)$row['new']) . '</td>';
                 $html .= '</tr>';
             } else {
                 $oldNum++;
@@ -156,7 +156,7 @@ class DiffLib
                 } elseif ($row['old'] === '') {
                     $html .= '<td class="old"><del class="empty-line">↵</del></td>';
                 } else {
-                    $html .= '<td class="old">' . ($row['old'] !== null ? '<del>' . htmlspecialchars((string) $row['old']) . '</del>' : '') . '</td>';
+                    $html .= '<td class="old">' . ($row['old'] !== null ? '<del>' . htmlspecialchars((string)$row['old']) . '</del>' : '') . '</td>';
                 }
 
                 $html .= '<td class="line-num new">' . ($row['new'] !== null ? $newNum : '') . '</td>';
@@ -166,7 +166,7 @@ class DiffLib
                 } elseif ($row['new'] === '') {
                     $html .= '<td class="new"><ins class="empty-line">↵</ins></td>';
                 } else {
-                    $html .= '<td class="new">' . ($row['new'] !== null ? '<ins>' . htmlspecialchars((string) $row['new']) . '</ins>' : '') . '</td>';
+                    $html .= '<td class="new">' . ($row['new'] !== null ? '<ins>' . htmlspecialchars((string)$row['new']) . '</ins>' : '') . '</td>';
                 }
 
                 $html .= '</tr>';
@@ -256,7 +256,7 @@ class DiffLib
             }
             $lastShownIndex = $item['origIndex'];
 
-            $line = rtrim((string) $item['line'], "\r\n");
+            $line = rtrim((string)$item['line'], "\r\n");
             $lineNum++;
 
             switch ($item['type']) {

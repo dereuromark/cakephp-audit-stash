@@ -187,7 +187,7 @@ class AuditMonitorTest extends TestCase
         // context (so Sentry / Monolog handlers get the stack).
         $brokenLog = null;
         foreach ($captured as $entry) {
-            if (str_contains((string) $entry['message'], 'Rule check failed')) {
+            if (str_contains((string)$entry['message'], 'Rule check failed')) {
                 $brokenLog = $entry;
 
                 break;
@@ -312,7 +312,7 @@ class AuditMonitorTest extends TestCase
         Configure::write('AuditStash.monitor.channels', $monitorConfig['channels'] ?? []);
 
         $monitor = new AuditMonitor();
-        if ($logger instanceof \Psr\Log\LoggerInterface) {
+        if ($logger instanceof LoggerInterface) {
             $monitor->setLogger($logger);
         }
         EventManager::instance()->on($monitor);

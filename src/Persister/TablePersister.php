@@ -141,11 +141,11 @@ class TablePersister implements PersisterInterface
      */
     public function getTable(): Table
     {
-        if (!$this->_table instanceof \Cake\ORM\Table) {
+        if (!$this->_table instanceof Table) {
             $this->setTable($this->getConfig('table'));
         }
 
-        assert($this->_table instanceof \Cake\ORM\Table);
+        assert($this->_table instanceof Table);
 
         return $this->_table;
     }

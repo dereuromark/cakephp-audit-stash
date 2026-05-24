@@ -344,6 +344,7 @@ class ExportService
             if (in_array($field, ['original', 'changed', 'meta'], true) && is_string($value) && $value !== '' && !$jsonEncodeArrays) {
                 $decoded = json_decode($value, true);
                 $extracted[$field] = is_array($decoded) ? $decoded : $value;
+
                 continue;
             }
 

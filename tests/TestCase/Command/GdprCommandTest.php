@@ -178,16 +178,16 @@ class GdprCommandTest extends TestCase
         $this->assertSame('ANONYMIZED', $anonymized->user_display);
 
         // Check meta was anonymized
-        $meta = json_decode((string) $anonymized->meta, true);
+        $meta = json_decode((string)$anonymized->meta, true);
         $this->assertSame('ANONYMIZED', $meta['user']);
         $this->assertSame('0.0.0.0', $meta['ip']);
 
         // Check PII was redacted
-        $original = json_decode((string) $anonymized->original, true);
+        $original = json_decode((string)$anonymized->original, true);
         $this->assertSame('[REDACTED]', $original['email']);
         $this->assertSame('[REDACTED]', $original['name']);
 
-        $changed = json_decode((string) $anonymized->changed, true);
+        $changed = json_decode((string)$anonymized->changed, true);
         $this->assertSame('[REDACTED]', $changed['email']);
         $this->assertSame('[REDACTED]', $changed['name']);
     }
