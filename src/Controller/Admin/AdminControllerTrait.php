@@ -93,6 +93,8 @@ trait AdminControllerTrait
 
         try {
             $allowed = $check($this->request) === true;
+        } catch (ForbiddenException $e) {
+            throw $e;
         } catch (Throwable $e) {
             Log::warning(sprintf('AuditStash.adminAccess threw %s: %s', $e::class, $e->getMessage()));
 
