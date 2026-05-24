@@ -23,7 +23,7 @@ class DashboardService
 
     public function __construct(?AuditLogsTable $auditLogs = null)
     {
-        if ($auditLogs === null) {
+        if (!$auditLogs instanceof \AuditStash\Model\Table\AuditLogsTable) {
             /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogs */
             $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
         }

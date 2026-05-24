@@ -72,11 +72,7 @@ trait ExtractionTrait
         switch ($strategy) {
             case 'automatic':
                 $id = (array)$event->getId();
-                if (count($id) === 1) {
-                    $id = array_pop($id);
-                } else {
-                    $id = $this->serialize($id);
-                }
+                $id = count($id) === 1 ? array_pop($id) : $this->serialize($id);
                 $primaryKeyFields['primary_key'] = $id;
 
                 break;

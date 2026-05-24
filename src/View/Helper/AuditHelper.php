@@ -703,9 +703,7 @@ class AuditHelper extends Helper
             $output .= '</tr>';
         }
 
-        $output .= '</tbody></table>';
-
-        return $output;
+        return $output . '</tbody></table>';
     }
 
     /**

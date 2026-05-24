@@ -23,9 +23,9 @@ use TestApp\Model\Enum\PriorityEnum;
 
 class AuditLogBehaviorTest extends TestCase
 {
-    private ?Table $table;
+    private ?Table $table = null;
 
-    private ?AuditLogBehavior $behavior;
+    private ?AuditLogBehavior $behavior = null;
 
     public function setUp(): void
     {

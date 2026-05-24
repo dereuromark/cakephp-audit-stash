@@ -37,7 +37,7 @@ class AuditLogsController extends AppController
      *
      * @var string
      */
-    protected const FILTER_IDENTIFIER_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]{0,63}$/';
+    protected const FILTER_IDENTIFIER_PATTERN = '/^[A-Za-z_]\w{0,63}$/';
 
     /**
      * The default model class to use.
@@ -89,7 +89,7 @@ class AuditLogsController extends AppController
         $changedFields = $this->AuditLogs->getDistinctChangedFields();
         sort($changedFields);
 
-        $this->set(compact('auditLogs', 'sources', 'eventTypes', 'changedFields'));
+        $this->set(['auditLogs' => $auditLogs, 'sources' => $sources, 'eventTypes' => $eventTypes, 'changedFields' => $changedFields]);
     }
 
     /**
@@ -216,7 +216,7 @@ class AuditLogsController extends AppController
     {
         $auditLog = $this->AuditLogs->get($id);
 
-        $this->set(compact('auditLog'));
+        $this->set(['auditLog' => $auditLog]);
     }
 
     /**
@@ -243,7 +243,7 @@ class AuditLogsController extends AppController
             ->orderBy(['AuditLogs.created' => 'DESC'])
             ->toArray();
 
-        $this->set(compact('auditLogs', 'source', 'primaryKey'));
+        $this->set(['auditLogs' => $auditLogs, 'source' => $source, 'primaryKey' => $primaryKey]);
     }
 
     /**
@@ -281,7 +281,7 @@ class AuditLogsController extends AppController
         // Calculate diff
         $diff = $reconstructor->calculateDiff($currentState, $targetState);
 
-        $this->set(compact('auditLog', 'currentState', 'targetState', 'diff'));
+        $this->set(['auditLog' => $auditLog, 'currentState' => $currentState, 'targetState' => $targetState, 'diff' => $diff]);
     }
 
     /**
@@ -375,7 +375,7 @@ class AuditLogsController extends AppController
             ->orderBy(['created' => 'DESC'])
             ->first();
 
-        $this->set(compact('source', 'primaryKey', 'deleteLog'));
+        $this->set(['source' => $source, 'primaryKey' => $primaryKey, 'deleteLog' => $deleteLog]);
     }
 
     /**
@@ -415,7 +415,7 @@ class AuditLogsController extends AppController
             $transactions[$transactionId]['logs'][] = $log;
         }
 
-        $this->set(compact('source', 'primaryKey', 'transactions'));
+        $this->set(['source' => $source, 'primaryKey' => $primaryKey, 'transactions' => $transactions]);
     }
 
     /**
@@ -430,7 +430,7 @@ class AuditLogsController extends AppController
         $bulkStats = $this->AuditLogs->find('bulkChangeStats', minRecords: $minRecords)
             ->toArray();
 
-        $this->set(compact('bulkStats', 'minRecords'));
+        $this->set(['bulkStats' => $bulkStats, 'minRecords' => $minRecords]);
     }
 
     /**
@@ -470,7 +470,7 @@ class AuditLogsController extends AppController
             $rowCount = $service->estimate($query);
             $hardCap = $service->hardCap();
 
-            $this->set(compact('rowCount', 'hardCap', 'defaultFloor'));
+            $this->set(['rowCount' => $rowCount, 'hardCap' => $hardCap, 'defaultFloor' => $defaultFloor]);
             $this->set('formats', ExportService::FORMATS);
             $this->set('queryParams', $this->request->getQueryParams());
 

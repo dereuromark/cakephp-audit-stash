@@ -277,7 +277,7 @@ class GdprService
      */
     protected function hashUserId(int|string $userId): string
     {
-        return 'anon_' . substr(hash('sha256', (string)$userId . Configure::read('Security.salt', '')), 0, 8);
+        return 'anon_' . substr(hash('sha256', $userId . Configure::read('Security.salt', '')), 0, 8);
     }
 
     /**

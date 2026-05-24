@@ -90,7 +90,7 @@ class RevertServiceTest extends TestCase
         $this->assertEquals('Articles', $revertLog->source);
         $this->assertEquals('1', $revertLog->primary_key);
 
-        $meta = json_decode($revertLog->meta, true);
+        $meta = json_decode((string) $revertLog->meta, true);
         $this->assertEquals('full', $meta['revert_type']);
         $this->assertEquals($createLog->id, $meta['revert_to_audit_id']);
     }
@@ -138,7 +138,7 @@ class RevertServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($revertLog);
-        $meta = json_decode($revertLog->meta, true);
+        $meta = json_decode((string) $revertLog->meta, true);
         $this->assertEquals('partial', $meta['revert_type']);
     }
 
@@ -185,7 +185,7 @@ class RevertServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($revertLog);
-        $meta = json_decode($revertLog->meta, true);
+        $meta = json_decode((string) $revertLog->meta, true);
         $this->assertEquals('restore', $meta['revert_type']);
     }
 

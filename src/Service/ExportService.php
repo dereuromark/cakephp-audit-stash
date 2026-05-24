@@ -212,7 +212,7 @@ class ExportService
      */
     public function filename(string $format): string
     {
-        return sprintf('audit_logs_%s.%s', date('Y-m-d_His'), $format === 'ndjson' ? 'ndjson' : $format);
+        return sprintf('audit_logs_%s.%s', date('Y-m-d_His'), $format);
     }
 
     /**
@@ -310,7 +310,7 @@ class ExportService
         $written = 0;
         foreach ($iter as $row) {
             $payload = $this->extractRow($row, $fields, jsonEncodeArrays: false);
-            fwrite($output, (string)json_encode($payload) . "\n");
+            fwrite($output, json_encode($payload) . "\n");
             $written++;
             if ($written % $batchSize === 0) {
                 $this->flush($output);
@@ -341,13 +341,10 @@ class ExportService
             // `original`/`changed`/`meta` may arrive as JSON-encoded strings
             // when hydration didn't unpack them — try to materialize the
             // structure for JSON/NDJSON output, leave the raw string for CSV.
-            if (in_array($field, ['original', 'changed', 'meta'], true) && is_string($value) && $value !== '') {
-                if (!$jsonEncodeArrays) {
-                    $decoded = json_decode($value, true);
-                    $extracted[$field] = is_array($decoded) ? $decoded : $value;
-
-                    continue;
-                }
+            if (in_array($field, ['original', 'changed', 'meta'], true) && is_string($value) && $value !== '' && !$jsonEncodeArrays) {
+                $decoded = json_decode($value, true);
+                $extracted[$field] = is_array($decoded) ? $decoded : $value;
+                continue;
             }
 
             $extracted[$field] = $value;

@@ -105,7 +105,7 @@ class Audit
      */
     protected static function persister(): PersisterInterface
     {
-        if (static::$persister !== null) {
+        if (static::$persister instanceof \AuditStash\PersisterInterface) {
             return static::$persister;
         }
 

@@ -141,7 +141,7 @@ class EnvironmentMetadata implements EventListenerInterface
      */
     protected function captureRequestFields(): array
     {
-        if ($this->request === null || !$this->capture) {
+        if (!$this->request instanceof \Cake\Http\ServerRequest || !$this->capture) {
             return [];
         }
 
@@ -170,7 +170,7 @@ class EnvironmentMetadata implements EventListenerInterface
      */
     protected function resolveSessionId(): ?string
     {
-        if ($this->request === null) {
+        if (!$this->request instanceof \Cake\Http\ServerRequest) {
             return null;
         }
 
@@ -207,7 +207,7 @@ class EnvironmentMetadata implements EventListenerInterface
         }
 
         // API detection (if request is available)
-        if ($this->request !== null && $this->isApiRequest($this->request)) {
+        if ($this->request instanceof \Cake\Http\ServerRequest && $this->isApiRequest($this->request)) {
             return 'api';
         }
 

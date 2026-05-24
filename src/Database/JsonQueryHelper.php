@@ -28,7 +28,7 @@ class JsonQueryHelper
      *
      * @var string
      */
-    public const KEY_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]{0,63}$/';
+    public const KEY_PATTERN = '/^[A-Za-z_]\w{0,63}$/';
 
     /**
      * Validate a JSON path key before interpolating it into a path expression.

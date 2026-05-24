@@ -7,7 +7,7 @@ namespace AuditStash\Service;
 /**
  * Immutable result of {@see ChainVerifier::verify()}.
  */
-final class ChainVerificationResult
+final readonly class ChainVerificationResult
 {
     /**
      * @param bool $intact True if every row's stored hash matches the recomputed one.
@@ -16,10 +16,10 @@ final class ChainVerificationResult
      * @param string|null $reason Human-readable description of the break, or null if intact.
      */
     public function __construct(
-        public readonly bool $intact,
-        public readonly int $rowsChecked,
-        public readonly ?int $brokenRowId,
-        public readonly ?string $reason,
+        public bool $intact,
+        public int $rowsChecked,
+        public ?int $brokenRowId,
+        public ?string $reason,
     ) {
     }
 
