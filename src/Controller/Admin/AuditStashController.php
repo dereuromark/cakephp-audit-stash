@@ -42,7 +42,7 @@ class AuditStashController extends AppController
         $recent = $service->recentEvents(20);
         $coverage = (new CoverageService())->summary();
 
-        $this->set(['kpis' => $kpis, 'histogram' => $histogram, 'topSources' => $topSources, 'topUsers' => $topUsers, 'recent' => $recent, 'coverage' => $coverage]);
+        $this->set(compact('kpis', 'histogram', 'topSources', 'topUsers', 'recent', 'coverage'));
     }
 
     /**
@@ -64,7 +64,7 @@ class AuditStashController extends AppController
 
         $summary = $service->summary();
 
-        $this->set(['rows' => $rows, 'filter' => $filter, 'includeInternal' => $includeInternal, 'summary' => $summary]);
+        $this->set(compact('rows', 'filter', 'includeInternal', 'summary'));
     }
 
     /**

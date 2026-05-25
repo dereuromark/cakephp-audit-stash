@@ -89,7 +89,7 @@ class AuditLogsController extends AppController
         $changedFields = $this->AuditLogs->getDistinctChangedFields();
         sort($changedFields);
 
-        $this->set(['auditLogs' => $auditLogs, 'sources' => $sources, 'eventTypes' => $eventTypes, 'changedFields' => $changedFields]);
+        $this->set(compact('auditLogs', 'sources', 'eventTypes', 'changedFields'));
     }
 
     /**
@@ -243,7 +243,7 @@ class AuditLogsController extends AppController
             ->orderBy(['AuditLogs.created' => 'DESC'])
             ->toArray();
 
-        $this->set(['auditLogs' => $auditLogs, 'source' => $source, 'primaryKey' => $primaryKey]);
+        $this->set(compact('auditLogs', 'source', 'primaryKey'));
     }
 
     /**
@@ -281,7 +281,7 @@ class AuditLogsController extends AppController
         // Calculate diff
         $diff = $reconstructor->calculateDiff($currentState, $targetState);
 
-        $this->set(['auditLog' => $auditLog, 'currentState' => $currentState, 'targetState' => $targetState, 'diff' => $diff]);
+        $this->set(compact('auditLog', 'currentState', 'targetState', 'diff'));
     }
 
     /**
@@ -375,7 +375,7 @@ class AuditLogsController extends AppController
             ->orderBy(['created' => 'DESC'])
             ->first();
 
-        $this->set(['source' => $source, 'primaryKey' => $primaryKey, 'deleteLog' => $deleteLog]);
+        $this->set(compact('source', 'primaryKey', 'deleteLog'));
     }
 
     /**
@@ -415,7 +415,7 @@ class AuditLogsController extends AppController
             $transactions[$transactionId]['logs'][] = $log;
         }
 
-        $this->set(['source' => $source, 'primaryKey' => $primaryKey, 'transactions' => $transactions]);
+        $this->set(compact('source', 'primaryKey', 'transactions'));
     }
 
     /**
@@ -430,7 +430,7 @@ class AuditLogsController extends AppController
         $bulkStats = $this->AuditLogs->find('bulkChangeStats', minRecords: $minRecords)
             ->toArray();
 
-        $this->set(['bulkStats' => $bulkStats, 'minRecords' => $minRecords]);
+        $this->set(compact('bulkStats', 'minRecords'));
     }
 
     /**
@@ -470,7 +470,7 @@ class AuditLogsController extends AppController
             $rowCount = $service->estimate($query);
             $hardCap = $service->hardCap();
 
-            $this->set(['rowCount' => $rowCount, 'hardCap' => $hardCap, 'defaultFloor' => $defaultFloor]);
+            $this->set(compact('rowCount', 'hardCap', 'defaultFloor'));
             $this->set('formats', ExportService::FORMATS);
             $this->set('queryParams', $this->request->getQueryParams());
 
