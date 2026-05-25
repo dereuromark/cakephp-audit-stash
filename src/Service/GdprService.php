@@ -107,8 +107,9 @@ class GdprService
             }
 
             // Anonymize PII in original data
-            if ($log->original !== null) {
-                $original = is_string($log->original) ? json_decode($log->original, true) : $log->original;
+            $originalValue = $log->original;
+            if ($originalValue !== null) {
+                $original = is_string($originalValue) ? json_decode($originalValue, true) : $originalValue;
                 if (is_array($original)) {
                     $original = $this->redactPiiFields($original, $piiFields);
                     $log->original = (string)json_encode($original, AuditStashPlugin::JSON_FLAGS);
@@ -116,8 +117,9 @@ class GdprService
             }
 
             // Anonymize PII in changed data
-            if ($log->changed !== null) {
-                $changed = is_string($log->changed) ? json_decode($log->changed, true) : $log->changed;
+            $changedValue = $log->changed;
+            if ($changedValue !== null) {
+                $changed = is_string($changedValue) ? json_decode($changedValue, true) : $changedValue;
                 if (is_array($changed)) {
                     $changed = $this->redactPiiFields($changed, $piiFields);
                     $log->changed = (string)json_encode($changed, AuditStashPlugin::JSON_FLAGS);
@@ -167,6 +169,10 @@ class GdprService
         // Iterate ResultSet directly to avoid loading all records into memory at once
         /** @var \AuditStash\Model\Entity\AuditLog $log */
         foreach ($this->findByUser($userId) as $log) {
+            $original = $log->original;
+            $changed = $log->changed;
+            $meta = $log->meta;
+
             $data[] = [
                 'id' => $log->id,
                 'transaction_key' => $log->transaction_key,
@@ -174,9 +180,9 @@ class GdprService
                 'source' => $log->source,
                 'primary_key' => $log->primary_key,
                 'display_value' => $log->display_value,
-                'original' => is_string($log->original) ? json_decode($log->original, true) : $log->original,
-                'changed' => is_string($log->changed) ? json_decode($log->changed, true) : $log->changed,
-                'meta' => is_string($log->meta) ? json_decode($log->meta, true) : $log->meta,
+                'original' => is_string($original) ? json_decode($original, true) : $original,
+                'changed' => is_string($changed) ? json_decode($changed, true) : $changed,
+                'meta' => is_string($meta) ? json_decode($meta, true) : $meta,
                 'created' => $log->created?->toIso8601String(),
             ];
         }
@@ -277,7 +283,7 @@ class GdprService
      */
     protected function hashUserId(int|string $userId): string
     {
-        return 'anon_' . substr(hash('sha256', (string)$userId . Configure::read('Security.salt', '')), 0, 8);
+        return 'anon_' . substr(hash('sha256', $userId . Configure::read('Security.salt', '')), 0, 8);
     }
 
     /**

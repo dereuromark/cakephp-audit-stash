@@ -107,11 +107,7 @@ class DiscordChannel extends AbstractWebhookChannel
      */
     protected function fieldValue(mixed $value): string
     {
-        if (is_scalar($value) || $value instanceof Stringable) {
-            $value = (string)$value;
-        } else {
-            $value = '';
-        }
+        $value = is_scalar($value) || $value instanceof Stringable ? (string)$value : '';
 
         return $value === '' ? 'n/a' : $value;
     }

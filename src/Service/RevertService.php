@@ -6,6 +6,7 @@ namespace AuditStash\Service;
 
 use AuditStash\AuditLogType;
 use AuditStash\AuditStashPlugin;
+use AuditStash\Model\Entity\AuditLog;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
@@ -143,12 +144,12 @@ class RevertService
                 ->orderBy(['created' => 'DESC'])
                 ->first();
 
-            if (!$deleteLog) {
+            if (!$deleteLog instanceof AuditLog) {
                 return false;
             }
-
             // Get state before deletion
-            $state = is_string($deleteLog->original) ? json_decode($deleteLog->original, true) : $deleteLog->original;
+            $original = $deleteLog->original;
+            $state = is_string($original) ? json_decode($original, true) : $original;
             $state = $state ?: [];
 
             // Create new entity
@@ -184,7 +185,7 @@ class RevertService
             }
 
             // Create audit entry for restore
-            $this->createRevertAudit($source, $primaryKey, $deleteLog->id, 'restore', [], $state);
+            $this->createRevertAudit($source, $primaryKey, (int)$deleteLog->id, 'restore', [], $state);
 
             return $entity;
         });

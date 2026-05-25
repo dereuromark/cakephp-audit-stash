@@ -77,7 +77,7 @@ class SlackChannelTest extends TestCase
         $fields = $payload['attachments'][0]['blocks'][2]['fields'];
         $byLabel = [];
         foreach ($fields as $field) {
-            [$label, $value] = explode("\n", $field['text'], 2);
+            [$label, $value] = explode("\n", (string)$field['text'], 2);
             $byLabel[trim($label, '*')] = $value;
         }
 

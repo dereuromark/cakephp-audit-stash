@@ -37,7 +37,7 @@ class AuditLogsController extends AppController
      *
      * @var string
      */
-    protected const FILTER_IDENTIFIER_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]{0,63}$/';
+    protected const FILTER_IDENTIFIER_PATTERN = '/^[A-Za-z_]\w{0,63}$/';
 
     /**
      * The default model class to use.

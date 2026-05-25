@@ -14,6 +14,7 @@ class DiffLibTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+
         $this->diffLib = new DiffLib();
     }
 

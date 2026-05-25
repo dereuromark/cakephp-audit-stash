@@ -132,7 +132,7 @@ class HashChain
 
         $isList = array_is_list($value);
         if ($isList) {
-            return array_map([self::class, 'canonicalize'], $value);
+            return array_map(self::canonicalize(...), $value);
         }
 
         ksort($value);

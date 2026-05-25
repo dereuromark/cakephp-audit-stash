@@ -127,11 +127,7 @@ class SlackChannel extends AbstractWebhookChannel
      */
     protected function mrkdwnField(string $label, mixed $value): array
     {
-        if (is_scalar($value) || $value instanceof Stringable) {
-            $value = (string)$value;
-        } else {
-            $value = '';
-        }
+        $value = is_scalar($value) || $value instanceof Stringable ? (string)$value : '';
         if ($value === '') {
             $value = 'n/a';
         }

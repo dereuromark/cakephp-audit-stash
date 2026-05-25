@@ -67,8 +67,8 @@ class EventFactory
                 $data['transaction_key'],
                 $data['primary_key'] ?? null,
                 $data['source'],
-                array_key_exists('changed', $data) ? $data['changed'] : null,
-                array_key_exists('original', $data) ? $data['original'] : null,
+                $data['changed'] ?? null,
+                $data['original'] ?? null,
                 new Entity(),
                 $displayValue,
             );

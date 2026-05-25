@@ -39,11 +39,7 @@ class UnusualTimeActivityRule extends AbstractRule
             return true;
         }
 
-        if ($timeOfDay < $businessHours['start'] || $timeOfDay > $businessHours['end']) {
-            return true;
-        }
-
-        return false;
+        return $timeOfDay < $businessHours['start'] || $timeOfDay > $businessHours['end'];
     }
 
     /**

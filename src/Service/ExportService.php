@@ -212,7 +212,7 @@ class ExportService
      */
     public function filename(string $format): string
     {
-        return sprintf('audit_logs_%s.%s', date('Y-m-d_His'), $format === 'ndjson' ? 'ndjson' : $format);
+        return sprintf('audit_logs_%s.%s', date('Y-m-d_His'), $format);
     }
 
     /**
@@ -341,13 +341,11 @@ class ExportService
             // `original`/`changed`/`meta` may arrive as JSON-encoded strings
             // when hydration didn't unpack them — try to materialize the
             // structure for JSON/NDJSON output, leave the raw string for CSV.
-            if (in_array($field, ['original', 'changed', 'meta'], true) && is_string($value) && $value !== '') {
-                if (!$jsonEncodeArrays) {
-                    $decoded = json_decode($value, true);
-                    $extracted[$field] = is_array($decoded) ? $decoded : $value;
+            if (in_array($field, ['original', 'changed', 'meta'], true) && is_string($value) && $value !== '' && !$jsonEncodeArrays) {
+                $decoded = json_decode($value, true);
+                $extracted[$field] = is_array($decoded) ? $decoded : $value;
 
-                    continue;
-                }
+                continue;
             }
 
             $extracted[$field] = $value;
