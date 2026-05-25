@@ -10,6 +10,7 @@ use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Model\Behavior\AuditLogBehavior;
 use AuditStash\Test\DebugPersister;
 use Cake\Core\Configure;
+use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
@@ -346,6 +347,148 @@ class AuditIntegrationTest extends TestCase
             });
 
         $this->table->save($entity);
+    }
+
+    /**
+     * Tests that a bulk saveMany logs exactly one audit event per entity.
+     *
+     * Regression test for saveMany logging nothing: CakePHP casts the options
+     * to a plain array and re-wraps them per entity inside `Table::saveMany()`,
+     * so the per-entity `_auditQueue` is discarded before the deferred
+     * `Model.afterSaveCommit` fires on the (queue-less) outer options. Without
+     * the bulk-save detection the audit log stayed empty for saveMany.
+     *
+     * @return void
+     */
+    public function testSaveManyLogsOneEventPerEntity()
+    {
+        $entities = [
+            $this->table->newEntity(['title' => 'Bulk 1', 'body' => 'b1']),
+            $this->table->newEntity(['title' => 'Bulk 2', 'body' => 'b2']),
+            $this->table->newEntity(['title' => 'Bulk 3', 'body' => 'b3']),
+        ];
+
+        $persisted = [];
+        $this->persister
+            ->expects($this->atLeastOnce())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) use (&$persisted): void {
+                foreach ($events as $event) {
+                    $this->assertInstanceOf(AuditCreateEvent::class, $event);
+                    $this->assertSame('Articles', $event->getSourceName());
+                    $persisted[] = $event;
+                }
+            });
+
+        $this->table->saveManyOrFail($entities);
+
+        // One create event per entity (was zero before the fix).
+        $this->assertCount(count($entities), $persisted);
+        $titles = array_map(fn ($event): mixed => $event->getChanged()['title'], $persisted);
+        sort($titles);
+        $this->assertSame(['Bulk 1', 'Bulk 2', 'Bulk 3'], $titles);
+    }
+
+    /**
+     * Tests that a bulk saveMany of entities with audited hasMany children logs
+     * every parent and child exactly once (no duplicates, none dropped), with
+     * each parent sharing a transaction id with its own children.
+     *
+     * @return void
+     */
+    public function testSaveManyWithHasManyLogsAllEvents()
+    {
+        $this->table->Comments->addBehavior('AuditLog', [
+            'className' => AuditLogBehavior::class,
+        ]);
+
+        $entities = [
+            $this->table->newEntity([
+                'title' => 'Parent 1',
+                'body' => 'b1',
+                'comments' => [['comment' => 'c1', 'user_id' => 1]],
+            ]),
+            $this->table->newEntity([
+                'title' => 'Parent 2',
+                'body' => 'b2',
+                'comments' => [['comment' => 'c2', 'user_id' => 1]],
+            ]),
+        ];
+
+        $persisted = [];
+        $this->persister
+            ->expects($this->atLeastOnce())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) use (&$persisted): void {
+                foreach ($events as $event) {
+                    $persisted[] = $event;
+                }
+            });
+
+        $this->table->saveManyOrFail($entities);
+
+        // 2 articles + 2 comments, each logged exactly once.
+        $this->assertCount(4, $persisted);
+
+        $bySource = [];
+        foreach ($persisted as $event) {
+            $bySource[$event->getSourceName()][] = $event;
+        }
+        $this->assertCount(2, $bySource['Articles']);
+        $this->assertCount(2, $bySource['Comments']);
+
+        // Each comment shares its transaction id with exactly one article.
+        $articleTransactions = array_map(
+            fn ($event): string => $event->getTransactionId(),
+            $bySource['Articles'],
+        );
+        foreach ($bySource['Comments'] as $comment) {
+            $this->assertContains(
+                $comment->getTransactionId(),
+                $articleTransactions,
+                'Each child must be grouped under its parent transaction id.',
+            );
+        }
+    }
+
+    /**
+     * Tests that a rolled-back saveMany does not write phantom audit records.
+     *
+     * Audit events must only be persisted after the surrounding transaction
+     * commits. If a later entity aborts the bulk save, the whole transaction
+     * rolls back and nothing must have been logged for the entities saved
+     * earlier in the same operation.
+     *
+     * @return void
+     */
+    public function testSaveManyRollbackDoesNotLogPhantomRecords()
+    {
+        // Abort the save of the second entity, rolling back the whole saveMany.
+        $this->table->getEventManager()->on(
+            'Model.beforeSave',
+            function ($event, $entity, $options): void {
+                if ($entity->get('title') === 'Boom') {
+                    $event->setResult(false);
+                    $event->stopPropagation();
+                }
+            },
+        );
+
+        $this->persister
+            ->expects($this->never())
+            ->method('logEvents');
+
+        $entities = [
+            $this->table->newEntity(['title' => 'Good', 'body' => 'b']),
+            $this->table->newEntity(['title' => 'Boom', 'body' => 'b']),
+        ];
+
+        try {
+            $this->table->saveManyOrFail($entities);
+            $this->fail('Expected PersistenceFailedException was not thrown.');
+        } catch (PersistenceFailedException) {
+            // Expected: the bulk save aborted and rolled back.
+        }
     }
 
     /**

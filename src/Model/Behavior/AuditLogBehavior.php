@@ -24,6 +24,7 @@ use Cake\Utility\Text;
 use SplObjectStorage;
 use Stringable;
 use UnitEnum;
+use WeakMap;
 use function Cake\Collection\collection;
 
 /**
@@ -78,6 +79,26 @@ class AuditLogBehavior extends Behavior
     protected ?PersisterInterface $persister = null;
 
     /**
+     * Audit queues kept alive across a `Table::saveMany()` bulk operation,
+     * keyed by the primary entity. CakePHP discards the per-entity options
+     * (and its queue) before the deferred `Model.afterSaveCommit` fires, so the
+     * queue is stashed here at `beforeSave` time and retrieved in
+     * `afterCommit()`. A `WeakMap` is used so entries vanish automatically if a
+     * bulk save rolls back (the commit event never fires to clean them up).
+     *
+     * @var \WeakMap<\Cake\Datasource\EntityInterface, \SplObjectStorage<\Cake\Datasource\EntityInterface, \AuditStash\Event\BaseEvent>>
+     */
+    protected WeakMap $bulkSaveQueues;
+
+    /**
+     * @inheritDoc
+     */
+    public function initialize(array $config): void
+    {
+        $this->bulkSaveQueues = new WeakMap();
+    }
+
+    /**
      * Returns the list of implemented events.
      *
      * @return array
@@ -120,6 +141,23 @@ class AuditLogBehavior extends Behavior
 
         if (!isset($options['_auditQueue'])) {
             $options['_auditQueue'] = new SplObjectStorage();
+        }
+
+        // Inside a saveMany() the per-entity options (and queue) are discarded
+        // before the deferred afterSaveCommit fires, so keep a reference to the
+        // queue keyed by the primary entity. Associated saves share this same
+        // queue, so afterCommit() can flush parent and children together once
+        // the outer transaction has committed. Registered on the primary entity
+        // regardless of whether it produces an event, so association-only
+        // changes are not lost.
+        if (
+            $event->getName() === 'Model.beforeSave'
+            && ($options['_primary'] ?? false)
+            && $this->isBulkSave($options)
+        ) {
+            /** @var \SplObjectStorage<\Cake\Datasource\EntityInterface, \AuditStash\Event\BaseEvent> $queue */
+            $queue = $options['_auditQueue'];
+            $this->bulkSaveQueues[$entity] = $queue;
         }
 
         // Capture cascade-deleted dependent records before they are deleted
@@ -320,6 +358,25 @@ class AuditLogBehavior extends Behavior
     }
 
     /**
+     * Determines whether the current save runs inside a `Table::saveMany()`
+     * bulk operation.
+     *
+     * `Table::saveMany()` is the only core path that sets `_cleanOnSuccess` to
+     * `false`, which makes it a reliable marker for the bulk-save case where the
+     * per-entity options (and audit queue) are discarded before the deferred
+     * commit event fires. See {@see self::injectTracking()} and
+     * {@see self::afterCommit()} for how the queue is kept alive across it.
+     *
+     * @param \ArrayObject $options The save options
+     *
+     * @return bool
+     */
+    protected function isBulkSave(ArrayObject $options): bool
+    {
+        return ($options['_cleanOnSuccess'] ?? true) === false;
+    }
+
+    /**
      * Persists all audit log events stored in the `_eventQueue` key inside $options.
      *
      * @param \Cake\Event\Event $event The Model event that is enclosed inside a transaction
@@ -333,29 +390,36 @@ class AuditLogBehavior extends Behavior
         EntityInterface $entity,
         ArrayObject $options,
     ): void {
-        if (!isset($options['_auditQueue'])) {
+        // The queue normally lives on the (shared) options object. For a
+        // saveMany() the per-entity options are discarded before this deferred
+        // commit event fires, so fall back to the queue stashed by entity in
+        // injectTracking().
+        /** @var \SplObjectStorage<\Cake\Datasource\EntityInterface, \AuditStash\Event\BaseEvent>|null $queue */
+        $queue = $options['_auditQueue'] ?? ($this->bulkSaveQueues[$entity] ?? null);
+        if ($queue === null) {
             return;
         }
 
-        /** @var \SplObjectStorage<\Cake\Datasource\EntityInterface, \AuditStash\Event\BaseEvent> $queue */
-        $queue = $options['_auditQueue'];
         $events = collection($queue)
             ->map(fn ($entity, $pos, $it): mixed => $it->getInfo())
             ->toList();
 
-        if (!$events) {
-            return;
+        if ($events) {
+            $data = $this->_table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
+            $this->persister()->logEvents($data->getData('logs'));
         }
 
-        $data = $this->_table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
-        $this->persister()->logEvents($data->getData('logs'));
-
-        // Reset the queue after flushing. The same options object (and thus the
-        // same queue) is shared across every entity of a bulk operation, while
-        // `Model.afterDeleteCommit`/`afterSaveCommit` is dispatched once per
-        // entity. Without this, each subsequent dispatch would re-persist the
-        // whole queue, turning N bulk deletes into N*N audit records.
-        $options['_auditQueue'] = new SplObjectStorage();
+        // Forget the queue after flushing. For a bulk delete the same options
+        // (and queue) is shared while `Model.afterDeleteCommit` is dispatched
+        // once per entity; without resetting, each dispatch would re-persist the
+        // whole queue (N deletes -> N*N records). For a saveMany the stashed
+        // per-entity queue is dropped once consumed.
+        if (isset($options['_auditQueue'])) {
+            $options['_auditQueue'] = new SplObjectStorage();
+        }
+        if (isset($this->bulkSaveQueues[$entity])) {
+            unset($this->bulkSaveQueues[$entity]);
+        }
     }
 
     /**
