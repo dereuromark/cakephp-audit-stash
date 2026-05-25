@@ -146,9 +146,10 @@ class RevertService
             if (!$deleteLog) {
                 return false;
             }
+            /** @var \AuditStash\Model\Entity\AuditLog $deleteLog */
 
             // Get state before deletion
-            $original = $deleteLog->get('original');
+            $original = $deleteLog->original;
             $state = is_string($original) ? json_decode($original, true) : $original;
             $state = $state ?: [];
 
@@ -185,7 +186,7 @@ class RevertService
             }
 
             // Create audit entry for restore
-            $this->createRevertAudit($source, $primaryKey, (int)$deleteLog->get('id'), 'restore', [], $state);
+            $this->createRevertAudit($source, $primaryKey, (int)$deleteLog->id, 'restore', [], $state);
 
             return $entity;
         });

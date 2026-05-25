@@ -89,12 +89,12 @@ class Alert
             'severity' => $this->severity,
             'message' => $this->message,
             'audit_log' => [
-                'id' => $this->auditLog->get('id'),
-                'type' => $this->auditLog->get('type'),
-                'source' => $this->auditLog->get('source'),
-                'primary_key' => $this->auditLog->get('primary_key'),
-                'transaction_key' => $this->auditLog->get('transaction_key'),
-                'created' => $this->auditLog->get('created')?->toIso8601String(),
+                'id' => $this->auditLog->id,
+                'type' => $this->auditLog->type,
+                'source' => $this->auditLog->source,
+                'primary_key' => $this->auditLog->primary_key,
+                'transaction_key' => $this->auditLog->transaction_key,
+                'created' => $this->auditLog->created?->toIso8601String(),
             ],
             'context' => $this->context,
         ];
