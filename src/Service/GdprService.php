@@ -167,17 +167,21 @@ class GdprService
         // Iterate ResultSet directly to avoid loading all records into memory at once
         /** @var \AuditStash\Model\Entity\AuditLog $log */
         foreach ($this->findByUser($userId) as $log) {
+            $original = $log->get('original');
+            $changed = $log->get('changed');
+            $meta = $log->get('meta');
+
             $data[] = [
-                'id' => $log->id,
-                'transaction_key' => $log->transaction_key,
-                'type' => $log->type,
-                'source' => $log->source,
-                'primary_key' => $log->primary_key,
-                'display_value' => $log->display_value,
-                'original' => is_string($log->original) ? json_decode($log->original, true) : $log->original,
-                'changed' => is_string($log->changed) ? json_decode($log->changed, true) : $log->changed,
-                'meta' => is_string($log->meta) ? json_decode($log->meta, true) : $log->meta,
-                'created' => $log->created?->toIso8601String(),
+                'id' => $log->get('id'),
+                'transaction_key' => $log->get('transaction_key'),
+                'type' => $log->get('type'),
+                'source' => $log->get('source'),
+                'primary_key' => $log->get('primary_key'),
+                'display_value' => $log->get('display_value'),
+                'original' => is_string($original) ? json_decode($original, true) : $original,
+                'changed' => is_string($changed) ? json_decode($changed, true) : $changed,
+                'meta' => is_string($meta) ? json_decode($meta, true) : $meta,
+                'created' => $log->get('created')?->toIso8601String(),
             ];
         }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AuditStash\Service;
 
-use Cake\Datasource\EntityInterface;
 use Cake\ORM\Table;
 use InvalidArgumentException;
 
@@ -80,9 +79,6 @@ class ChainVerifier
 
             $count = 0;
             foreach ($rows as $row) {
-                if (!$row instanceof EntityInterface) {
-                    continue;
-                }
                 $count++;
                 $fields = $row->toArray();
                 $id = (int)($fields[$primaryKey] ?? 0);
