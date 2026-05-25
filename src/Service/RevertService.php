@@ -155,8 +155,10 @@ class RevertService
             // Create new entity
             $table = $this->fetchTable($source);
 
-            /** @var string $primaryKeyField */
             $primaryKeyField = $table->getPrimaryKey();
+            if (is_array($primaryKeyField)) {
+                $primaryKeyField = $primaryKeyField[0] ?? '';
+            }
             $exists = $table->exists([$primaryKeyField => $primaryKey]);
             if ($exists) {
                 return false;
