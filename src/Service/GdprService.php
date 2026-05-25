@@ -107,8 +107,9 @@ class GdprService
             }
 
             // Anonymize PII in original data
-            if ($log->original !== null) {
-                $original = is_string($log->original) ? json_decode($log->original, true) : $log->original;
+            $originalValue = $log->get('original');
+            if ($originalValue !== null) {
+                $original = is_string($originalValue) ? json_decode($originalValue, true) : $originalValue;
                 if (is_array($original)) {
                     $original = $this->redactPiiFields($original, $piiFields);
                     $log->original = (string)json_encode($original, AuditStashPlugin::JSON_FLAGS);
@@ -116,8 +117,9 @@ class GdprService
             }
 
             // Anonymize PII in changed data
-            if ($log->changed !== null) {
-                $changed = is_string($log->changed) ? json_decode($log->changed, true) : $log->changed;
+            $changedValue = $log->get('changed');
+            if ($changedValue !== null) {
+                $changed = is_string($changedValue) ? json_decode($changedValue, true) : $changedValue;
                 if (is_array($changed)) {
                     $changed = $this->redactPiiFields($changed, $piiFields);
                     $log->changed = (string)json_encode($changed, AuditStashPlugin::JSON_FLAGS);

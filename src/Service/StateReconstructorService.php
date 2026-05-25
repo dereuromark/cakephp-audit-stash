@@ -51,7 +51,7 @@ class StateReconstructorService
                 $state = array_merge($state, $changed);
             }
 
-            if ($log->id === $auditLogId) {
+            if ((int)$log->get('id') === $auditLogId) {
                 break;
             }
         }
