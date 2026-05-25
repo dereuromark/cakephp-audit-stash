@@ -141,7 +141,7 @@ class TablePersister implements PersisterInterface
      */
     public function getTable(): Table
     {
-        if (!$this->_table instanceof Table) {
+        if (!($this->_table instanceof Table)) {
             $this->setTable($this->getConfig('table'));
         }
 

@@ -151,7 +151,7 @@ class AuditLogBehavior extends Behavior
 
         foreach ($this->_table->associations() as $association) {
             // Only process HasMany and HasOne associations with dependent = true
-            if (!$association instanceof HasMany && !$association instanceof HasOne) {
+            if (!($association instanceof HasMany) && !($association instanceof HasOne)) {
                 continue;
             }
 
@@ -474,7 +474,7 @@ class AuditLogBehavior extends Behavior
      */
     public function persister(?PersisterInterface $persister = null): PersisterInterface
     {
-        if (!$persister instanceof PersisterInterface && !$this->persister instanceof PersisterInterface) {
+        if (!($persister instanceof PersisterInterface) && !($this->persister instanceof PersisterInterface)) {
             $class = Configure::read('AuditStash.persister') ?: TablePersister::class;
             $index = $this->getConfig('index') ?: $this->_table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);

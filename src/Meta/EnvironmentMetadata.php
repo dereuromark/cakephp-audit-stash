@@ -141,7 +141,7 @@ class EnvironmentMetadata implements EventListenerInterface
      */
     protected function captureRequestFields(): array
     {
-        if (!$this->request instanceof ServerRequest || !$this->capture) {
+        if (!($this->request instanceof ServerRequest) || !$this->capture) {
             return [];
         }
 
@@ -170,7 +170,7 @@ class EnvironmentMetadata implements EventListenerInterface
      */
     protected function resolveSessionId(): ?string
     {
-        if (!$this->request instanceof ServerRequest) {
+        if (!($this->request instanceof ServerRequest)) {
             return null;
         }
 
