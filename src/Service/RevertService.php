@@ -147,7 +147,6 @@ class RevertService
                 return false;
             }
             /** @var \AuditStash\Model\Entity\AuditLog $deleteLog */
-
             // Get state before deletion
             $original = $deleteLog->original;
             $state = is_string($original) ? json_decode($original, true) : $original;
