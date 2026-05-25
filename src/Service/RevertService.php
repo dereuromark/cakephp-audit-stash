@@ -148,7 +148,8 @@ class RevertService
             }
 
             // Get state before deletion
-            $state = is_string($deleteLog->original) ? json_decode($deleteLog->original, true) : $deleteLog->original;
+            $original = $deleteLog->get('original');
+            $state = is_string($original) ? json_decode($original, true) : $original;
             $state = $state ?: [];
 
             // Create new entity
@@ -184,7 +185,7 @@ class RevertService
             }
 
             // Create audit entry for restore
-            $this->createRevertAudit($source, $primaryKey, $deleteLog->id, 'restore', [], $state);
+            $this->createRevertAudit($source, $primaryKey, (int)$deleteLog->get('id'), 'restore', [], $state);
 
             return $entity;
         });
