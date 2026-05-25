@@ -216,7 +216,7 @@ class AuditLogsController extends AppController
     {
         $auditLog = $this->AuditLogs->get($id);
 
-        $this->set(['auditLog' => $auditLog]);
+        $this->set(compact('auditLog'));
     }
 
     /**
