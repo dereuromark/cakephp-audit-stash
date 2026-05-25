@@ -90,7 +90,7 @@ class RevertServiceTest extends TestCase
         $this->assertEquals('Articles', $revertLog->source);
         $this->assertEquals('1', $revertLog->primary_key);
 
-        $meta = json_decode((string)$revertLog->meta, true);
+        $meta = $this->normalizeJsonArray($revertLog->meta);
         $this->assertEquals('full', $meta['revert_type']);
         $this->assertEquals($createLog->id, $meta['revert_to_audit_id']);
     }
@@ -138,7 +138,7 @@ class RevertServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($revertLog);
-        $meta = json_decode((string)$revertLog->meta, true);
+        $meta = $this->normalizeJsonArray($revertLog->meta);
         $this->assertEquals('partial', $meta['revert_type']);
     }
 
@@ -185,7 +185,7 @@ class RevertServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($revertLog);
-        $meta = json_decode((string)$revertLog->meta, true);
+        $meta = $this->normalizeJsonArray($revertLog->meta);
         $this->assertEquals('restore', $meta['revert_type']);
     }
 
@@ -299,5 +299,24 @@ class RevertServiceTest extends TestCase
         $this->assertNotFalse($result);
         $this->assertEquals('Current Title', $result->title);
         $this->assertEquals('Current Body', $result->body);
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return array<string, mixed>
+     */
+    protected function normalizeJsonArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (!is_string($value)) {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

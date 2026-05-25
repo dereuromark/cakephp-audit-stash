@@ -178,16 +178,16 @@ class GdprCommandTest extends TestCase
         $this->assertSame('ANONYMIZED', $anonymized->user_display);
 
         // Check meta was anonymized
-        $meta = json_decode((string)$anonymized->meta, true);
+        $meta = $this->normalizeJsonArray($anonymized->meta);
         $this->assertSame('ANONYMIZED', $meta['user']);
         $this->assertSame('0.0.0.0', $meta['ip']);
 
         // Check PII was redacted
-        $original = json_decode((string)$anonymized->original, true);
+        $original = $this->normalizeJsonArray($anonymized->original);
         $this->assertSame('[REDACTED]', $original['email']);
         $this->assertSame('[REDACTED]', $original['name']);
 
-        $changed = json_decode((string)$anonymized->changed, true);
+        $changed = $this->normalizeJsonArray($anonymized->changed);
         $this->assertSame('[REDACTED]', $changed['email']);
         $this->assertSame('[REDACTED]', $changed['name']);
     }
@@ -449,5 +449,24 @@ class GdprCommandTest extends TestCase
         // Verify user 123's logs are gone
         $deleted = $auditLogsTable->find()->where(['user_id' => '123'])->count();
         $this->assertSame(0, $deleted);
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return array<string, mixed>
+     */
+    protected function normalizeJsonArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return $value;
+        }
+        if (!is_string($value)) {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }
