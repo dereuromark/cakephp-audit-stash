@@ -9,6 +9,8 @@ use AuditStash\Event\AuditDeleteEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Model\Behavior\AuditLogBehavior;
 use AuditStash\Test\DebugPersister;
+use Cake\Core\Configure;
+use Cake\ORM\Exception\PersistenceFailedException;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
@@ -348,6 +350,148 @@ class AuditIntegrationTest extends TestCase
     }
 
     /**
+     * Tests that a bulk saveMany logs exactly one audit event per entity.
+     *
+     * Regression test for saveMany logging nothing: CakePHP casts the options
+     * to a plain array and re-wraps them per entity inside `Table::saveMany()`,
+     * so the per-entity `_auditQueue` is discarded before the deferred
+     * `Model.afterSaveCommit` fires on the (queue-less) outer options. Without
+     * the bulk-save detection the audit log stayed empty for saveMany.
+     *
+     * @return void
+     */
+    public function testSaveManyLogsOneEventPerEntity()
+    {
+        $entities = [
+            $this->table->newEntity(['title' => 'Bulk 1', 'body' => 'b1']),
+            $this->table->newEntity(['title' => 'Bulk 2', 'body' => 'b2']),
+            $this->table->newEntity(['title' => 'Bulk 3', 'body' => 'b3']),
+        ];
+
+        $persisted = [];
+        $this->persister
+            ->expects($this->atLeastOnce())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) use (&$persisted): void {
+                foreach ($events as $event) {
+                    $this->assertInstanceOf(AuditCreateEvent::class, $event);
+                    $this->assertSame('Articles', $event->getSourceName());
+                    $persisted[] = $event;
+                }
+            });
+
+        $this->table->saveManyOrFail($entities);
+
+        // One create event per entity (was zero before the fix).
+        $this->assertCount(count($entities), $persisted);
+        $titles = array_map(fn ($event): mixed => $event->getChanged()['title'], $persisted);
+        sort($titles);
+        $this->assertSame(['Bulk 1', 'Bulk 2', 'Bulk 3'], $titles);
+    }
+
+    /**
+     * Tests that a bulk saveMany of entities with audited hasMany children logs
+     * every parent and child exactly once (no duplicates, none dropped), with
+     * each parent sharing a transaction id with its own children.
+     *
+     * @return void
+     */
+    public function testSaveManyWithHasManyLogsAllEvents()
+    {
+        $this->table->Comments->addBehavior('AuditLog', [
+            'className' => AuditLogBehavior::class,
+        ]);
+
+        $entities = [
+            $this->table->newEntity([
+                'title' => 'Parent 1',
+                'body' => 'b1',
+                'comments' => [['comment' => 'c1', 'user_id' => 1]],
+            ]),
+            $this->table->newEntity([
+                'title' => 'Parent 2',
+                'body' => 'b2',
+                'comments' => [['comment' => 'c2', 'user_id' => 1]],
+            ]),
+        ];
+
+        $persisted = [];
+        $this->persister
+            ->expects($this->atLeastOnce())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) use (&$persisted): void {
+                foreach ($events as $event) {
+                    $persisted[] = $event;
+                }
+            });
+
+        $this->table->saveManyOrFail($entities);
+
+        // 2 articles + 2 comments, each logged exactly once.
+        $this->assertCount(4, $persisted);
+
+        $bySource = [];
+        foreach ($persisted as $event) {
+            $bySource[$event->getSourceName()][] = $event;
+        }
+        $this->assertCount(2, $bySource['Articles']);
+        $this->assertCount(2, $bySource['Comments']);
+
+        // Each comment shares its transaction id with exactly one article.
+        $articleTransactions = array_map(
+            fn ($event): string => $event->getTransactionId(),
+            $bySource['Articles'],
+        );
+        foreach ($bySource['Comments'] as $comment) {
+            $this->assertContains(
+                $comment->getTransactionId(),
+                $articleTransactions,
+                'Each child must be grouped under its parent transaction id.',
+            );
+        }
+    }
+
+    /**
+     * Tests that a rolled-back saveMany does not write phantom audit records.
+     *
+     * Audit events must only be persisted after the surrounding transaction
+     * commits. If a later entity aborts the bulk save, the whole transaction
+     * rolls back and nothing must have been logged for the entities saved
+     * earlier in the same operation.
+     *
+     * @return void
+     */
+    public function testSaveManyRollbackDoesNotLogPhantomRecords()
+    {
+        // Abort the save of the second entity, rolling back the whole saveMany.
+        $this->table->getEventManager()->on(
+            'Model.beforeSave',
+            function ($event, $entity, $options): void {
+                if ($entity->get('title') === 'Boom') {
+                    $event->setResult(false);
+                    $event->stopPropagation();
+                }
+            },
+        );
+
+        $this->persister
+            ->expects($this->never())
+            ->method('logEvents');
+
+        $entities = [
+            $this->table->newEntity(['title' => 'Good', 'body' => 'b']),
+            $this->table->newEntity(['title' => 'Boom', 'body' => 'b']),
+        ];
+
+        try {
+            $this->table->saveManyOrFail($entities);
+            $this->fail('Expected PersistenceFailedException was not thrown.');
+        } catch (PersistenceFailedException) {
+            // Expected: the bulk save aborted and rolled back.
+        }
+    }
+
+    /**
      * Tests that deleting an entity logs a single event.
      *
      * @return void
@@ -367,6 +511,107 @@ class AuditIntegrationTest extends TestCase
             });
 
         $this->table->delete($entity);
+    }
+
+    /**
+     * Tests that a bulk deleteMany logs exactly one audit event per entity.
+     *
+     * Regression test for the N^2 duplication: CakePHP shares a single options
+     * object (and therefore one `_auditQueue`) across all entities of a
+     * `deleteMany()` and then dispatches `Model.afterDeleteCommit` once per
+     * entity. Before the fix every dispatch re-flushed the whole queue, so
+     * deleting N rows produced N*N audit records.
+     *
+     * @return void
+     */
+    public function testDeleteManyLogsOneEventPerEntity()
+    {
+        $entities = $this->table->find()->all()->toList();
+        $count = count($entities);
+        $this->assertGreaterThan(1, $count, 'Need multiple rows to exercise the bulk path.');
+
+        $persistedIds = [];
+        $this->persister
+            ->expects($this->atLeastOnce())
+            ->method('logEvents')
+            ->willReturnCallback(function (array $events) use (&$persistedIds): void {
+                foreach ($events as $event) {
+                    $this->assertInstanceOf(AuditDeleteEvent::class, $event);
+                    $persistedIds[] = $event->getId();
+                }
+            });
+
+        $this->table->deleteManyOrFail($entities);
+
+        // Exactly one event per entity (was $count * $count before the fix).
+        $this->assertCount(
+            $count,
+            $persistedIds,
+            'deleteMany must log exactly one audit event per entity, not N^2.',
+        );
+        // And every entity logged once, none duplicated.
+        $expectedIds = array_map(
+            fn ($entity): mixed => $entity->get('id'),
+            $entities,
+        );
+        sort($expectedIds);
+        sort($persistedIds);
+        $this->assertSame($expectedIds, $persistedIds);
+    }
+
+    /**
+     * Tests that the `afterSave` save strategy also logs exactly one event per
+     * entity on a bulk deleteMany.
+     *
+     * In this strategy `afterCommit()` is invoked inline (per entity, during the
+     * transaction) instead of via the commit events. The events accumulate in
+     * the shared queue, so without clearing it every inline flush re-persisted
+     * the already-queued events (1 + 2 + ... + N records).
+     *
+     * @return void
+     */
+    public function testDeleteManyWithAfterSaveStrategyLogsOneEventPerEntity()
+    {
+        Configure::write('AuditStash.saveType', 'afterSave');
+        try {
+            // Build a fresh, isolated table so the behavior is only ever
+            // registered with the afterSave strategy (implementedEvents is
+            // evaluated when the behavior is added).
+            $locator = $this->getTableLocator();
+            $locator->clear();
+
+            $table = $locator->get('Articles');
+            $table->addBehavior('AuditLog', [
+                'className' => AuditLogBehavior::class,
+            ]);
+            $table->behaviors()->get('AuditLog')->persister($this->persister);
+
+            $entities = $table->find()->all()->toList();
+            $count = count($entities);
+            $this->assertGreaterThan(1, $count, 'Need multiple rows to exercise the bulk path.');
+
+            $persistedIds = [];
+            $this->persister
+                ->expects($this->atLeastOnce())
+                ->method('logEvents')
+                ->willReturnCallback(function (array $events) use (&$persistedIds): void {
+                    foreach ($events as $event) {
+                        $this->assertInstanceOf(AuditDeleteEvent::class, $event);
+                        $persistedIds[] = $event->getId();
+                    }
+                });
+
+            $table->deleteManyOrFail($entities);
+
+            $this->assertCount(
+                $count,
+                $persistedIds,
+                'afterSave strategy must log exactly one audit event per entity.',
+            );
+        } finally {
+            Configure::write('AuditStash.saveType', null);
+            $this->getTableLocator()->clear();
+        }
     }
 
     /**
