@@ -349,6 +349,13 @@ class AuditLogBehavior extends Behavior
 
         $data = $this->_table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
         $this->persister()->logEvents($data->getData('logs'));
+
+        // Reset the queue after flushing. The same options object (and thus the
+        // same queue) is shared across every entity of a bulk operation, while
+        // `Model.afterDeleteCommit`/`afterSaveCommit` is dispatched once per
+        // entity. Without this, each subsequent dispatch would re-persist the
+        // whole queue, turning N bulk deletes into N*N audit records.
+        $options['_auditQueue'] = new SplObjectStorage();
     }
 
     /**
