@@ -207,6 +207,29 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
             letter-spacing: 0.025em;
         }
 
+        .table th a {
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            text-decoration: none;
+        }
+
+        .table th a.asc,
+        .table th a.desc {
+            color: var(--audit-dark);
+        }
+
+        .table th a.asc::after {
+            content: "\2191";
+            font-size: 0.875em;
+        }
+
+        .table th a.desc::after {
+            content: "\2193";
+            font-size: 0.875em;
+        }
+
         .table td {
             vertical-align: middle;
         }
