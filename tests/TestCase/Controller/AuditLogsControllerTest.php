@@ -856,6 +856,7 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertResponseContains('Revert Preview');
+        $this->assertResponseContains('type="hidden" name="fields[]" value="0"');
     }
 
     /**

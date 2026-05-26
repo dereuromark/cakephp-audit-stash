@@ -74,7 +74,6 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
                                 <?= $this->Form->checkbox('fields[]', [
                                     'value' => $field,
                                     'checked' => true,
-                                    'hiddenField' => false,
                                     'class' => 'form-check-input',
                                 ]) ?>
                             </td>
