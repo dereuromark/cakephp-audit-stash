@@ -39,7 +39,7 @@ class GdprService
      *
      * @return \Cake\ORM\Query\SelectQuery
      */
-    public function findByUser(int|string $userId): SelectQuery
+    public function findByUser(string|int $userId): SelectQuery
     {
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
@@ -63,7 +63,7 @@ class GdprService
      *
      * @return int Number of records anonymized
      */
-    public function anonymize(int|string $userId, array $options = []): int
+    public function anonymize(string|int $userId, array $options = []): int
     {
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
@@ -144,7 +144,7 @@ class GdprService
      *
      * @return int Number of records deleted
      */
-    public function delete(int|string $userId): int
+    public function delete(string|int $userId): int
     {
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
@@ -162,7 +162,7 @@ class GdprService
      *
      * @return array<mixed>|string
      */
-    public function export(int|string $userId, string $format = 'json'): array|string
+    public function export(string|int $userId, string $format = 'json'): array|string
     {
         $data = [];
 
@@ -206,7 +206,7 @@ class GdprService
      *
      * @return array<string, mixed>
      */
-    public function getStats(int|string $userId): array
+    public function getStats(string|int $userId): array
     {
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
@@ -264,7 +264,7 @@ class GdprService
      *
      * @return string|null
      */
-    protected function generateAnonymizedUserId(int|string $userId, string $strategy): ?string
+    protected function generateAnonymizedUserId(string|int $userId, string $strategy): ?string
     {
         return match ($strategy) {
             'hash' => $this->hashUserId($userId),
@@ -281,7 +281,7 @@ class GdprService
      *
      * @return string
      */
-    protected function hashUserId(int|string $userId): string
+    protected function hashUserId(string|int $userId): string
     {
         return 'anon_' . substr(hash('sha256', $userId . Configure::read('Security.salt', '')), 0, 8);
     }

@@ -506,10 +506,10 @@ class AuditHelper extends Helper
      * @return array|string|null URL or null if no link
      */
     protected function buildUserUrl(
-        callable|string|array $linkConfig,
+        callable|array|string $linkConfig,
         string $user,
         string $displayName,
-    ): string|array|null {
+    ): array|string|null {
         if (is_callable($linkConfig)) {
             return $linkConfig($user, $displayName);
         }
@@ -573,11 +573,11 @@ class AuditHelper extends Helper
      * @return array|string|null URL or null if no link
      */
     protected function buildRecordUrl(
-        callable|string|array $linkConfig,
+        callable|array|string $linkConfig,
         string $source,
         string $primaryKey,
         string $displayValue,
-    ): string|array|null {
+    ): array|string|null {
         if (is_callable($linkConfig)) {
             return $linkConfig($source, $primaryKey, $displayValue);
         }
@@ -630,7 +630,7 @@ class AuditHelper extends Helper
      *
      * @return string HTML button
      */
-    public function restoreButton(string $source, int|string $primaryKey, array $options = []): string
+    public function restoreButton(string $source, string|int $primaryKey, array $options = []): string
     {
         $options += ['class' => 'btn btn-sm btn-success'];
 
