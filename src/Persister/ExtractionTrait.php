@@ -113,7 +113,7 @@ trait ExtractionTrait
      */
     protected function extractMetaFields(
         EventInterface $event,
-        bool|array $fields,
+        array|bool $fields,
         bool $unsetExtracted = true,
         bool $serialize = true,
     ): array {

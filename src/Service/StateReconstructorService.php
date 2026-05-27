@@ -23,7 +23,7 @@ class StateReconstructorService
      *
      * @return array Reconstructed data
      */
-    public function reconstructState(string $source, int|string $primaryKey, int $auditLogId): array
+    public function reconstructState(string $source, string|int $primaryKey, int $auditLogId): array
     {
         $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
 

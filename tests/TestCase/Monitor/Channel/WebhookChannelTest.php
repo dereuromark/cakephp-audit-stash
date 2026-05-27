@@ -103,7 +103,7 @@ class WebhookChannelTest extends TestCase
              */
             public array $records = [];
 
-            public function log(mixed $level, string|Stringable $message, array $context = []): void
+            public function log(mixed $level, Stringable|string $message, array $context = []): void
             {
                 $this->records[] = ['level' => $level, 'message' => (string)$message];
             }

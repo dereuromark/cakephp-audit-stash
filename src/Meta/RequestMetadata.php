@@ -44,7 +44,7 @@ class RequestMetadata implements EventListenerInterface
      */
     public function __construct(
         Request $request,
-        int|string|null $userId = null,
+        string|int|null $userId = null,
         ?string $userDisplay = null,
     ) {
         $this->request = $request;

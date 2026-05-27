@@ -159,7 +159,7 @@ class TablePersister implements PersisterInterface
      *
      * @return $this
      */
-    public function setTable(string|Table|null $table)
+    public function setTable(Table|string|null $table)
     {
         if (is_string($table)) {
             $table = $this->getTableLocator()->get($table);

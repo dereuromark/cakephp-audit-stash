@@ -38,7 +38,7 @@ class RevertService
      *
      * @return \Cake\Datasource\EntityInterface|false
      */
-    public function revertFull(string $source, int|string $primaryKey, int $auditLogId): EntityInterface|false
+    public function revertFull(string $source, string|int $primaryKey, int $auditLogId): EntityInterface|false
     {
         $this->assertEnabled();
 
@@ -81,7 +81,7 @@ class RevertService
      *
      * @return \Cake\Datasource\EntityInterface|false
      */
-    public function revertPartial(string $source, int|string $primaryKey, int $auditLogId, array $fields): EntityInterface|false
+    public function revertPartial(string $source, string|int $primaryKey, int $auditLogId, array $fields): EntityInterface|false
     {
         $this->assertEnabled();
 
@@ -125,7 +125,7 @@ class RevertService
      *
      * @return \Cake\Datasource\EntityInterface|false
      */
-    public function restoreDeleted(string $source, int|string $primaryKey): EntityInterface|false
+    public function restoreDeleted(string $source, string|int $primaryKey): EntityInterface|false
     {
         $this->assertEnabled();
 
@@ -207,7 +207,7 @@ class RevertService
      */
     protected function createRevertAudit(
         string $source,
-        int|string $primaryKey,
+        string|int $primaryKey,
         int $auditLogId,
         string $revertType,
         array $currentState,
