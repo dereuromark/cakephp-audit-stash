@@ -23,7 +23,7 @@ class AuditHelper extends Helper
  /**
   * Helpers to load
   *
-  * @var array
+  * @var array<int|string, array<string, mixed>|string>
   */
     protected array $helpers = ['Html'];
 
