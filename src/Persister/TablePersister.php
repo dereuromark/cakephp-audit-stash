@@ -10,6 +10,7 @@ use Cake\Core\InstanceConfigTrait;
 use Cake\Event\EventDispatcherTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
+use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -126,6 +127,22 @@ class TablePersister implements PersisterInterface
         'unsetExtractedMetaFields' => true,
         'hashChain' => false,
     ];
+
+    /**
+     * Lock scope taken for every chained write.
+     *
+     * @var string
+     */
+    protected const LOCK_SCOPE_WRITE = 'hash_chain';
+
+    /**
+     * Lock scope that serializes maintenance runs, including the part of a
+     * run that does not hold the write lock. No longer than the write scope:
+     * MySQL caps lock names at 64 characters and the table name is appended.
+     *
+     * @var string
+     */
+    protected const LOCK_SCOPE_MAINTENANCE = 'chain_fix';
 
     /**
      * The table to use for persisting logs.
@@ -279,6 +296,39 @@ class TablePersister implements PersisterInterface
     }
 
     /**
+     * Runs chain maintenance one run at a time.
+     *
+     * `$prepare` runs first, under the maintenance lock only, so a long read
+     * such as verifying the chain does not hold up audit writes. `$work` then
+     * runs in one transaction while the chain write lock is held as well:
+     * a writer waiting on a row that maintenance changed would otherwise
+     * keep the write lock the seal needs. A failure in `$work` rolls its row
+     * changes back, so the chain is never left changed without its seal.
+     *
+     * @param \Closure $work Receives the return value of `$prepare`
+     * @param \Closure|null $prepare Optional read-only preparation
+     *
+     * @return mixed The return value of `$work`
+     */
+    public function chainMaintenance(Closure $work, ?Closure $prepare = null): mixed
+    {
+        $table = $this->getTable();
+        $maintenanceLock = $this->acquireChainWriteLock($table, static::LOCK_SCOPE_MAINTENANCE);
+        try {
+            $prepared = $prepare !== null ? $prepare() : null;
+
+            $writeLock = $this->acquireChainWriteLock($table);
+            try {
+                return $table->getConnection()->transactional(fn (): mixed => $work($prepared));
+            } finally {
+                $this->releaseChainWriteLock($table, $writeLock);
+            }
+        } finally {
+            $this->releaseChainWriteLock($table, $maintenanceLock);
+        }
+    }
+
+    /**
      * Load the hash of the last (highest-id) row, locking the table against
      * concurrent chain writers for the remainder of the transaction.
      *
@@ -375,16 +425,17 @@ class TablePersister implements PersisterInterface
 
     /**
      * @param \Cake\ORM\Table $table
+     * @param string $scope
      *
      * @throws \RuntimeException
      *
      * @return string|null
      */
-    protected function acquireChainWriteLock(Table $table): ?string
+    protected function acquireChainWriteLock(Table $table, string $scope = self::LOCK_SCOPE_WRITE): ?string
     {
         $connection = $table->getConnection();
         $driverClass = $connection->getDriver()::class;
-        $lockName = 'audit_stash_hash_chain:' . $table->getTable();
+        $lockName = 'audit_stash_' . $scope . ':' . $table->getTable();
 
         if (str_contains($driverClass, 'Mysql')) {
             $result = $connection

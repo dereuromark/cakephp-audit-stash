@@ -9,6 +9,7 @@ use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
 use Cake\ORM\Table;
 use Cake\Utility\Text;
+use Closure;
 
 /**
  * Keeps the hash chain verifiable across authorized maintenance.
@@ -35,6 +36,68 @@ class ChainSealer
      * @var int
      */
     protected const CHUNK_SIZE = 500;
+
+    /**
+     * Result of the verification the last maintain() call ran before its work.
+     *
+     * @var \AuditStash\Service\ChainVerificationResult|null
+     */
+    protected ?ChainVerificationResult $before = null;
+
+    /**
+     * Whether the last maintain() call wrote a seal.
+     *
+     * @var bool
+     */
+    protected bool $sealed = false;
+
+    /**
+     * Runs an operation that removes or rewrites chained rows and seals the
+     * chain afterwards. With the hash chain off, it only runs the operation.
+     *
+     * @param string $operation Name recorded in the seal, for example `cleanup`
+     * @param \Closure(): array{0: int, 1?: array<string, mixed>} $work Does the
+     *   change and returns the number of affected rows plus facts for the seal
+     *
+     * @return int Number of affected rows
+     */
+    public function maintain(string $operation, Closure $work): int
+    {
+        $this->before = null;
+        $this->sealed = false;
+        $persister = $this->persister();
+        if (!$persister->getConfig('hashChain')) {
+            return $work()[0];
+        }
+
+        return $persister->chainMaintenance(function (?ChainVerificationResult $before) use ($operation, $work): int {
+            $this->before = $before;
+            $result = $work();
+            if ($result[0] > 0) {
+                $this->sealed = $this->seal($operation, $result[1] ?? [], $this->before);
+            }
+
+            return $result[0];
+        }, $this->check(...));
+    }
+
+    /**
+     * @return bool Whether the last maintain() call wrote a seal
+     */
+    public function hasSealed(): bool
+    {
+        return $this->sealed;
+    }
+
+    /**
+     * Whether the last maintain() call found the chain already broken.
+     *
+     * @return \AuditStash\Service\ChainVerificationResult|null The failed verification, or null
+     */
+    public function brokenBefore(): ?ChainVerificationResult
+    {
+        return $this->before !== null && !$this->before->intact ? $this->before : null;
+    }
 
     /**
      * Verifies the chain before maintenance touches it. Pass the result to

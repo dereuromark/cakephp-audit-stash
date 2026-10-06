@@ -208,8 +208,20 @@ forensic review, but the seal records the break in `broken_before` and
 `verify_chain` keeps reporting it. Maintenance never turns a broken chain
 into a clean one.
 
+Only one maintenance run happens at a time. The operation and the seal are
+one database transaction: if the seal cannot be written, the operation is
+rolled back, so the chain is never left changed without a seal.
+
+That transaction holds the chain write lock. Audit writes wait for it, and a
+write that waits longer than the lock timeout (10 seconds) fails the way it
+does under any other lock contention. The verification before the operation
+does not hold that lock, but the row changes and the digest for the seal do,
+and the digest reads the whole table. On a large table, run cleanup and GDPR
+operations when the application is quiet.
+
 Only the newest seal counts. Verifying before and sealing after each read every row once, so a cleanup
-on a large table takes about as long as two `verify_chain` runs.
+on a large table takes about as long as two `verify_chain` runs, the second
+of them under the write lock.
 
 A seal records that the maintenance happened and what the table looked like
 afterwards. It cannot show what the removed rows contained. The limits

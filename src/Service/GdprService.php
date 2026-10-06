@@ -50,6 +50,23 @@ class GdprService
     }
 
     /**
+     * Anonymizes the audit logs of a user and, with the hash chain enabled,
+     * seals the chain afterwards.
+     *
+     * @param string|int $userId The user ID to anonymize
+     * @param array<string, mixed> $options Options, see anonymizeRows()
+     *
+     * @return int Number of records anonymized
+     */
+    public function anonymize(string|int $userId, array $options = []): int
+    {
+        return (new ChainSealer())->maintain(
+            'gdpr.anonymize',
+            fn (): array => [$count = $this->anonymizeRows($userId, $options), ['rows' => $count]],
+        );
+    }
+
+    /**
      * Anonymize all audit logs for a user.
      *
      * Replaces identifying information but keeps the audit trail intact
@@ -63,7 +80,7 @@ class GdprService
      *
      * @return int Number of records anonymized
      */
-    public function anonymize(string|int $userId, array $options = []): int
+    protected function anonymizeRows(string|int $userId, array $options = []): int
     {
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
@@ -83,8 +100,6 @@ class GdprService
         );
 
         $anonymizedUserId = $this->generateAnonymizedUserId($userId, $userIdStrategy);
-        $sealer = new ChainSealer();
-        $chainBefore = $sealer->check();
 
         $count = 0;
 
@@ -133,10 +148,6 @@ class GdprService
             }
         }
 
-        if ($count > 0) {
-            $sealer->seal('gdpr.anonymize', ['rows' => $count], $chainBefore);
-        }
-
         return $count;
     }
 
@@ -155,14 +166,10 @@ class GdprService
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
 
-        $sealer = new ChainSealer();
-        $chainBefore = $sealer->check();
-        $deleted = $auditLogsTable->deleteAll(['user_id' => (string)$userId]);
-        if ($deleted > 0) {
-            $sealer->seal('gdpr.delete', ['rows' => $deleted], $chainBefore);
-        }
-
-        return $deleted;
+        return (new ChainSealer())->maintain('gdpr.delete', fn (): array => [
+            $deleted = $auditLogsTable->deleteAll(['user_id' => (string)$userId]),
+            ['rows' => $deleted],
+        ]);
     }
 
     /**
