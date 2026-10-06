@@ -22,6 +22,10 @@ payload of the first later row that changed it. A record does not need a
 data, and histories trimmed by [retention](./retention), revert completely.
 A restore reads the `original` payload of the DELETE row.
 
+A revert writes every audited field, including fields the entity class does
+not mark as accessible. Mass-assignment protection applies to request data,
+and the values here come from the audit log.
+
 Writes that bypass the behavior (see
 [Usage](../guide/usage#operations-that-bypass-the-audit-listener)) leave no
 audit row, so the reconstruction cannot account for them.

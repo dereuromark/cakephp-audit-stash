@@ -293,7 +293,7 @@ The audit log viewer provides:
   - **Inline diff** (default): Compact, git-style unified diff with + and - indicators
   - **Side-by-side diff**: Traditional two-column comparison showing before and after values
   - Toggle between views with a single click in the detail view
-- **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download.
+- **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download. In CSV output, a cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a leading apostrophe, so a spreadsheet application shows it as text and does not run it as a formula.
 - **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
 
 ## Coverage report

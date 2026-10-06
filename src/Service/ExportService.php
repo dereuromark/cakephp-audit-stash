@@ -36,6 +36,13 @@ use RuntimeException;
 class ExportService
 {
     /**
+     * First characters that make a spreadsheet treat a CSV cell as a formula.
+     *
+     * @var array<string>
+     */
+    protected const FORMULA_TRIGGERS = ['=', '+', '-', '@', "\t", "\r"];
+
+    /**
      * Supported export formats.
      *
      * @var array
@@ -261,7 +268,8 @@ class ExportService
 
         $written = 0;
         foreach ($iter as $row) {
-            fputcsv($output, $this->extractRow($row, $fields, jsonEncodeArrays: true), escape: '\\');
+            $cells = array_map($this->neutralizeFormula(...), $this->extractRow($row, $fields, jsonEncodeArrays: true));
+            fputcsv($output, $cells, escape: '\\');
             $written++;
             if ($written % $batchSize === 0) {
                 $this->flush($output);
@@ -352,6 +360,23 @@ class ExportService
         }
 
         return $extracted;
+    }
+
+    /**
+     * Spreadsheet applications run a cell that starts with one of these
+     * characters as a formula. A leading apostrophe makes it plain text.
+     *
+     * @param mixed $value Cell value
+     *
+     * @return mixed
+     */
+    protected function neutralizeFormula(mixed $value): mixed
+    {
+        if (is_string($value) && $value !== '' && in_array($value[0], static::FORMULA_TRIGGERS, true)) {
+            return "'" . $value;
+        }
+
+        return $value;
     }
 
     /**

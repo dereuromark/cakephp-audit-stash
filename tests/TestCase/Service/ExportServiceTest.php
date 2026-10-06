@@ -9,6 +9,7 @@ use Cake\Core\Configure;
 use Cake\Http\Exception\BadRequestException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 
 class ExportServiceTest extends TestCase
@@ -241,5 +242,50 @@ class ExportServiceTest extends TestCase
                 'created' => new DateTime(),
             ]));
         }
+    }
+
+    /**
+     * @param string $value Cell value as stored
+     * @param string $expected Cell value in the CSV
+     *
+     * @return void
+     */
+    #[DataProvider('csvCells')]
+    public function testStreamCsvNeutralizesFormulaCells(string $value, string $expected): void
+    {
+        $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
+        $auditLogs->saveOrFail($auditLogs->newEntity([
+            'transaction_key' => 'test-csv',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => '1',
+            'display_value' => $value,
+        ]));
+
+        $stream = fopen('php://memory', 'r+');
+        (new ExportService())->stream($auditLogs->find(), 'csv', $stream, ['display_value']);
+        rewind($stream);
+        fgetcsv($stream, escape: '\\');
+        $row = fgetcsv($stream, escape: '\\');
+        fclose($stream);
+
+        $this->assertIsArray($row);
+        $this->assertSame($expected, end($row));
+    }
+
+    /**
+     * @return array<string, array<string>>
+     */
+    public static function csvCells(): array
+    {
+        return [
+            'formula' => ['=HYPERLINK("http://example.org","x")', '\'=HYPERLINK("http://example.org","x")'],
+            'plus' => ['+1+1', '\'+1+1'],
+            'minus' => ['-1+1', '\'-1+1'],
+            'at' => ['@SUM(A1)', '\'@SUM(A1)'],
+            'tab' => ["\t=1+1", "'\t=1+1"],
+            'plain' => ['First Article', 'First Article'],
+            'inner equals' => ['a=b', 'a=b'],
+        ];
     }
 }
