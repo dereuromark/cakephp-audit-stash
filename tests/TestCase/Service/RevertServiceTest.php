@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Service;
 
 use AuditStash\AuditLogType;
+use AuditStash\Service\ChainVerifier;
 use AuditStash\Service\RevertService;
+use Cake\Core\Configure;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\ORM\Locator\LocatorAwareTrait;
+use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
 
 class RevertServiceTest extends TestCase
@@ -30,6 +33,8 @@ class RevertServiceTest extends TestCase
     public function tearDown(): void
     {
         unset($this->service);
+        Configure::delete('AuditStash.persisterConfig');
+        $this->getTableLocator()->clear();
         parent::tearDown();
     }
 
@@ -358,5 +363,126 @@ class RevertServiceTest extends TestCase
         $this->assertNotFalse($result);
         $this->assertSame('Title v2', $result->title);
         $this->assertSame('First Article Body', $result->body);
+    }
+
+    /**
+     * Deleting an entity that was loaded with a subset of its columns must
+     * still record a snapshot the restore can use.
+     *
+     * @return void
+     */
+    public function testRestoreDeletedAfterPartialEntityDelete(): void
+    {
+        $articles = $this->audited();
+        $partial = $articles->find()->select(['id'])->where(['id' => 1])->firstOrFail();
+        $articles->deleteOrFail($partial);
+
+        $result = $this->service->restoreDeleted('Articles', 1);
+
+        $this->assertNotFalse($result);
+        $restored = $articles->get(1);
+        $this->assertSame('First Article', $restored->title);
+        $this->assertSame('First Article Body', $restored->body);
+        $this->assertSame(1, $restored->author_id);
+    }
+
+    /**
+     * @return void
+     */
+    public function testRestoreDeletedIncompleteSnapshotReturnsFalse(): void
+    {
+        $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
+        foreach (['77' => [], '78' => ['body' => 'No title']] as $primaryKey => $original) {
+            $auditLogs->saveOrFail($auditLogs->newEntity([
+                'transaction_key' => 'test-transaction-delete',
+                'type' => 'delete',
+                'source' => 'Articles',
+                'primary_key' => (string)$primaryKey,
+                'original' => $original,
+            ]));
+        }
+
+        $this->assertFalse($this->service->restoreDeleted('Articles', 77));
+        $this->assertFalse($this->service->restoreDeleted('Articles', 78));
+        $this->assertFalse($this->fetchTable('Articles')->exists(['id IN' => [77, 78]]));
+    }
+
+    /**
+     * @return void
+     */
+    public function testRestoreDeletedSkipsSensitiveFields(): void
+    {
+        $articles = $this->audited(['sensitive' => ['body']]);
+        $articles->deleteOrFail($articles->get(1));
+
+        $result = $this->service->restoreDeleted('Articles', 1);
+
+        $this->assertNotFalse($result);
+        $restored = $articles->get(1);
+        $this->assertSame('First Article', $restored->title);
+        $this->assertNull($restored->body);
+    }
+
+    /**
+     * @return void
+     */
+    public function testRevertFullSkipsSensitiveFields(): void
+    {
+        $articles = $this->audited(['sensitive' => ['body']]);
+        $article = $articles->get(1);
+        $article = $articles->patchEntity($article, ['title' => 'Changed', 'body' => 'Changed body']);
+        $articles->saveOrFail($article);
+        $article = $articles->patchEntity($article, ['title' => 'Changed again']);
+        $articles->saveOrFail($article);
+
+        $first = $this->fetchTable('AuditStash.AuditLogs')->find()->orderByAsc('id')->firstOrFail();
+        $result = $this->service->revertFull('Articles', 1, $first->id);
+
+        $this->assertNotFalse($result);
+        $reverted = $articles->get(1);
+        $this->assertSame('Changed', $reverted->title);
+        $this->assertSame('Changed body', $reverted->body);
+    }
+
+    /**
+     * The revert row has to be stored like every other audit row: decoded
+     * payloads and, when enabled, a link in the hash chain.
+     *
+     * @return void
+     */
+    public function testRevertAuditGoesThroughPersister(): void
+    {
+        Configure::write('AuditStash.persisterConfig', ['hashChain' => true]);
+        $articles = $this->audited();
+        $article = $articles->get(1);
+        $article = $articles->patchEntity($article, ['title' => 'Changed']);
+        $articles->saveOrFail($article);
+        $article = $articles->patchEntity($article, ['title' => 'Changed again']);
+        $articles->saveOrFail($article);
+
+        $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
+        $first = $auditLogs->find()->orderByAsc('id')->firstOrFail();
+        $this->service->revertFull('Articles', 1, $first->id);
+
+        $revertLog = $auditLogs->find()->where(['type' => AuditLogType::Revert->value])->firstOrFail();
+        $this->assertSame(['title' => 'Changed'], $revertLog->changed);
+        $this->assertIsArray($revertLog->original);
+        $this->assertSame('full', $revertLog->meta['revert_type']);
+        $this->assertNotNull($revertLog->hash);
+        $result = (new ChainVerifier())->verify($auditLogs);
+        $this->assertTrue($result->intact, (string)$result->reason);
+    }
+
+    /**
+     * @param array<string, mixed> $config Behavior config
+     *
+     * @return \Cake\ORM\Table
+     */
+    protected function audited(array $config = []): Table
+    {
+        $articles = $this->fetchTable('Articles');
+        $articles->addBehavior('AuditStash.AuditLog', $config);
+
+        return $articles;
     }
 }

@@ -267,10 +267,13 @@ class AuditLogsController extends AppController
         $reconstructor = new StateReconstructorService();
 
         // Get target state from audit
-        $targetState = $reconstructor->reconstructState(
+        $targetState = (new RevertService())->withoutSensitive(
             $auditLog->source,
-            $auditLog->primary_key,
-            $auditLog->id,
+            $reconstructor->reconstructState(
+                $auditLog->source,
+                $auditLog->primary_key,
+                $auditLog->id,
+            ),
         );
 
         // Get current state

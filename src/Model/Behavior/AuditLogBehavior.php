@@ -91,11 +91,20 @@ class AuditLogBehavior extends Behavior
     protected WeakMap $bulkSaveQueues;
 
     /**
+     * Column values a partially loaded entity did not carry when it was
+     * deleted, read in `beforeDelete` while the row still exists.
+     *
+     * @var \WeakMap<\Cake\Datasource\EntityInterface, array<string, mixed>>
+     */
+    protected WeakMap $unloadedFields;
+
+    /**
      * @inheritDoc
      */
     public function initialize(array $config): void
     {
         $this->bulkSaveQueues = new WeakMap();
+        $this->unloadedFields = new WeakMap();
     }
 
     /**
@@ -160,9 +169,52 @@ class AuditLogBehavior extends Behavior
             $this->bulkSaveQueues[$entity] = $queue;
         }
 
+        if ($event->getName() === 'Model.beforeDelete') {
+            $this->captureUnloadedFields($entity);
+        }
+
         // Capture cascade-deleted dependent records before they are deleted
         if ($event->getName() === 'Model.beforeDelete' && $this->getConfig('cascadeDeletes')) {
             $this->captureCascadeDeletes($entity, $options);
+        }
+    }
+
+    /**
+     * Reads the audited columns the entity was loaded without, so the delete
+     * entry holds the whole row and can be restored.
+     *
+     * @param \Cake\Datasource\EntityInterface $entity The entity being deleted
+     *
+     * @return void
+     */
+    protected function captureUnloadedFields(EntityInterface $entity): void
+    {
+        $missing = array_diff(
+            $this->_table->getSchema()->columns(),
+            array_keys($entity->getOriginalValues()),
+            $this->getConfig('blacklist'),
+        );
+        if (!$missing) {
+            return;
+        }
+
+        $conditions = [];
+        foreach ((array)$this->_table->getPrimaryKey() as $field) {
+            $value = $entity->get($field);
+            if ($value === null) {
+                return;
+            }
+            $conditions[$this->_table->aliasField($field)] = $value;
+        }
+
+        /** @var array<string, mixed>|null $row */
+        $row = $this->_table->find()
+            ->select($missing)
+            ->where($conditions)
+            ->disableHydration()
+            ->first();
+        if ($row !== null) {
+            $this->unloadedFields[$entity] = $row;
         }
     }
 
@@ -448,7 +500,8 @@ class AuditLogBehavior extends Behavior
 
         // Capture original values before deletion
         $config = $this->_config;
-        $original = $entity->getOriginalValues();
+        $original = $entity->getOriginalValues() + ($this->unloadedFields[$entity] ?? []);
+        unset($this->unloadedFields[$entity]);
 
         // Filter out blacklisted fields from original
         foreach ($original as $originalKey => $originalValue) {

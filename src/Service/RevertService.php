@@ -6,13 +6,17 @@ namespace AuditStash\Service;
 
 use AuditStash\AuditLogType;
 use AuditStash\AuditStashPlugin;
+use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Model\Entity\AuditLog;
+use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
 use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
+use Cake\Log\Log;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Text;
+use PDOException;
 use RuntimeException;
 
 /**
@@ -47,7 +51,10 @@ class RevertService
 
         return $connection->transactional(function () use ($source, $primaryKey, $auditLogId) {
             // Get target state
-            $targetState = $this->reconstructor->reconstructState($source, $primaryKey, $auditLogId);
+            $targetState = $this->withoutSensitive(
+                $source,
+                $this->reconstructor->reconstructState($source, $primaryKey, $auditLogId),
+            );
 
             // Load and update entity
             $table = $this->fetchTable($source);
@@ -93,7 +100,10 @@ class RevertService
             $fullTargetState = $this->reconstructor->reconstructState($source, $primaryKey, $auditLogId);
 
             // Filter only selected fields
-            $targetState = array_intersect_key($fullTargetState, array_flip($fields));
+            $targetState = $this->withoutSensitive(
+                $source,
+                array_intersect_key($fullTargetState, array_flip($fields)),
+            );
 
             // Load and update entity
             $table = $this->fetchTable($source);
@@ -132,7 +142,7 @@ class RevertService
         /** @var \Cake\Database\Connection $connection */
         $connection = ConnectionManager::get('default');
 
-        return $connection->transactional(function () use ($source, $primaryKey) {
+        $restore = function () use ($source, $primaryKey) {
             // Find DELETE audit entry
             $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
             $deleteLog = $auditLogs->find()
@@ -150,7 +160,10 @@ class RevertService
             // Get state before deletion
             $original = $deleteLog->original;
             $state = is_string($original) ? json_decode($original, true) : $original;
-            $state = $state ?: [];
+            $state = $this->withoutSensitive($source, $state ?: []);
+            if (!$state) {
+                return false;
+            }
 
             // Create new entity
             $table = $this->fetchTable($source);
@@ -190,7 +203,35 @@ class RevertService
             $this->createRevertAudit($source, $primaryKey, (int)$deleteLog->id, 'restore', [], $state);
 
             return $entity;
-        });
+        };
+
+        try {
+            return $connection->transactional($restore);
+        } catch (PDOException $e) {
+            // An incomplete snapshot cannot satisfy the table's column constraints.
+            Log::error(sprintf('AuditStash could not restore %s %s: %s', $source, $primaryKey, $e->getMessage()));
+
+            return false;
+        }
+    }
+
+    /**
+     * Removes the fields the source table redacts in its audit rows. Their
+     * stored value is the redaction marker, not the data.
+     *
+     * @param string $source Table name
+     * @param array<string, mixed> $state Field values taken from audit rows
+     *
+     * @return array<string, mixed>
+     */
+    public function withoutSensitive(string $source, array $state): array
+    {
+        $table = $this->fetchTable($source);
+        if (!$table->hasBehavior('AuditLog')) {
+            return $state;
+        }
+
+        return array_diff_key($state, array_flip((array)$table->getBehavior('AuditLog')->getConfig('sensitive')));
     }
 
     /**
@@ -217,23 +258,56 @@ class RevertService
             return;
         }
 
-        $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
-
-        $auditLog = $auditLogs->newEntity([
-            'transaction_key' => Text::uuid(),
-            'type' => AuditLogType::Revert->value,
-            'source' => $source,
-            'primary_key' => (string)$primaryKey,
-            'original' => json_encode($currentState, AuditStashPlugin::JSON_FLAGS),
-            'changed' => json_encode($targetState, AuditStashPlugin::JSON_FLAGS),
-            'meta' => json_encode([
-                'revert_to_audit_id' => $auditLogId,
-                'revert_type' => $revertType,
-            ], AuditStashPlugin::JSON_FLAGS),
-            'created' => new DateTime(),
+        $event = new AuditCustomEvent(
+            AuditLogType::Revert->value,
+            Text::uuid(),
+            $primaryKey,
+            $source,
+            $this->jsonValues($targetState),
+            $this->jsonValues($currentState),
+        );
+        $event->setMetaInfo([
+            'revert_to_audit_id' => $auditLogId,
+            'revert_type' => $revertType,
         ]);
 
-        $auditLogs->save($auditLog);
+        $data = $this->fetchTable($source)->dispatchEvent('AuditStash.beforeLog', ['logs' => [$event]]);
+        $this->persister()->logEvents($data->getData('logs'));
+    }
+
+    /**
+     * Reduces entity values (dates, enums) to what the JSON column gives back
+     * on read, so the hash written now matches the one verified later.
+     *
+     * @param array<string, mixed> $values Field values
+     *
+     * @return array<string, mixed>
+     */
+    protected function jsonValues(array $values): array
+    {
+        return (array)json_decode((string)json_encode($values, AuditStashPlugin::JSON_FLAGS), true);
+    }
+
+    /**
+     * The persister keeps the payload encoding and the hash chain consistent
+     * with the rows the behavior writes.
+     *
+     * @return \AuditStash\Persister\TablePersister
+     */
+    protected function persister(): TablePersister
+    {
+        $class = Configure::read('AuditStash.persister');
+        if (!is_string($class) || !is_a($class, TablePersister::class, true)) {
+            $class = TablePersister::class;
+        }
+
+        $persister = new $class();
+        $config = Configure::read('AuditStash.persisterConfig');
+        if (is_array($config) && $config) {
+            $persister->setConfig($config);
+        }
+
+        return $persister;
     }
 
     /**
