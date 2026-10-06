@@ -228,17 +228,18 @@ class TablePersister implements PersisterInterface
                     $serializeFields,
                 );
 
-                if ($hashChain) {
-                    // Only hash fields the target schema actually owns, and
-                    // stay consistent with ChainVerifier which excludes
-                    // prev_hash from the hash input (it contributes via the
-                    // chain-link argument instead).
-                    $hash = HashChain::hash($prevHash, $this->buildHashPayload($fields, $hashPayloadColumns));
-                    $fields['prev_hash'] = $prevHash;
-                    $fields['hash'] = $hash;
-                }
-
                 $persisterEntity = $persisterTable->newEntity($fields);
+
+                if ($hashChain) {
+                    // Hash the marshalled values, which have the column types
+                    // the verifier reads back (an integer user id in a string
+                    // column, a string key in an integer column). Only fields
+                    // the schema owns are hashed; prev_hash enters through
+                    // the chain-link argument, as in ChainVerifier.
+                    $payload = $this->buildHashPayload($persisterEntity->extract($hashPayloadColumns), $hashPayloadColumns);
+                    $persisterEntity->set('prev_hash', $prevHash);
+                    $persisterEntity->set('hash', HashChain::hash($prevHash, $payload));
+                }
 
                 if ($persisterTable->save($persisterEntity)) {
                     if ($hashChain) {

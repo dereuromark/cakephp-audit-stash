@@ -71,6 +71,12 @@ trait ExtractionTrait
 
         switch ($strategy) {
             case 'automatic':
+                // An event without a record (a custom action) has no key to store.
+                if ($event->getId() === null) {
+                    $primaryKeyFields['primary_key'] = null;
+
+                    break;
+                }
                 $id = (array)$event->getId();
                 $id = count($id) === 1 ? array_pop($id) : $this->serialize($id);
                 $primaryKeyFields['primary_key'] = $id;

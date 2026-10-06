@@ -106,3 +106,6 @@ Add to your crontab to run cleanup automatically:
 **Note**: The cleanup command only works with `TablePersister`.
 For Elasticsearch, use [Index Lifecycle Management (ILM)](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html) policies instead.
 
+## Hash chain
+
+With `hashChain` enabled, a cleanup that deletes rows appends a `chain_seal` row so that `verify_chain` keeps passing. See [Retention cleanup and GDPR erasure](./tamper-evidence#retention-cleanup-and-gdpr-erasure).

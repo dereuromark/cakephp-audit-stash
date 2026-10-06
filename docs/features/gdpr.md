@@ -242,3 +242,7 @@ Workflow:
 2. Run `audit_stash gdpr anonymize --user-id=X`
 3. Anonymized logs are retained for compliance period
 4. Cleanup command removes old anonymized logs based on retention policy
+
+## Hash chain
+
+With `hashChain` enabled, `anonymize` and `delete` append a `chain_seal` row so that `verify_chain` keeps passing. The seal records the operation and the number of rows, not the user id. See [Retention cleanup and GDPR erasure](./tamper-evidence#retention-cleanup-and-gdpr-erasure).

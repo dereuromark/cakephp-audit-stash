@@ -170,6 +170,55 @@ append-only hash chain. Mitigations:
 - **Use per-day heartbeats.** Emit a daily "heartbeat" audit event;
   missing heartbeats reveal truncated ranges.
 
+## Retention cleanup and GDPR erasure
+
+Some operations have to remove or rewrite rows that are already part of the
+chain:
+
+- `audit_stash cleanup` deletes rows past their retention window. With
+  `--table` that leaves gaps in the middle of the chain.
+- `audit_stash gdpr delete` removes a user's rows, wherever they are.
+- `audit_stash gdpr anonymize` rewrites columns that are part of the hash.
+
+Each of them breaks links that cannot be repaired without rewriting every
+later hash. So after such an operation the plugin appends a **seal**: an
+audit row of type `chain_seal` with source `AuditStash`. Its `changed`
+payload holds:
+
+| Key | Meaning |
+|---|---|
+| `operation` | `cleanup`, `gdpr.delete` or `gdpr.anonymize` |
+| `sealed_through_id` | highest row id that existed when the seal was written |
+| `sealed_rows` | number of rows up to that id |
+| `sealed_digest` | SHA-256 over the id, stored hash and content of each of those rows |
+| `broken_before` | only present if the chain was already broken before the operation: the row and the reason |
+
+The seal row is chained like any other row. `verify_chain` then works in two
+parts:
+
+1. Rows up to `sealed_through_id` of the newest seal are checked against
+   `sealed_digest`. An edit, a deletion or an insertion in that range after
+   the seal gives a different digest, and the verifier reports
+   `sealed segment mismatch`.
+2. Rows after it are verified link by link, as before.
+
+The chain is verified before the operation runs. If it is already broken,
+the operation still runs, because an erasure request cannot wait for a
+forensic review, but the seal records the break in `broken_before` and
+`verify_chain` keeps reporting it. Maintenance never turns a broken chain
+into a clean one.
+
+Only the newest seal counts. Verifying before and sealing after each read every row once, so a cleanup
+on a large table takes about as long as two `verify_chain` runs.
+
+A seal records that the maintenance happened and what the table looked like
+afterwards. It cannot show what the removed rows contained. The limits
+described above apply to it as well: someone with write access to the table
+can forge a seal the same way they can rebuild the chain, which is why the
+tail should be anchored outside the database.
+
+No seal is written while `hashChain` is off.
+
 ## Backfilling an existing table
 
 Rows written before enabling the chain have `NULL` in `prev_hash` and
