@@ -136,12 +136,13 @@ class TablePersister implements PersisterInterface
     protected const LOCK_SCOPE_WRITE = 'hash_chain';
 
     /**
-     * Lock scope that serializes maintenance runs. Separate from the write
-     * scope so a long cleanup does not stall the application's audit writes.
+     * Lock scope that serializes maintenance runs, including the part of a
+     * run that does not hold the write lock. No longer than the write scope:
+     * MySQL caps lock names at 64 characters and the table name is appended.
      *
      * @var string
      */
-    protected const LOCK_SCOPE_MAINTENANCE = 'chain_maintenance';
+    protected const LOCK_SCOPE_MAINTENANCE = 'chain_fix';
 
     /**
      * The table to use for persisting logs.
@@ -295,22 +296,35 @@ class TablePersister implements PersisterInterface
     }
 
     /**
-     * Runs chain maintenance (verify, change rows, seal) as one transaction,
-     * one run at a time. A failure anywhere rolls the row changes back, so
-     * the chain is never left changed without its seal.
+     * Runs chain maintenance one run at a time.
      *
-     * @param \Closure $callback The maintenance work
+     * `$prepare` runs first, under the maintenance lock only, so a long read
+     * such as verifying the chain does not hold up audit writes. `$work` then
+     * runs in one transaction while the chain write lock is held as well:
+     * a writer waiting on a row that maintenance changed would otherwise
+     * keep the write lock the seal needs. A failure in `$work` rolls its row
+     * changes back, so the chain is never left changed without its seal.
      *
-     * @return mixed The callback's return value
+     * @param \Closure $work Receives the return value of `$prepare`
+     * @param \Closure|null $prepare Optional read-only preparation
+     *
+     * @return mixed The return value of `$work`
      */
-    public function chainMaintenance(Closure $callback): mixed
+    public function chainMaintenance(Closure $work, ?Closure $prepare = null): mixed
     {
         $table = $this->getTable();
-        $lockHandle = $this->acquireChainWriteLock($table, static::LOCK_SCOPE_MAINTENANCE);
+        $maintenanceLock = $this->acquireChainWriteLock($table, static::LOCK_SCOPE_MAINTENANCE);
         try {
-            return $table->getConnection()->transactional($callback);
+            $prepared = $prepare !== null ? $prepare() : null;
+
+            $writeLock = $this->acquireChainWriteLock($table);
+            try {
+                return $table->getConnection()->transactional(fn (): mixed => $work($prepared));
+            } finally {
+                $this->releaseChainWriteLock($table, $writeLock);
+            }
         } finally {
-            $this->releaseChainWriteLock($table, $lockHandle);
+            $this->releaseChainWriteLock($table, $maintenanceLock);
         }
     }
 

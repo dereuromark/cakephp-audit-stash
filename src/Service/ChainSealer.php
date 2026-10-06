@@ -70,15 +70,15 @@ class ChainSealer
             return $work()[0];
         }
 
-        return $persister->chainMaintenance(function () use ($operation, $work): int {
-            $this->before = $this->check();
+        return $persister->chainMaintenance(function (?ChainVerificationResult $before) use ($operation, $work): int {
+            $this->before = $before;
             $result = $work();
             if ($result[0] > 0) {
                 $this->sealed = $this->seal($operation, $result[1] ?? [], $this->before);
             }
 
             return $result[0];
-        });
+        }, $this->check(...));
     }
 
     /**
