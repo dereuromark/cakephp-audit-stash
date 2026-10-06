@@ -19,6 +19,7 @@ use Cake\Event\Event;
 use Cake\ORM\Association\HasMany;
 use Cake\ORM\Association\HasOne;
 use Cake\ORM\Behavior;
+use Cake\ORM\Table;
 use Cake\Utility\Inflector;
 use Cake\Utility\Text;
 use SplObjectStorage;
@@ -190,9 +191,8 @@ class AuditLogBehavior extends Behavior
     protected function captureUnloadedFields(EntityInterface $entity): void
     {
         $missing = array_diff(
-            $this->_table->getSchema()->columns(),
+            $this->auditedColumns($this->_table, $this->getConfig()),
             array_keys($entity->getOriginalValues()),
-            $this->getConfig('blacklist'),
         );
         if (!$missing) {
             return;
@@ -265,6 +265,7 @@ class AuditLogBehavior extends Behavior
             foreach ($dependentRecords as $record) {
                 $options['_cascadeDeleteRecords'][] = [
                     'entity' => $record,
+                    'table' => $target,
                     'source' => $target->getRegistryAlias(),
                     'displayField' => $target->getDisplayField(),
                     'primaryKey' => $target->getPrimaryKey(),
@@ -277,12 +278,13 @@ class AuditLogBehavior extends Behavior
      * Redacts sensitive fields from the array
      *
      * @param array<string, mixed> $fields Field
+     * @param array<string>|null $sensitive Fields to redact, defaults to this behavior's `sensitive` config
      *
      * @return void
      */
-    private function redactArray(array &$fields): void
+    private function redactArray(array &$fields, ?array $sensitive = null): void
     {
-        $sensitive = $this->_config['sensitive'] ?? [];
+        $sensitive ??= $this->_config['sensitive'] ?? [];
         if ($sensitive === []) {
             return;
         }
@@ -292,6 +294,44 @@ class AuditLogBehavior extends Behavior
                 $value = '****';
             }
         }
+    }
+
+    /**
+     * Columns of a table that a delete entry may record: schema columns,
+     * narrowed by the whitelist, minus the blacklist. Association properties
+     * and other non-column fields on the entity are never part of it.
+     *
+     * @param \Cake\ORM\Table $table The table the record belongs to
+     * @param array<string, mixed> $config Behavior config to apply
+     *
+     * @return array<string>
+     */
+    protected function auditedColumns(Table $table, array $config): array
+    {
+        $columns = $table->getSchema()->columns();
+        if (!empty($config['whitelist'])) {
+            $columns = array_intersect($columns, $config['whitelist']);
+        }
+
+        return array_diff($columns, $config['blacklist'] ?? []);
+    }
+
+    /**
+     * Reduces a deleted record's values to what its table audits and redacts
+     * the sensitive ones.
+     *
+     * @param array<string, mixed> $values Values of the deleted record
+     * @param \Cake\ORM\Table $table The table the record belongs to
+     * @param array<string, mixed> $config Behavior config to apply
+     *
+     * @return array<string, mixed>
+     */
+    protected function deleteSnapshot(array $values, Table $table, array $config): array
+    {
+        $snapshot = array_intersect_key($values, array_flip($this->auditedColumns($table, $config)));
+        $this->redactArray($snapshot, $config['sensitive'] ?? []);
+
+        return $snapshot;
     }
 
     /**
@@ -498,19 +538,12 @@ class AuditLogBehavior extends Behavior
         // Get display field value for human-friendly identification
         $displayValue = $this->extractDisplayValue($entity, $this->_table->getDisplayField());
 
-        // Capture original values before deletion
-        $config = $this->_config;
-        $original = $entity->getOriginalValues() + ($this->unloadedFields[$entity] ?? []);
+        $original = $this->deleteSnapshot(
+            $entity->getOriginalValues() + ($this->unloadedFields[$entity] ?? []),
+            $this->_table,
+            $this->getConfig(),
+        );
         unset($this->unloadedFields[$entity]);
-
-        // Filter out blacklisted fields from original
-        foreach ($original as $originalKey => $originalValue) {
-            if (in_array($originalKey, $config['blacklist'], true)) {
-                unset($original[$originalKey]);
-            }
-        }
-
-        $this->redactArray($original);
 
         // Log cascade-deleted dependent records first (children are deleted before parent)
         if ($this->getConfig('cascadeDeletes') && !empty($options['_cascadeDeleteRecords'])) {
@@ -543,7 +576,6 @@ class AuditLogBehavior extends Behavior
     protected function logCascadeDeletes(string $transaction, ArrayObject $options): void
     {
         $parentSource = $this->_table->getRegistryAlias();
-        $config = $this->_config;
 
         foreach ($options['_cascadeDeleteRecords'] as $record) {
             /** @var \Cake\Datasource\EntityInterface $dependentEntity */
@@ -560,17 +592,13 @@ class AuditLogBehavior extends Behavior
             // Get display value
             $displayValue = $this->extractDisplayValue($dependentEntity, $displayField);
 
-            // Get original values
-            $original = $dependentEntity->toArray();
-
-            // Filter out blacklisted fields
-            foreach ($original as $key => $value) {
-                if (in_array($key, $config['blacklist'], true)) {
-                    unset($original[$key]);
-                }
-            }
-
-            $this->redactArray($original);
+            /** @var \Cake\ORM\Table $table */
+            $table = $record['table'];
+            // The dependent table's own audit rules win over the parent's.
+            $config = $table->hasBehavior('AuditLog')
+                ? $table->getBehavior('AuditLog')->getConfig()
+                : $this->getConfig();
+            $original = $this->deleteSnapshot($dependentEntity->getOriginalValues(), $table, $config);
 
             $auditEvent = new AuditDeleteEvent(
                 $transaction,
