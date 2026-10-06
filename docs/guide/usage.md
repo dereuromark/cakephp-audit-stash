@@ -44,6 +44,8 @@ public function initialize(array $config = []): void
 }
 ```
 
+`blacklist` and `whitelist` apply to delete entries as well. A delete entry stores the audited columns of the removed row and nothing else: associations that were loaded with `contain()` are not copied into it.
+
 If you have fields that contain sensitive information but still want to track their changes you can use the `sensitive` configuration:
 
 ```php
@@ -182,6 +184,7 @@ When `cascadeDeletes` is enabled:
 - After deletion, audit events are created for all cascade-deleted records
 - All events share the same transaction ID for traceability
 - The `parent_source` field indicates which table triggered the cascade delete
+- If the dependent table has the behavior itself, its own `blacklist`, `whitelist` and `sensitive` settings decide what is recorded. Otherwise the parent's settings apply
 
 This is particularly useful when:
 - You don't want to add `AuditLogBehavior` to every dependent table
