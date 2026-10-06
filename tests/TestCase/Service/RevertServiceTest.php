@@ -319,4 +319,44 @@ class RevertServiceTest extends TestCase
 
         return is_array($decoded) ? $decoded : [];
     }
+
+    /**
+     * A full revert has to restore fields that only changed after the target
+     * entry, even when the history has no `create` entry to start from.
+     *
+     * @return void
+     */
+    public function testRevertFullWithoutCreateEntry(): void
+    {
+        $articles = $this->fetchTable('Articles');
+        $article = $articles->get(1);
+        $article = $articles->patchEntity($article, ['title' => 'Title v2', 'body' => 'Body v2']);
+        $articles->saveOrFail($article);
+
+        $auditLogs = $this->fetchTable('AuditStash.AuditLogs');
+        $titleLog = $auditLogs->newEntity([
+            'transaction_key' => 'test-transaction-1',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => '1',
+            'original' => json_encode(['title' => 'First Article']),
+            'changed' => json_encode(['title' => 'Title v2']),
+        ]);
+        $auditLogs->saveOrFail($titleLog);
+        $bodyLog = $auditLogs->newEntity([
+            'transaction_key' => 'test-transaction-2',
+            'type' => 'update',
+            'source' => 'Articles',
+            'primary_key' => '1',
+            'original' => json_encode(['body' => 'First Article Body']),
+            'changed' => json_encode(['body' => 'Body v2']),
+        ]);
+        $auditLogs->saveOrFail($bodyLog);
+
+        $result = $this->service->revertFull('Articles', 1, $titleLog->id);
+
+        $this->assertNotFalse($result);
+        $this->assertSame('Title v2', $result->title);
+        $this->assertSame('First Article Body', $result->body);
+    }
 }

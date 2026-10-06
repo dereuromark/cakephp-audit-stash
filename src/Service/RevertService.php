@@ -181,7 +181,7 @@ class RevertService
                 $entity->set('modified', new DateTime());
             }
 
-            // Save entity without callbacks to avoid triggering behaviors
+            // Rules may depend on related rows that were deleted as well
             if (!$table->save($entity, ['checkRules' => false])) {
                 return false;
             }

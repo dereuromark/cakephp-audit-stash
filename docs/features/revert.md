@@ -14,8 +14,19 @@ auditable as well.
 | **Partial revert** | any UPDATE/CREATE audit row + field list | only those fields restored, others untouched |
 | **Restore deleted** | a record that has a DELETE audit row | record recreated with its pre-deletion data |
 
-The data used for revert/restore comes from the `original` payload on the
-audit row, reconstructed via `StateReconstructorService`. Reverts are
+A revert target is rebuilt by `StateReconstructorService`. It replays the
+`changed` payloads up to the chosen audit row, including earlier `revert`
+rows, and takes every field the replay has no value for from the `original`
+payload of the first later row that changed it. A record does not need a
+`create` row for this: tables that got the behavior after they already held
+data, and histories trimmed by [retention](./retention), revert completely.
+A restore reads the `original` payload of the DELETE row.
+
+Writes that bypass the behavior (see
+[Usage](../guide/usage#operations-that-bypass-the-audit-listener)) leave no
+audit row, so the reconstruction cannot account for them.
+
+Reverts are
 transactional — the entity update and the new "revert" audit entry are
 written in the same DB transaction, so a save failure leaves nothing behind.
 
@@ -97,8 +108,9 @@ create/update/delete activity.
   `primary_key`
 - refuses to run if a row with that primary key already exists
 - saves with `checkRules = false` to bypass rules that depend on related
-  data that may also have been deleted; **no behaviors fire** on the
-  restored row
+  data that may also have been deleted. The `beforeSave` / `afterSave`
+  callbacks of the table's behaviors still run. The audit trail records the
+  restore as a `revert` row, not as a `create` row
 
 Treat the restored row as a starting point — you may need to re-establish
 associations (HABTM joins, has-many children) by hand or via a follow-up
