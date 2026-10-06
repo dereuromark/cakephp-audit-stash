@@ -106,7 +106,7 @@ Detects activity outside normal business hours.
 
 ### SensitiveFieldRule
 
-Detects modifications to fields that you've flagged as sensitive (passwords, tokens, role assignments, etc.). Looks at the `changed` payload for create / update events and at `original` for deletes, so password rotations and API-key revocations both fire.
+Detects modifications to fields that you've flagged as sensitive (passwords, tokens, role assignments, etc.). Looks at the `changed` payload for create / update events and at `original` for deletes and snapshots, so password rotations and API-key revocations both fire.
 
 **Configuration options:**
 - `fields` (array, required): Field names to flag. Empty means "no sensitive fields configured" — the rule never matches.

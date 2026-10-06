@@ -81,6 +81,7 @@ class AuditLogsController extends AppController
                 AuditLogType::Update->value,
                 AuditLogType::Delete->value,
                 AuditLogType::Revert->value,
+                AuditLogType::Snapshot->value,
             ],
             $distinctTypes,
         )));

@@ -55,7 +55,7 @@ callables all work.
 
 | Method | Returns |
 |---|---|
-| `eventTypeBadge($type)` | colored Bootstrap badge — green/blue/red/yellow for create/update/delete/revert, secondary for custom event types |
+| `eventTypeBadge($type)` | colored Bootstrap badge — green/blue/red/yellow for create/update/delete/revert, secondary for snapshot and custom event types |
 | `transactionId($txn, $full = false)` | `<code>` short or full transaction id |
 | `changeSummary($changed)` | "3 field(s): title, body, status" |
 

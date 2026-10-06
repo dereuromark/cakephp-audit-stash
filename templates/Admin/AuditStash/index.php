@@ -41,6 +41,7 @@ $typeColor = [
     AuditLogType::Update->value => '#0d6efd',
     AuditLogType::Delete->value => '#dc3545',
     AuditLogType::Revert->value => '#ffc107',
+    AuditLogType::Snapshot->value => '#6c757d',
 ];
 
 $topSourceMax = 0;

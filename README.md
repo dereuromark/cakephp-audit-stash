@@ -19,6 +19,7 @@ Audit-trail plugin: records every create / update / delete on your Table classes
 - **Tamper-evidence** — optional SHA-256 hash chain for GoBD / SOX / HIPAA-grade integrity, verifiable via CLI.
 - **Admin viewer** — built-in dashboard, coverage report, search, diffs, timeline, and CSV/JSON export under `/admin/audit-stash`.
 - **Monitoring & alerting** — rules for mass-deletion and off-hours activity, notifications via email, webhook, or log channel.
+- **Baseline snapshots**: `audit_stash snapshot` records the current values of rows that predate auditing.
 - **Retention & cleanup** — per-table retention policies and a dry-run-friendly cleanup CLI.
 - **GDPR helpers** — redaction and subject-access-export tooling.
 - **Custom event types** — log arbitrary actions (logins, exports, permission grants) through the same persister and viewer.

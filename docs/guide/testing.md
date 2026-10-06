@@ -39,7 +39,7 @@ The trait queries the `audit_logs` table directly through `AuditStash.AuditLogs`
 
 ### `assertAuditLogged(string $source, ?string $type = null, string $message = '')`
 
-Passes when at least one row exists for `$source` (and, if given, `$type` — `create` / `update` / `delete` / any custom string from `Audit::log()`).
+Passes when at least one row exists for `$source` (and, if given, `$type` — `create` / `update` / `delete` / `revert` / `snapshot` / any custom string from `Audit::log()`).
 
 ```php
 $this->assertAuditLogged('Articles');                  // any event on Articles
@@ -86,7 +86,7 @@ $this->assertAuditFieldChanged('Articles', 'title', 'Renamed');      // field ==
 The "most recent" lookup uses `id DESC`, which matches insertion order under `TablePersister`. For a multi-event sequence where you need to assert on a specific earlier row, query `AuditStash.AuditLogs` directly with your own conditions.
 
 > [!NOTE]
-> This only inspects `changed`. For `delete` events the relevant payload lives under `original`; query the table directly when you need that.
+> This only inspects `changed`. For `delete` and `snapshot` events the relevant payload lives under `original`; query the table directly when you need that.
 
 ## Custom assertions
 

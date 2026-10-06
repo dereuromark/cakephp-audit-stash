@@ -977,3 +977,28 @@ The same caveat applies in reverse: if you have an `AuditLog`-behaved table and 
 > [!NOTE]
 > A future opt-in `AuditLog.queryDecorator` config that wraps `Table::updateQuery()` / `deleteQuery()` and emits a synthetic `bulk_update` event with the matched primary keys is on the roadmap. For now the workaround above is the supported path.
 
+## Adding auditing to a table that already has data
+
+Existing records have no audit history until their first change. A snapshot stores their current audited values in `original`, with an empty `changed` payload. Its type is `snapshot`, since the record was not created at that moment.
+
+After adding the `AuditLog` behavior, run:
+
+```bash
+bin/cake audit_stash snapshot Articles
+bin/cake audit_stash snapshot Articles --dry-run
+bin/cake audit_stash snapshot Blog.Posts --batch-size 100
+```
+
+The command requires `TablePersister`. It reads records in primary key order, in batches of 200 by default. `--batch-size` must be an integer of at least 1. Dry runs report how many snapshots would be written without writing any rows.
+
+Any record with an audit row for its source and primary key is skipped, regardless of the row's type. Running the command again writes nothing for records that already have history. The final counts show records seen, snapshots written, and records skipped. If the persister could not save a snapshot, the command reports the number and exits with an error code.
+
+Snapshots honor `sensitive`, `blacklist`, and `whitelist`. Sensitive values are redacted. Only table schema columns are included. Events pass through `AuditStash.beforeLog` and the configured persister, including its hash chain when enabled.
+
+You can also snapshot an iterable of entities directly:
+
+```php
+$count = $table->getBehavior('AuditLog')->snapshot($entities);
+```
+
+One call shares a transaction ID and returns the number of events passed to the persister. An empty iterable writes nothing. The programmatic method does not check for existing history; the command performs that check.

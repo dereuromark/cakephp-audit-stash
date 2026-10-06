@@ -54,6 +54,11 @@ class AuditHelperTest extends TestCase
      *
      * @return void
      */
+    public function testSnapshotBadge(): void
+    {
+        $this->assertSame('<span class="badge bg-secondary">Snapshot</span>', $this->Audit->eventTypeBadge('snapshot'));
+    }
+
     public function testDiffSimpleChanges(): void
     {
         $original = json_encode(['name' => 'John', 'age' => 30]);

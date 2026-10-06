@@ -517,3 +517,10 @@ msgstr ""
 msgid "Server Time"
 msgstr ""
 
+#: templates/Admin/AuditLogs/view.php templates/Admin/AuditLogs/timeline.php
+msgid "State when auditing started for this record:"
+msgstr ""
+
+#: templates/Admin/AuditLogs/timeline.php
+msgid "Snapshot"
+msgstr ""

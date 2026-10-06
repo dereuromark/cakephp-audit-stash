@@ -7,6 +7,7 @@ namespace AuditStash\Model\Behavior;
 use ArrayObject;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditDeleteEvent;
+use AuditStash\Event\AuditSnapshotEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Event\BaseEvent;
 use AuditStash\Filter\ChangeFilter;
@@ -240,6 +241,45 @@ class AuditLogBehavior extends Behavior
                 $value = '****';
             }
         }
+    }
+
+    /**
+     * Records the current audited state of existing entities.
+     *
+     * @param iterable<\Cake\Datasource\EntityInterface> $entities Entities to snapshot
+     *
+     * @return int Number of events passed to the persister
+     */
+    public function snapshot(iterable $entities): int
+    {
+        $fields = $this->_table->getSchema()->columns();
+        $whitelist = $this->getConfig('whitelist');
+        if ($whitelist) {
+            $fields = array_intersect($fields, $whitelist);
+        }
+        $fields = array_diff($fields, $this->getConfig('blacklist'));
+        $transactionId = Text::uuid();
+        $events = [];
+        foreach ($entities as $entity) {
+            $original = $entity->extract($fields);
+            $this->redactArray($original);
+            $events[] = new AuditSnapshotEvent(
+                $transactionId,
+                $entity->extract((array)$this->_table->getPrimaryKey()),
+                $this->_table->getRegistryAlias(),
+                $original,
+                $this->extractDisplayValue($entity, $this->_table->getDisplayField()),
+            );
+        }
+        if (!$events) {
+            return 0;
+        }
+
+        $data = $this->_table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
+        $logs = $data->getData('logs');
+        $this->persister()->logEvents($logs);
+
+        return count($logs);
     }
 
     /**

@@ -7,6 +7,7 @@ namespace AuditStash;
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Event\AuditDeleteEvent;
+use AuditStash\Event\AuditSnapshotEvent;
 use AuditStash\Event\AuditUpdateEvent;
 use Cake\ORM\Entity;
 use ReflectionObject;
@@ -29,7 +30,15 @@ class EventFactory
     {
         $displayValue = $data['display_value'] ?? null;
 
-        if ($data['type'] === 'delete') {
+        if ($data['type'] === 'snapshot') {
+            $event = new AuditSnapshotEvent(
+                $data['transaction_key'],
+                $data['primary_key'],
+                $data['source'],
+                $data['original'] ?? [],
+                $displayValue,
+            );
+        } elseif ($data['type'] === 'delete') {
             $parentSource = $data['parent_source'] ?? null;
             $original = array_key_exists('original', $data) ? $data['original'] : [];
             $event = new AuditDeleteEvent(

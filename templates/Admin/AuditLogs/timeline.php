@@ -63,6 +63,8 @@ use AuditStash\AuditLogType;
                                         <span class="ms-2">
                                             <?php if ($auditLog->type === AuditLogType::Create->value) { ?>
                                                 Record created
+                                            <?php } elseif ($auditLog->type === AuditLogType::Snapshot->value) { ?>
+                                                <?= __d('audit_stash', 'Snapshot') ?>
                                             <?php } elseif ($auditLog->type === AuditLogType::Update->value) { ?>
                                                 <?= $this->Audit->changeSummary($auditLog->changed) ?>
                                             <?php } elseif ($auditLog->type === AuditLogType::Revert->value) { ?>
@@ -127,6 +129,8 @@ use AuditStash\AuditLogType;
                                             }
                                             ?>
                                         </div>
+                                    <?php } elseif ($auditLog->type === AuditLogType::Snapshot->value) { ?>
+                                        <?= $this->Audit->fieldValuesTable($auditLog->original, __d('audit_stash', 'State when auditing started for this record:')) ?>
                                     <?php } elseif ($auditLog->type === AuditLogType::Update->value) { ?>
                                         <details>
                                             <summary class="cursor-pointer text-primary">Show changes</summary>

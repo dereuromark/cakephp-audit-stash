@@ -44,7 +44,7 @@ trait AuditAssertionsTrait
     /**
      * Assert that at least one audit log row exists for the given source
      * (and optionally a specific event type — `create`, `update`, `delete`,
-     * or any custom string).
+     * `revert`, `snapshot`, or any custom string).
      *
      * @param string $source The audit source / table alias (e.g. 'Articles')
      * @param string|null $type Event type to match. `null` matches any type.

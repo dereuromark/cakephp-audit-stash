@@ -102,6 +102,8 @@ use AuditStash\AuditLogType;
                 <?= $this->Audit->fieldValuesTable($auditLog->changed, __d('audit_stash', 'Created with values:')) ?>
             <?php } elseif ($auditLog->type === AuditLogType::Delete->value) { ?>
                 <?= $this->Audit->fieldValuesTable($auditLog->original, __d('audit_stash', 'Deleted record had these values:')) ?>
+            <?php } elseif ($auditLog->type === AuditLogType::Snapshot->value) { ?>
+                <?= $this->Audit->fieldValuesTable($auditLog->original, __d('audit_stash', 'State when auditing started for this record:')) ?>
             <?php } elseif (in_array($auditLog->type, [AuditLogType::Update->value, AuditLogType::Revert->value], true)) { ?>
                 <div id="inline-diff-view">
                     <?= $this->Audit->diffInline($auditLog->original, $auditLog->changed) ?>

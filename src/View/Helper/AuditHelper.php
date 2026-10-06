@@ -375,6 +375,7 @@ class AuditHelper extends Helper
             AuditLogType::Create->value => '<span class="badge bg-success">Create</span>',
             AuditLogType::Update->value => '<span class="badge bg-primary">Update</span>',
             AuditLogType::Delete->value => '<span class="badge bg-danger">Delete</span>',
+            AuditLogType::Snapshot->value => '<span class="badge bg-secondary">Snapshot</span>',
             AuditLogType::Revert->value => '<span class="badge bg-warning">Revert</span>',
             default => '<span class="badge bg-secondary">' . h($value) . '</span>',
         };

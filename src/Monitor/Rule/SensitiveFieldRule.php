@@ -129,6 +129,7 @@ class SensitiveFieldRule extends AbstractRule
         $sides = match ($auditLog->type) {
             AuditLogType::Create->value => ['changed'],
             AuditLogType::Delete->value => ['original'],
+            AuditLogType::Snapshot->value => ['original'],
             default => ['changed', 'original'],
         };
 

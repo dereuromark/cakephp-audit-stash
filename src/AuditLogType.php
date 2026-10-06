@@ -15,4 +15,5 @@ enum AuditLogType: string
     case Update = 'update';
     case Delete = 'delete';
     case Revert = 'revert';
+    case Snapshot = 'snapshot';
 }
