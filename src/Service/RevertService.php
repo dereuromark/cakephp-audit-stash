@@ -26,6 +26,14 @@ class RevertService
 {
     use LocatorAwareTrait;
 
+    /**
+     * Mass-assignment protection guards request data. The values here come
+     * from the audit log, and a revert has to reach every audited field.
+     *
+     * @var array<string, mixed>
+     */
+    protected const PATCH_OPTIONS = ['accessibleFields' => ['*' => true]];
+
     protected StateReconstructorService $reconstructor;
 
     public function __construct()
@@ -64,7 +72,7 @@ class RevertService
             $currentState = $entity->extract($entity->getVisible());
 
             // Patch entity with target state
-            $entity = $table->patchEntity($entity, $targetState);
+            $entity = $table->patchEntity($entity, $targetState, static::PATCH_OPTIONS);
 
             // Save entity
             if (!$table->save($entity)) {
@@ -113,7 +121,7 @@ class RevertService
             $currentState = $entity->extract($fields);
 
             // Patch entity with target state
-            $entity = $table->patchEntity($entity, $targetState);
+            $entity = $table->patchEntity($entity, $targetState, static::PATCH_OPTIONS);
 
             // Save entity
             if (!$table->save($entity)) {

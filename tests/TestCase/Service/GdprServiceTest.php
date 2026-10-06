@@ -480,4 +480,34 @@ class GdprServiceTest extends TestCase
 
         return is_array($decoded) ? $decoded : [];
     }
+
+    /**
+     * Anonymized payloads must come back decoded, like the rows the
+     * persister writes.
+     *
+     * @return void
+     */
+    public function testAnonymizeKeepsPayloadsDecoded(): void
+    {
+        $auditLogsTable = $this->getTableLocator()->get('AuditStash.AuditLogs');
+        $log = $auditLogsTable->newEntity([
+            'transaction_key' => 'test-1',
+            'type' => 'update',
+            'source' => 'users',
+            'primary_key' => 1,
+            'user_id' => '123',
+            'meta' => ['ip' => '192.168.1.100', 'request_id' => 'abc'],
+            'original' => ['email' => 'old@example.com', 'status' => 'new'],
+            'changed' => ['email' => 'new@example.com', 'status' => 'active'],
+            'created' => new DateTime(),
+        ]);
+        $auditLogsTable->saveOrFail($log);
+
+        $this->service->anonymize(123);
+
+        $anonymized = $auditLogsTable->get($log->id);
+        $this->assertSame(['ip' => '0.0.0.0', 'request_id' => 'abc'], $anonymized->meta);
+        $this->assertSame(['email' => '[REDACTED]', 'status' => 'new'], $anonymized->original);
+        $this->assertSame(['email' => '[REDACTED]', 'status' => 'active'], $anonymized->changed);
+    }
 }

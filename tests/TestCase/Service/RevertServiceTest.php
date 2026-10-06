@@ -9,6 +9,7 @@ use AuditStash\Service\ChainVerifier;
 use AuditStash\Service\RevertService;
 use Cake\Core\Configure;
 use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\ORM\Entity;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
@@ -484,5 +485,35 @@ class RevertServiceTest extends TestCase
         $articles->addBehavior('AuditStash.AuditLog', $config);
 
         return $articles;
+    }
+
+    /**
+     * Mass-assignment protection is for request data. A revert must reach
+     * every audited field.
+     *
+     * @return void
+     */
+    public function testRevertFullRestoresGuardedFields(): void
+    {
+        $articles = $this->audited();
+        $article = $articles->get(1);
+        $article = $articles->patchEntity($article, ['title' => 'Changed', 'body' => 'Changed body']);
+        $articles->saveOrFail($article);
+        $first = $this->fetchTable('AuditStash.AuditLogs')->find()->orderByAsc('id')->firstOrFail();
+        $article->set('title', 'Changed again');
+        $articles->saveOrFail($article);
+
+        $guarded = new class extends Entity {
+            /**
+             * @var array<string, bool>
+             */
+            protected array $_accessible = ['title' => false, 'body' => false];
+        };
+        $articles->setEntityClass($guarded::class);
+
+        $result = $this->service->revertFull('Articles', 1, $first->id);
+
+        $this->assertNotFalse($result);
+        $this->assertSame('Changed', $articles->get(1)->title);
     }
 }

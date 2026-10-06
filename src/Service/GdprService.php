@@ -102,7 +102,7 @@ class GdprService
                             $meta[$field] = $replacement;
                         }
                     }
-                    $log->meta = (string)json_encode($meta, AuditStashPlugin::JSON_FLAGS);
+                    $log->meta = $meta;
                 }
             }
 
@@ -112,7 +112,7 @@ class GdprService
                 $original = is_string($originalValue) ? json_decode($originalValue, true) : $originalValue;
                 if (is_array($original)) {
                     $original = $this->redactPiiFields($original, $piiFields);
-                    $log->original = (string)json_encode($original, AuditStashPlugin::JSON_FLAGS);
+                    $log->original = $original;
                 }
             }
 
@@ -122,7 +122,7 @@ class GdprService
                 $changed = is_string($changedValue) ? json_decode($changedValue, true) : $changedValue;
                 if (is_array($changed)) {
                     $changed = $this->redactPiiFields($changed, $piiFields);
-                    $log->changed = (string)json_encode($changed, AuditStashPlugin::JSON_FLAGS);
+                    $log->changed = $changed;
                 }
             }
 
