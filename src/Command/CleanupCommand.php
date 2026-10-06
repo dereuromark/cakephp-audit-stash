@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Command;
 
+use AuditStash\Service\ChainSealer;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
@@ -183,10 +184,29 @@ class CleanupCommand extends Command
             return self::CODE_SUCCESS;
         }
 
+        $sealer = new ChainSealer();
+        $chainBefore = $sealer->check();
+        if ($chainBefore !== null && !$chainBefore->intact) {
+            $io->warning(sprintf(
+                'Hash chain is already broken at row %d (%s). The seal will record that.',
+                (int)$chainBefore->brokenRowId,
+                (string)$chainBefore->reason,
+            ));
+        }
+
         // Delete records
         $deleted = $auditLogsTable->deleteAll($conditions);
 
         $io->success(sprintf('Successfully deleted %d audit log(s).', $deleted));
+
+        $sealed = $sealer->seal('cleanup', [
+            'table' => $table,
+            'retention_days' => $retention,
+            'deleted' => $deleted,
+        ], $chainBefore);
+        if ($sealed) {
+            $io->out('Hash chain sealed after cleanup.');
+        }
 
         return self::CODE_SUCCESS;
     }

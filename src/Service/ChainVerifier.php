@@ -24,7 +24,7 @@ class ChainVerifier
      *
      * @var array<string>
      */
-    protected const IGNORED_FIELDS = ['id', 'hash', 'prev_hash'];
+    public const IGNORED_FIELDS = ['id', 'hash', 'prev_hash'];
 
     /**
      * Verify the whole chain in a table.
@@ -70,6 +70,44 @@ class ChainVerifier
             return ChainVerificationResult::intact(0);
         }
 
+        // Rows up to the newest maintenance seal lost their links on purpose
+        // (retention cleanup, GDPR erasure). They are checked against the
+        // digest the seal recorded; the chain walk starts after them.
+        $sealed = false;
+        $sealer = new ChainSealer();
+        $seal = $sealer->latestSeal($table, $maxId);
+        if ($seal !== null) {
+            $segment = $sealer->digest($table, $seal['through_id'], $chunkSize);
+            if (!hash_equals($seal['digest'], $segment['digest'])) {
+                return ChainVerificationResult::broken(
+                    $seal['id'],
+                    $segment['rows'],
+                    sprintf(
+                        'sealed segment mismatch: rows up to id %d changed after the seal in row %d was written',
+                        $seal['through_id'],
+                        $seal['id'],
+                    ),
+                );
+            }
+
+            if ($seal['broken_before'] !== null) {
+                return ChainVerificationResult::broken(
+                    $seal['id'],
+                    $segment['rows'],
+                    sprintf(
+                        'chain was already broken when the seal in row %d was written (%s)',
+                        $seal['id'],
+                        $seal['broken_before'],
+                    ),
+                );
+            }
+
+            $total = $segment['rows'];
+            $lastId = $seal['through_id'];
+            // Every row after a seal is chained; none may pass as a legacy row.
+            $sealed = true;
+        }
+
         while (true) {
             $rows = $table->find()
                 ->where([$orderField . ' >' => $lastId, $orderField . ' <=' => $maxId])
@@ -85,7 +123,7 @@ class ChainVerifier
                 $storedHash = $fields['hash'] ?? null;
                 $storedPrev = $fields['prev_hash'] ?? null;
 
-                if (!$started && $storedHash === null) {
+                if (!$started && !$sealed && $storedHash === null) {
                     if ($storedPrev !== null) {
                         return ChainVerificationResult::broken(
                             $id,

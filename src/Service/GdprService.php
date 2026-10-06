@@ -83,6 +83,8 @@ class GdprService
         );
 
         $anonymizedUserId = $this->generateAnonymizedUserId($userId, $userIdStrategy);
+        $sealer = new ChainSealer();
+        $chainBefore = $sealer->check();
 
         $count = 0;
 
@@ -131,6 +133,10 @@ class GdprService
             }
         }
 
+        if ($count > 0) {
+            $sealer->seal('gdpr.anonymize', ['rows' => $count], $chainBefore);
+        }
+
         return $count;
     }
 
@@ -149,7 +155,14 @@ class GdprService
         /** @var \AuditStash\Model\Table\AuditLogsTable $auditLogsTable */
         $auditLogsTable = $this->fetchTable('AuditStash.AuditLogs');
 
-        return $auditLogsTable->deleteAll(['user_id' => (string)$userId]);
+        $sealer = new ChainSealer();
+        $chainBefore = $sealer->check();
+        $deleted = $auditLogsTable->deleteAll(['user_id' => (string)$userId]);
+        if ($deleted > 0) {
+            $sealer->seal('gdpr.delete', ['rows' => $deleted], $chainBefore);
+        }
+
+        return $deleted;
     }
 
     /**
