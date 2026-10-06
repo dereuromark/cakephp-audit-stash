@@ -264,6 +264,24 @@ class StateReconstructorServiceTest extends TestCase
     }
 
     /**
+     * A restore writes the delete entry's payload into `changed`, and that
+     * payload is not narrowed by the whitelist.
+     *
+     * @return void
+     */
+    public function testReconstructStateHonorsWhitelistForReplayedRevert(): void
+    {
+        $this->fetchTable('Articles')->addBehavior('AuditStash.AuditLog', ['whitelist' => ['title']]);
+
+        $this->log('revert', [], ['title' => 'A', 'body' => 'Body'], 'Articles');
+        $last = $this->log('update', ['title' => 'A'], ['title' => 'B'], 'Articles');
+
+        $state = $this->service->reconstructState('Articles', 1, $last);
+
+        $this->assertSame(['title' => 'B'], $state);
+    }
+
+    /**
      * @param string $type Entry type
      * @param array<string, mixed> $original Original values
      * @param array<string, mixed>|null $changed Changed values

@@ -16,16 +16,6 @@ class StateReconstructorService
     use LocatorAwareTrait;
 
     /**
-     * Entry types whose `changed` payload is merged into the replayed state.
-     *
-     * @var array<string>
-     */
-    protected const MERGED_TYPES = [
-        AuditLogType::Update->value,
-        AuditLogType::Revert->value,
-    ];
-
-    /**
      * Reconstruct record state at specific audit log entry
      *
      * Replays `changed` payloads up to the target entry. Fields the replay
@@ -65,8 +55,11 @@ class StateReconstructorService
 
             if ($log->type === AuditLogType::Create->value && $log->changed !== null) {
                 $state = $this->decode($log->changed);
-            } elseif (in_array($log->type, static::MERGED_TYPES, true)) {
+            } elseif ($log->type === AuditLogType::Update->value) {
                 $state = array_merge($state, $this->decode($log->changed));
+            } elseif ($log->type === AuditLogType::Revert->value) {
+                // A restore copies the delete entry's payload, which ignores the whitelist.
+                $state = array_merge($state, $this->auditedOnly($this->decode($log->changed), $source));
             }
 
             $reached = (int)$log->id === $auditLogId;
