@@ -10,6 +10,7 @@ use Cake\Core\InstanceConfigTrait;
 use Cake\Event\EventDispatcherTrait;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\ORM\Table;
+use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -126,6 +127,21 @@ class TablePersister implements PersisterInterface
         'unsetExtractedMetaFields' => true,
         'hashChain' => false,
     ];
+
+    /**
+     * Lock scope taken for every chained write.
+     *
+     * @var string
+     */
+    protected const LOCK_SCOPE_WRITE = 'hash_chain';
+
+    /**
+     * Lock scope that serializes maintenance runs. Separate from the write
+     * scope so a long cleanup does not stall the application's audit writes.
+     *
+     * @var string
+     */
+    protected const LOCK_SCOPE_MAINTENANCE = 'chain_maintenance';
 
     /**
      * The table to use for persisting logs.
@@ -279,6 +295,26 @@ class TablePersister implements PersisterInterface
     }
 
     /**
+     * Runs chain maintenance (verify, change rows, seal) as one transaction,
+     * one run at a time. A failure anywhere rolls the row changes back, so
+     * the chain is never left changed without its seal.
+     *
+     * @param \Closure $callback The maintenance work
+     *
+     * @return mixed The callback's return value
+     */
+    public function chainMaintenance(Closure $callback): mixed
+    {
+        $table = $this->getTable();
+        $lockHandle = $this->acquireChainWriteLock($table, static::LOCK_SCOPE_MAINTENANCE);
+        try {
+            return $table->getConnection()->transactional($callback);
+        } finally {
+            $this->releaseChainWriteLock($table, $lockHandle);
+        }
+    }
+
+    /**
      * Load the hash of the last (highest-id) row, locking the table against
      * concurrent chain writers for the remainder of the transaction.
      *
@@ -375,16 +411,17 @@ class TablePersister implements PersisterInterface
 
     /**
      * @param \Cake\ORM\Table $table
+     * @param string $scope
      *
      * @throws \RuntimeException
      *
      * @return string|null
      */
-    protected function acquireChainWriteLock(Table $table): ?string
+    protected function acquireChainWriteLock(Table $table, string $scope = self::LOCK_SCOPE_WRITE): ?string
     {
         $connection = $table->getConnection();
         $driverClass = $connection->getDriver()::class;
-        $lockName = 'audit_stash_hash_chain:' . $table->getTable();
+        $lockName = 'audit_stash_' . $scope . ':' . $table->getTable();
 
         if (str_contains($driverClass, 'Mysql')) {
             $result = $connection

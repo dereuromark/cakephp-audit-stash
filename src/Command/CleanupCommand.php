@@ -185,27 +185,24 @@ class CleanupCommand extends Command
         }
 
         $sealer = new ChainSealer();
-        $chainBefore = $sealer->check();
-        if ($chainBefore !== null && !$chainBefore->intact) {
-            $io->warning(sprintf(
-                'Hash chain is already broken at row %d (%s). The seal will record that.',
-                (int)$chainBefore->brokenRowId,
-                (string)$chainBefore->reason,
-            ));
-        }
-
-        // Delete records
-        $deleted = $auditLogsTable->deleteAll($conditions);
+        $deleted = $sealer->maintain('cleanup', fn (): array => [
+            $count = $auditLogsTable->deleteAll($conditions),
+            ['table' => $table, 'retention_days' => $retention, 'deleted' => $count],
+        ]);
 
         $io->success(sprintf('Successfully deleted %d audit log(s).', $deleted));
 
-        $sealed = $sealer->seal('cleanup', [
-            'table' => $table,
-            'retention_days' => $retention,
-            'deleted' => $deleted,
-        ], $chainBefore);
-        if ($sealed) {
+        if ($sealer->hasSealed()) {
             $io->out('Hash chain sealed after cleanup.');
+        }
+
+        $broken = $sealer->brokenBefore();
+        if ($broken !== null) {
+            $io->warning(sprintf(
+                'Hash chain was already broken at row %d (%s). The seal records that.',
+                (int)$broken->brokenRowId,
+                (string)$broken->reason,
+            ));
         }
 
         return self::CODE_SUCCESS;

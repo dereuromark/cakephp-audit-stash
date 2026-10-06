@@ -19,6 +19,7 @@ use Cake\TestSuite\TestCase;
 use Cake\Utility\Text;
 use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionProperty;
+use RuntimeException;
 
 /**
  * The hash chain has to stay verifiable after cleanup and GDPR operations,
@@ -223,6 +224,28 @@ class ChainSealerTest extends TestCase
         $result = $this->verify();
         $this->assertFalse($result->intact);
         $this->assertStringContainsString('already broken', (string)$result->reason);
+    }
+
+    /**
+     * A chain must not be left changed without its seal.
+     *
+     * @return void
+     */
+    public function testFailedSealRollsBackTheOperation(): void
+    {
+        $this->auditLogs->getEventManager()->on('Model.beforeSave', function ($event, $entity): void {
+            if ($entity->type === ChainSealer::TYPE) {
+                $event->setResult(false);
+            }
+        });
+
+        try {
+            (new GdprService())->delete('7');
+            $this->fail('Expected the failed seal to abort the operation.');
+        } catch (RuntimeException) {
+            $this->assertSame(6, $this->auditLogs->find()->count());
+            $this->assertTrue($this->verify()->intact);
+        }
     }
 
     /**

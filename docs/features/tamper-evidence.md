@@ -208,6 +208,11 @@ forensic review, but the seal records the break in `broken_before` and
 `verify_chain` keeps reporting it. Maintenance never turns a broken chain
 into a clean one.
 
+Verification, the operation and the seal run in one database transaction,
+and only one maintenance run at a time. If the seal cannot be written, the
+operation is rolled back, so the chain is never left changed without a seal.
+Normal audit writes are not blocked while maintenance runs.
+
 Only the newest seal counts. Verifying before and sealing after each read every row once, so a cleanup
 on a large table takes about as long as two `verify_chain` runs.
 
