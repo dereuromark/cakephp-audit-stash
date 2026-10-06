@@ -95,8 +95,11 @@ Every revert/restore writes a new audit row:
 | `meta.revert_to_audit_id` | the audit row that was replayed |
 | `meta.revert_type` | `full`, `partial`, or `restore` |
 
-The new row participates in the [tamper-evidence chain](./tamper-evidence)
-like any other audit row. `AuditHelper::eventTypeBadge()` renders revert
+The row is written through `TablePersister` with your
+`AuditStash.persisterConfig`, after an `AuditStash.beforeLog` event on the
+source table. It therefore carries the same metadata as other audit rows (the
+acting user, for example) and is part of the
+[tamper-evidence chain](./tamper-evidence). `AuditHelper::eventTypeBadge()` renders revert
 events with a yellow badge so they're visually distinct from regular
 create/update/delete activity.
 
@@ -111,10 +114,25 @@ create/update/delete activity.
   data that may also have been deleted. The `beforeSave` / `afterSave`
   callbacks of the table's behaviors still run. The audit trail records the
   restore as a `revert` row, not as a `create` row
+- returns `false` when the DELETE row holds no usable snapshot, for example
+  one written by an older version for an entity that was deleted while only
+  partly loaded. The database error is written to the error log
 
 Treat the restored row as a starting point — you may need to re-establish
 associations (HABTM joins, has-many children) by hand or via a follow-up
 restore pass.
+
+## Sensitive fields
+
+Fields listed in the behavior's `sensitive` config are stored as `****` in
+the audit rows, so their real value is not available. Revert and restore
+leave them out:
+
+- a full or partial revert keeps the current value of a sensitive field
+- a restore inserts the row without it. A nullable column ends up `NULL`,
+  and a `NOT NULL` column without a default makes the restore return `false`
+
+The revert preview does not list sensitive fields either.
 
 ## Configuration
 
