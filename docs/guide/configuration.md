@@ -96,6 +96,16 @@ To change the column type on an existing install, write an app-side migration th
 For the `integer` and `biginteger` variants, signedness is inherited from the `Migrations.unsigned_primary_keys`
 config key (same as CakePHP core migrations). For `uuid` and `binaryuuid` no `signed` option is set.
 
+::: warning Tables with a composite primary key
+A composite key is stored as one JSON string, for example `{"article_id":1,"tag_id":2}`. That does not fit an
+`integer`, `biginteger`, `uuid` or `binaryuuid` column, and the value ends up as `NULL`: the audit row is written,
+but it can no longer be tied to its record, and the row cannot be reverted or restored.
+
+If you audit such tables, change `audit_logs.primary_key` to a string column wide enough for the JSON form, or
+set the persister option `primaryKeyExtractionStrategy` to `TablePersister::STRATEGY_PROPERTIES` and add one
+`primary_key_<field>` column per key field.
+:::
+
 The table persister is configured by default, but you can explicitly set it in your `config/app_local.php` or `config/app.php`:
 
 ```php
