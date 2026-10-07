@@ -6,6 +6,7 @@ namespace AuditStash\Test\TestCase\Service;
 
 use AuditStash\Event\AuditCreateEvent;
 use AuditStash\Event\AuditCustomEvent;
+use AuditStash\Event\AuditUpdateEvent;
 use AuditStash\Persister\TablePersister;
 use AuditStash\Service\ChainSealer;
 use AuditStash\Service\ChainVerificationResult;
@@ -13,6 +14,7 @@ use AuditStash\Service\ChainVerifier;
 use AuditStash\Service\GdprService;
 use Cake\Console\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\Core\Configure;
+use Cake\I18n\Date;
 use Cake\I18n\DateTime;
 use Cake\ORM\Table;
 use Cake\TestSuite\TestCase;
@@ -32,7 +34,7 @@ class ChainSealerTest extends TestCase
     /**
      * @var array<string>
      */
-    protected array $fixtures = ['plugin.AuditStash.AuditLogs'];
+    protected array $fixtures = ['plugin.AuditStash.AuditLogs', 'plugin.AuditStash.Articles'];
 
     protected Table $auditLogs;
 
@@ -277,6 +279,63 @@ class ChainSealerTest extends TestCase
             'string key in an integer column' => ['5', '7'],
             'no record id' => [null, '7'],
         ];
+    }
+
+    /**
+     * The JSON columns give back what JSON can hold, so a date in a payload
+     * comes back as a string. The hash has to be built from that form.
+     *
+     * @param mixed $value Value inside an audited payload
+     *
+     * @return void
+     */
+    #[DataProvider('payloadValues')]
+    public function testChainSurvivesJsonRoundTripOfPayloadValues(mixed $value): void
+    {
+        $event = new AuditUpdateEvent(Text::uuid(), 1, 'Articles', ['field' => $value], ['field' => null], null);
+        $event->setMetaInfo(['at' => $value]);
+        $this->persister()->logEvents([$event]);
+
+        $result = $this->verify();
+        $this->assertTrue($result->intact, (string)$result->reason);
+    }
+
+    /**
+     * @return array<string, array<mixed>>
+     */
+    public static function payloadValues(): array
+    {
+        return [
+            'datetime' => [new DateTime('2020-01-01 10:00:00')],
+            'datetime with microseconds' => [new DateTime('2020-01-01 10:00:00.123456')],
+            'date' => [new Date('2020-01-01')],
+            'float without fraction' => [10.0],
+            'nested' => [['at' => new DateTime('2020-01-01 10:00:00'), 'list' => [1, null, 'x']]],
+        ];
+    }
+
+    /**
+     * Create, update and delete of a record with an audited datetime column.
+     *
+     * @return void
+     */
+    public function testChainSurvivesAuditedDateColumns(): void
+    {
+        $this->auditLogs->deleteAll([]);
+        $articles = $this->fetchTable('Articles');
+        $articles->addBehavior('AuditStash.AuditLog');
+        $articles->getBehavior('AuditLog')->setConfig('blacklist', ['id'], false);
+
+        $article = $articles->newEntity(['title' => 'New', 'body' => 'Body', 'author_id' => 1]);
+        $article->set('created', new DateTime('2020-01-01 10:00:00'));
+        $articles->saveOrFail($article);
+        $article->set('created', new DateTime('2021-02-02 11:11:11'));
+        $articles->saveOrFail($article);
+        $articles->deleteOrFail($article);
+
+        $this->assertSame(3, $this->auditLogs->find()->count());
+        $result = $this->verify();
+        $this->assertTrue($result->intact, (string)$result->reason);
     }
 
     /**

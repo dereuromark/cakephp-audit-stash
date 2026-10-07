@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Persister;
 
+use AuditStash\AuditStashPlugin;
 use AuditStash\PersisterInterface;
 use AuditStash\Service\HashChain;
 use Cake\Core\InstanceConfigTrait;
@@ -417,7 +418,14 @@ class TablePersister implements PersisterInterface
     {
         $payload = [];
         foreach ($hashPayloadColumns as $column) {
-            $payload[$column] = $fields[$column] ?? null;
+            $value = $fields[$column] ?? null;
+            // A JSON column gives back only what JSON can hold: a date inside
+            // `original`, `changed` or `meta` is read back as a string. Hash
+            // that form, or the row fails verification as soon as it is read.
+            if (is_array($value)) {
+                $value = json_decode((string)json_encode($value, AuditStashPlugin::JSON_FLAGS), true);
+            }
+            $payload[$column] = $value;
         }
 
         return $payload;
