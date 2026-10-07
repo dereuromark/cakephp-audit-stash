@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AuditStash\Model\Table;
 
 use AuditStash\Database\JsonQueryHelper;
+use Cake\Database\Expression\IdentifierExpression;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Utility\Inflector;
@@ -374,12 +375,14 @@ class AuditLogsTable extends Table
             ->select([
                 'transaction_key' => 'AuditLogs.transaction_key',
                 'record_count' => $query->func()->count('*'),
-                'sources' => $query->func()->count(
-                    $query->expr()->add('DISTINCT AuditLogs.source'),
-                ),
-                'user_id' => $query->func()->max('AuditLogs.user_id'),
-                'user_display' => $query->func()->max('AuditLogs.user_display'),
-                'created' => $query->func()->min('AuditLogs.created'),
+                // Identifiers, so they are quoted like the table alias. PostgreSQL
+                // folds an unquoted `AuditLogs` to lower case and finds no table.
+                'sources' => $query->func()
+                    ->aggregate('COUNT', ['DISTINCT' => 'literal', 'AuditLogs.source' => 'identifier'], [], 'integer')
+                    ->setConjunction(' '),
+                'user_id' => $query->func()->max(new IdentifierExpression('AuditLogs.user_id')),
+                'user_display' => $query->func()->max(new IdentifierExpression('AuditLogs.user_display')),
+                'created' => $query->func()->min(new IdentifierExpression('AuditLogs.created')),
             ])
             ->groupBy(['AuditLogs.transaction_key'])
             ->having(function ($exp, $q) use ($minRecords) {

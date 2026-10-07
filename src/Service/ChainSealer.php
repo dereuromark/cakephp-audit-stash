@@ -7,6 +7,7 @@ namespace AuditStash\Service;
 use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
+use Cake\Database\Expression\IdentifierExpression;
 use Cake\ORM\Table;
 use Cake\Utility\Text;
 use Closure;
@@ -244,7 +245,7 @@ class ChainSealer
         /** @var string $primaryKey */
         $primaryKey = $table->getPrimaryKey();
         $row = $table->find()
-            ->select(['max' => $table->find()->func()->max($table->aliasField($primaryKey))])
+            ->select(['max' => $table->find()->func()->max(new IdentifierExpression($table->aliasField($primaryKey)))])
             ->disableHydration()
             ->first();
 
