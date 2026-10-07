@@ -103,6 +103,8 @@ By default, the user value in audit logs is displayed as plain text. You can con
 ],
 ```
 
+Placeholder values are URL-encoded when they are put into a string template.
+
 Available placeholders: `{user}` (the linkable part, populated from `user_id`), `{display}` (the display name, from `user_display`).
 
 **Callable (recommended for conditional linking):**
