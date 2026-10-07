@@ -491,16 +491,21 @@ The plugin dispatches two events around persistence:
 | `AuditStash.beforeLog` | just before the persister writes the rows | mutating each log (add metadata, redact fields, attach extra context) |
 | `AuditStash.afterLog` | just after the persister returns | side effects that need the rows already-stored (notifications, cache busts, derived projections) |
 
-Both events receive the same `array<\AuditStash\EventInterface> $logs`
-payload. `afterLog` listeners must not mutate the log objects — the rows
-have already been persisted, so changes have no effect on what's stored.
+The payloads differ. `beforeLog` is dispatched on the audited table once per
+batch, with `logs`: the `array<\AuditStash\EventInterface>` about to be
+written. `afterLog` is dispatched by `TablePersister` once per stored row,
+with `auditLog`: the saved `AuditLog` entity.
+
+`afterLog` fires after the row is committed, and with `hashChain` enabled
+after the chain lock is released. An exception or error thrown by a listener
+is written to the error log and does not undo the audit row or reach the code
+that triggered the save.
 
 ```php
-EventManager::instance()->on('AuditStash.afterLog', function (EventInterface $event, array $logs): void {
-    foreach ($logs as $log) {
-        // logs are already in the database; do post-processing
-        Cache::delete('article_' . $log->getId() . '_history');
-    }
+EventManager::instance()->on('AuditStash.afterLog', function (EventInterface $event): void {
+    /** @var \AuditStash\Model\Entity\AuditLog $auditLog */
+    $auditLog = $event->getData('auditLog');
+    Cache::delete('article_' . $auditLog->primary_key . '_history');
 });
 ```
 

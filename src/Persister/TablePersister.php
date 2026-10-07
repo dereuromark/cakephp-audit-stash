@@ -13,6 +13,7 @@ use Cake\ORM\Table;
 use Closure;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 /**
  * A persister that uses the ORM API to persist audit logs.
@@ -222,6 +223,7 @@ class TablePersister implements PersisterInterface
             $hashPayloadColumns = $this->assertHashChainReady($persisterTable);
         }
 
+        $saved = [];
         $persist = function () use (
             $auditLogs,
             $persisterTable,
@@ -232,6 +234,7 @@ class TablePersister implements PersisterInterface
             $logErrors,
             $hashChain,
             $hashPayloadColumns,
+            &$saved,
         ): void {
             $prevHash = $hashChain ? $this->loadLastHashForUpdate($persisterTable) : null;
 
@@ -262,7 +265,7 @@ class TablePersister implements PersisterInterface
                     if ($hashChain) {
                         $prevHash = $persisterEntity->get('hash');
                     }
-                    $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $persisterEntity]);
+                    $saved[] = $persisterEntity;
 
                     continue;
                 }
@@ -288,11 +291,43 @@ class TablePersister implements PersisterInterface
             } finally {
                 $this->releaseChainWriteLock($persisterTable, $lockHandle);
             }
+        } else {
+            // Without the chain every row commits on its own, so rows stored
+            // before a later one fails are announced as well.
+            try {
+                $persist();
+            } finally {
+                $this->dispatchAfterLog($saved);
+            }
 
             return;
         }
 
-        $persist();
+        $this->dispatchAfterLog($saved);
+    }
+
+    /**
+     * Tells listeners about the stored rows once they are committed and the
+     * chain lock is released. A listener that fails or is slow (a monitoring
+     * webhook) must neither undo an audit row nor hold up other writers.
+     *
+     * @param array<\Cake\Datasource\EntityInterface> $saved Stored audit rows
+     *
+     * @return void
+     */
+    protected function dispatchAfterLog(array $saved): void
+    {
+        foreach ($saved as $auditLog) {
+            try {
+                $this->dispatchEvent('AuditStash.afterLog', ['auditLog' => $auditLog]);
+            } catch (Throwable $e) {
+                $this->log(sprintf(
+                    'AuditStash.afterLog listener failed: %s: %s',
+                    $e::class,
+                    $e->getMessage(),
+                ));
+            }
+        }
     }
 
     /**
