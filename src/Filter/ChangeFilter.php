@@ -114,7 +114,11 @@ class ChangeFilter
 
         $isNumber = fn (mixed $value): bool => is_int($value) || is_float($value);
         if ($isNumber($original) && $isNumber($changed)) {
-            return $original == $changed;
+            // An int and a float. Checked in both directions: a large int
+            // cast to float can land on a neighboring value.
+            [$int, $float] = is_int($original) ? [$original, $changed] : [$changed, $original];
+
+            return (float)$int === $float && (int)$float === $int;
         }
 
         [$number, $string] = is_string($changed) ? [$original, $changed] : [$changed, $original];

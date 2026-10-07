@@ -239,6 +239,8 @@ class ChangeFilterTest extends TestCase
             'floats differing past string precision' => [1.000000000000001, 1.000000000000002, true],
             'float as differently written string' => [1.5, '1.50', false],
             'int as float' => [1, 1.0, false],
+            'large int next to its float neighbor' => [9007199254740993, 9007199254740992.0, true],
+            'float with fraction over int' => [1, 1.5, true],
             'int as padded string' => [1, '01', true],
             'non-numeric string over number' => [1, 'one', true],
             'null to empty string' => [null, '', true],
