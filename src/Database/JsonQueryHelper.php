@@ -101,10 +101,7 @@ class JsonQueryHelper
             new FunctionExpression(
                 'jsonb_exists',
                 [
-                    new FunctionExpression('CAST', [
-                        $expr->add(new IdentifierExpression($column)),
-                        $expr->add('AS jsonb'),
-                    ]),
+                    $query->func()->cast(new IdentifierExpression($column), 'jsonb'),
                     $key,
                 ],
             ),
@@ -158,10 +155,7 @@ class JsonQueryHelper
         return new FunctionExpression(
             'jsonb_extract_path_text',
             [
-                new FunctionExpression('CAST', [
-                    new IdentifierExpression($column),
-                    'AS jsonb',
-                ]),
+                $query->func()->cast(new IdentifierExpression($column), 'jsonb'),
                 $key,
             ],
         );

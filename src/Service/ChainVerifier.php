@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Service;
 
+use Cake\Database\Expression\IdentifierExpression;
 use Cake\ORM\Table;
 use InvalidArgumentException;
 
@@ -57,7 +58,7 @@ class ChainVerifier
         // upfront gives the verifier a stable point-in-time view; new rows
         // inserted during verification are simply picked up by the next run.
         $maxId = (int)($table->find()
-            ->select(['max' => $table->find()->func()->max($orderField)])
+            ->select(['max' => $table->find()->func()->max(new IdentifierExpression($orderField))])
             ->first()
             ?->get('max') ?? 0);
 
