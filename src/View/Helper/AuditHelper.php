@@ -452,7 +452,7 @@ class AuditHelper extends Helper
         if ($linkConfig && $userId !== null && $userId !== '') {
             $url = $this->buildUserUrl($linkConfig, (string)$userId, $displayName);
             if ($url) {
-                return $this->Html->link(h($displayName), $url);
+                return $this->Html->link($displayName, $url);
             }
         }
 
@@ -520,7 +520,13 @@ class AuditHelper extends Helper
         ];
 
         if (is_string($linkConfig)) {
-            return str_replace(array_keys($replacements), array_values($replacements), $linkConfig);
+            // The values come from audit data, so they must not be able to
+            // change the path or the query of the template.
+            return str_replace(
+                array_keys($replacements),
+                array_map(rawurlencode(...), array_values($replacements)),
+                $linkConfig,
+            );
         }
 
         // Replace placeholders in array values
@@ -555,7 +561,7 @@ class AuditHelper extends Helper
         if ($linkConfig) {
             $url = $this->buildRecordUrl($linkConfig, $source, (string)$primaryKey, $display);
             if ($url) {
-                return $this->Html->link(h($display), $url);
+                return $this->Html->link($display, $url);
             }
         }
 
@@ -589,7 +595,13 @@ class AuditHelper extends Helper
         ];
 
         if (is_string($linkConfig)) {
-            return str_replace(array_keys($replacements), array_values($replacements), $linkConfig);
+            // The values come from audit data, so they must not be able to
+            // change the path or the query of the template.
+            return str_replace(
+                array_keys($replacements),
+                array_map(rawurlencode(...), array_values($replacements)),
+                $linkConfig,
+            );
         }
 
         // Replace placeholders in array values

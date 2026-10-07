@@ -9,6 +9,7 @@ use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Utility\Inflector;
 use Cake\Validation\Validator;
+use function Cake\Core\pluginSplit;
 
 /**
  * AuditLogs Model
@@ -431,6 +432,9 @@ class AuditLogsTable extends Table
      */
     protected function buildForeignKeyName(string $source): string
     {
-        return Inflector::singularize(Inflector::underscore($source)) . '_id';
+        // A plugin table's source is dotted (`Blog.Posts`); the key is `post_id`.
+        [, $name] = pluginSplit($source);
+
+        return Inflector::singularize(Inflector::underscore($name)) . '_id';
     }
 }

@@ -843,4 +843,28 @@ class AuditLogsTableTest extends TestCase
             ]));
         }
     }
+
+    /**
+     * A plugin table records its source in dotted form. The foreign key is
+     * built from the table name alone.
+     *
+     * @return void
+     */
+    public function testFindRelatedChangesWithPluginSource(): void
+    {
+        $auditLogs = $this->getAuditLogsTable();
+        $auditLogs->saveOrFail($auditLogs->newEntity([
+            'transaction_key' => 'test-plugin-source',
+            'type' => 'create',
+            'source' => 'Blog.Comments',
+            'parent_source' => 'Blog.Posts',
+            'primary_key' => 9,
+            'changed' => ['post_id' => 4, 'comment' => 'Hello'],
+        ]));
+
+        $results = $auditLogs->find('relatedChanges', source: 'Blog.Posts', primaryKey: 4)->toArray();
+
+        $this->assertCount(1, $results);
+        $this->assertSame('Blog.Comments', $results[0]->source);
+    }
 }

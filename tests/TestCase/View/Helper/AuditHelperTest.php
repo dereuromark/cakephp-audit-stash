@@ -798,7 +798,7 @@ class AuditHelperTest extends TestCase
 
         $result = $this->Audit->formatRecord('Articles', 123, 'My Title');
 
-        $this->assertStringContainsString('href="/admin/Articles/view/123?title=My Title"', $result);
+        $this->assertStringContainsString('href="/admin/Articles/view/123?title=My%20Title"', $result);
         $this->assertStringContainsString('>My Title</a>', $result);
     }
 
@@ -875,5 +875,40 @@ class AuditHelperTest extends TestCase
         ];
 
         $this->assertSame($expected, $result);
+    }
+
+    /**
+     * Html::link() escapes the title itself.
+     *
+     * @return void
+     */
+    public function testLinkedNamesAreEscapedOnce(): void
+    {
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}');
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}');
+
+        $user = $this->Audit->formatUser('7', "O'Brien & Sons <b>");
+        $record = $this->Audit->formatRecord('Articles', 5, 'Tom & Jerry');
+
+        $this->assertStringContainsString('>O&#039;Brien &amp; Sons &lt;b&gt;</a>', $user);
+        $this->assertStringContainsString('>Tom &amp; Jerry</a>', $record);
+    }
+
+    /**
+     * Values put into a URL template must not be able to change its path
+     * or add a query string.
+     *
+     * @return void
+     */
+    public function testUrlTemplatePlaceholdersAreEncoded(): void
+    {
+        Configure::write('AuditStash.linkUser', '/admin/users/view/{user}?name={display}');
+        Configure::write('AuditStash.linkRecord', '/admin/{source}/view/{primary_key}');
+
+        $user = $this->Audit->formatUser('a/b', 'Tom & Jerry');
+        $record = $this->Audit->formatRecord('Blog.Posts', '../x?y=1#z', 'Post');
+
+        $this->assertStringContainsString('href="/admin/users/view/a%2Fb?name=Tom%20%26%20Jerry"', $user);
+        $this->assertStringContainsString('href="/admin/Blog.Posts/view/..%2Fx%3Fy%3D1%23z"', $record);
     }
 }
