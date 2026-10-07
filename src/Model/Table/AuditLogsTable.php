@@ -402,6 +402,7 @@ class AuditLogsTable extends Table
         $logs = $this->find()
             ->select(['changed'])
             ->where(['changed IS NOT' => null])
+            ->orderByDesc($this->aliasField('id'))
             ->limit(1000)
             ->toArray();
 

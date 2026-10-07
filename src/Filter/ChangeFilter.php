@@ -45,19 +45,21 @@ class ChangeFilter
      */
     public static function filter(array $changed, array $original, array $config): ?array
     {
-        // Apply whitespace normalization if configured
+        // Compare normalized copies. The values that get logged stay as they are.
+        $comparedChanged = $changed;
+        $comparedOriginal = $original;
         if (!empty($config['ignoreWhitespace'])) {
-            [$changed, $original] = self::normalizeWhitespace($changed, $original);
+            [$comparedChanged, $comparedOriginal] = self::normalizeWhitespace($comparedChanged, $comparedOriginal);
         }
-
-        // Apply case normalization if configured
         if (!empty($config['ignoreCase'])) {
-            [$changed, $original] = self::normalizeCase($changed, $original);
+            [$comparedChanged, $comparedOriginal] = self::normalizeCase($comparedChanged, $comparedOriginal);
         }
 
-        // Remove fields where changed equals original after normalization
-        foreach ($changed as $field => $value) {
-            if (array_key_exists($field, $original) && $original[$field] === $value) {
+        foreach ($comparedChanged as $field => $value) {
+            if (
+                array_key_exists($field, $comparedOriginal)
+                && self::isSameValue($comparedOriginal[$field], $value)
+            ) {
                 unset($changed[$field], $original[$field]);
             }
         }
@@ -86,6 +88,46 @@ class ChangeFilter
         }
 
         return ['changed' => $changed, 'original' => $original];
+    }
+
+    /**
+     * Whether two values are the same for audit purposes. A number and its
+     * string form are: an entity field assigned `'1'` while it held `1` did
+     * not change. Booleans and null only equal themselves.
+     *
+     * @param mixed $original Stored value
+     * @param mixed $changed Assigned value
+     *
+     * @return bool
+     */
+    protected static function isSameValue(mixed $original, mixed $changed): bool
+    {
+        if ($original === $changed) {
+            return true;
+        }
+
+        // Only a difference in type is in question here. Two values of the
+        // same type that are not identical did change.
+        if (gettype($original) === gettype($changed)) {
+            return false;
+        }
+
+        $isNumber = fn (mixed $value): bool => is_int($value) || is_float($value);
+        if ($isNumber($original) && $isNumber($changed)) {
+            // An int and a float. Checked in both directions: a large int
+            // cast to float can land on a neighboring value.
+            [$int, $float] = is_int($original) ? [$original, $changed] : [$changed, $original];
+
+            return (float)$int === $float && (int)$float === $int;
+        }
+
+        [$number, $string] = is_string($changed) ? [$original, $changed] : [$changed, $original];
+        if (!$isNumber($number) || !is_string($string) || !is_numeric($string)) {
+            return false;
+        }
+
+        // Compared as numbers: casting a float to a string would round it.
+        return is_int($number) ? (string)$number === $string : (float)$string === $number;
     }
 
     /**

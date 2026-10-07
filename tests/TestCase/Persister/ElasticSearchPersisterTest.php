@@ -77,13 +77,15 @@ class ElasticSearchPersisterTest extends TestCase
         $original = ['title' => 'Removed article', 'body' => 'article body'];
 
         $persister->logEvents([
-            new AuditDeleteEvent('1234', 50, 'articles', null, $original),
+            new AuditDeleteEvent('1234', 50, 'articles', null, $original, 'Removed article'),
             new AuditDeleteEvent('1234', 51, 'articles'),
         ]);
 
         $this->assertCount(2, $documents);
         $this->assertSame($original, $documents[0]->getData()['original']);
         $this->assertNull($documents[0]->getData()['changed']);
+        $this->assertSame('Removed article', $documents[0]->getData()['display_value']);
+        $this->assertNull($documents[1]->getData()['display_value']);
         $this->assertNull($documents[1]->getData()['original']);
     }
 }

@@ -867,4 +867,32 @@ class AuditLogsTableTest extends TestCase
         $this->assertCount(1, $results);
         $this->assertSame('Blog.Comments', $results[0]->source);
     }
+
+    /**
+     * The field list for the filter is read from the newest entries, so the
+     * fields of recent changes are offered on a long history too.
+     *
+     * @return void
+     */
+    public function testGetDistinctChangedFieldsReadsNewestEntries(): void
+    {
+        $auditLogs = $this->getAuditLogsTable();
+        $row = fn (string $field): array => [
+            'transaction_key' => 'test-fields',
+            'type' => 'update',
+            'source' => 'Articles',
+            'changed' => json_encode([$field => 'x']),
+        ];
+        $query = $auditLogs->insertQuery()->insert(['transaction_key', 'type', 'source', 'changed']);
+        $query->values($row('ancient_field'));
+        for ($i = 0; $i < 1000; $i++) {
+            $query->values($row('recent_field'));
+        }
+        $query->execute();
+
+        $fields = $auditLogs->getDistinctChangedFields();
+
+        $this->assertContains('recent_field', $fields);
+        $this->assertNotContains('ancient_field', $fields);
+    }
 }

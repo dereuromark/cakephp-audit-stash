@@ -62,6 +62,8 @@ public function initialize(array $config = []): void
 
 The behavior can be configured to ignore changes that aren't meaningful for your audit trail. This helps reduce noise and storage:
 
+A value assigned in another scalar type is never logged as a change: setting `'1'` on a field that holds `1` is not an update. The options below only decide whether a field counts as changed. The values that get logged are the real ones, not a trimmed or lower-cased form.
+
 ```php
 public function initialize(array $config = []): void
 {

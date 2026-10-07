@@ -136,6 +136,7 @@ class ElasticSearchPersister implements PersisterInterface
                 'primary_key' => $primary,
                 'source' => $log->getSourceName(),
                 'parent_source' => $parentSource,
+                'display_value' => $log->getDisplayValue(),
                 'original' => $original,
                 'changed' => $changed,
                 'meta' => $log->getMetaInfo(),

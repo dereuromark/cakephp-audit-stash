@@ -66,6 +66,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'primary_key' => 50,
             'source' => 'articles',
             'parent_source' => null,
+            'display_value' => null,
             'original' => [
                 'title' => 'A new article',
                 'body' => 'article body',
@@ -123,6 +124,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'primary_key' => 50,
             'source' => 'articles',
             'parent_source' => 'authors',
+            'display_value' => null,
             'original' => $original,
             'changed' => $changed,
             'meta' => [],
@@ -162,6 +164,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'primary_key' => 50,
             'source' => 'articles',
             'parent_source' => 'authors',
+            'display_value' => null,
             'original' => null,
             'changed' => null,
             'meta' => [],
@@ -282,6 +285,7 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
             'primary_key' => 50,
             'source' => 'articles',
             'parent_source' => null,
+            'display_value' => null,
             'original' => [
                 'title' => 'Old article title',
                 'published_date' => '2015-04-12T20:20:21+00:00',

@@ -6,6 +6,7 @@ namespace AuditStash\Test\TestCase\Filter;
 
 use AuditStash\Filter\ChangeFilter;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * ChangeFilter Test Case
@@ -188,5 +189,65 @@ class ChangeFilterTest extends TestCase
             ['title' => 'Old'],
             ['ignoreEmpty' => true],
         ));
+    }
+
+    /**
+     * The ignore options decide whether a field counts as changed. They must
+     * not alter the values that get logged.
+     *
+     * @return void
+     */
+    public function testNormalizationDoesNotAlterLoggedValues(): void
+    {
+        $changed = ['title' => '  Hello World ', 'code' => 'ABC'];
+        $original = ['title' => 'Goodbye', 'code' => 'abc'];
+
+        $result = ChangeFilter::filter($changed, $original, ['ignoreCase' => true, 'ignoreWhitespace' => true]);
+
+        $this->assertSame(
+            ['changed' => ['title' => '  Hello World '], 'original' => ['title' => 'Goodbye']],
+            $result,
+        );
+    }
+
+    /**
+     * A value assigned in another scalar type is not a change: `'1'` over `1`.
+     *
+     * @param mixed $original Stored value
+     * @param mixed $changed Assigned value
+     * @param bool $isChange Whether an entry is expected
+     *
+     * @return void
+     */
+    #[DataProvider('typeOnlyDifferences')]
+    public function testTypeOnlyDifferencesAreNotChanges(mixed $original, mixed $changed, bool $isChange): void
+    {
+        $result = ChangeFilter::filter(['field' => $changed], ['field' => $original], []);
+
+        $this->assertSame($isChange, $result !== null);
+    }
+
+    /**
+     * @return array<string, array<mixed>>
+     */
+    public static function typeOnlyDifferences(): array
+    {
+        return [
+            'int as numeric string' => [1, '1', false],
+            'float as numeric string' => [1.5, '1.5', false],
+            'different number' => [1, '2', true],
+            'floats differing past string precision' => [1.000000000000001, 1.000000000000002, true],
+            'float as differently written string' => [1.5, '1.50', false],
+            'int as float' => [1, 1.0, false],
+            'large int next to its float neighbor' => [9007199254740993, 9007199254740992.0, true],
+            'float with fraction over int' => [1, 1.5, true],
+            'int as padded string' => [1, '01', true],
+            'non-numeric string over number' => [1, 'one', true],
+            'null to empty string' => [null, '', true],
+            'zero to empty string' => [0, '', true],
+            'bool to int' => [true, 1, true],
+            'int to bool' => [0, false, true],
+            'string to other string' => ['a', 'b', true],
+        ];
     }
 }
