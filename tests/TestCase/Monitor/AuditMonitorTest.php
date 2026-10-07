@@ -22,6 +22,7 @@ use TestApp\Monitor\Rule\AlwaysMatchRule;
 use TestApp\Monitor\Rule\ExplodingRule;
 use TestApp\Monitor\Rule\NeverMatchRule;
 use TestApp\Monitor\Rule\TypeErrorRule;
+use TypeError;
 
 class AuditMonitorTest extends TestCase
 {
@@ -291,6 +292,38 @@ class AuditMonitorTest extends TestCase
 
         $this->assertSame(['boom' => false, 'ok' => true], $afterResults);
         $this->assertCount(1, RecordingChannel::$delivered);
+    }
+
+    /**
+     * A channel that fails with an Error (a TypeError in its own code) is a
+     * failed channel like any other.
+     *
+     * @return void
+     */
+    public function testChannelErrorMarksItFailedButContinuesOtherChannels(): void
+    {
+        $afterResults = null;
+
+        $this->configureMonitor([
+            'rules' => [
+                'test' => ['class' => AlwaysMatchRule::class, 'channels' => ['boom', 'ok']],
+            ],
+            'channels' => [
+                'boom' => ['class' => ExplodingChannel::class, 'throws' => TypeError::class],
+                'ok' => ['class' => RecordingChannel::class, 'returns' => true],
+            ],
+        ]);
+
+        EventManager::instance()->on(
+            'AuditStash.Monitor.afterAlert',
+            function (EventInterface $event) use (&$afterResults): void {
+                $afterResults = $event->getData('results');
+            },
+        );
+
+        $this->dispatchAuditLog();
+
+        $this->assertSame(['boom' => false, 'ok' => true], $afterResults);
     }
 
     public function testMonitorIsInertWhenDisabled(): void

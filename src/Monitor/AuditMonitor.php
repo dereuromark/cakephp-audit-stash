@@ -11,7 +11,6 @@ use Cake\Core\Configure;
 use Cake\Event\EventDispatcherTrait;
 use Cake\Event\EventInterface;
 use Cake\Event\EventListenerInterface;
-use Exception;
 use Psr\Log\LoggerAwareTrait;
 use Throwable;
 
@@ -181,7 +180,7 @@ class AuditMonitor implements EventListenerInterface
         foreach ($this->channels[$ruleName] ?? [] as $channelName => $channel) {
             try {
                 $results[$channelName] = (bool)$channel->send($alert);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $results[$channelName] = false;
                 $this->logger?->error('AuditMonitor: Channel send failed', [
                     'rule' => $ruleName,

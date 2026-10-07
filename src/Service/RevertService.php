@@ -10,7 +10,6 @@ use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Model\Entity\AuditLog;
 use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
-use Cake\Datasource\ConnectionManager;
 use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
 use Cake\Log\Log;
@@ -55,7 +54,7 @@ class RevertService
         $this->assertEnabled();
 
         /** @var \Cake\Database\Connection $connection */
-        $connection = ConnectionManager::get('default');
+        $connection = $this->fetchTable($source)->getConnection();
 
         return $connection->transactional(function () use ($source, $primaryKey, $auditLogId) {
             // Get target state
@@ -101,7 +100,7 @@ class RevertService
         $this->assertEnabled();
 
         /** @var \Cake\Database\Connection $connection */
-        $connection = ConnectionManager::get('default');
+        $connection = $this->fetchTable($source)->getConnection();
 
         return $connection->transactional(function () use ($source, $primaryKey, $auditLogId, $fields) {
             // Get target state
@@ -148,7 +147,7 @@ class RevertService
         $this->assertEnabled();
 
         /** @var \Cake\Database\Connection $connection */
-        $connection = ConnectionManager::get('default');
+        $connection = $this->fetchTable($source)->getConnection();
 
         $restore = function () use ($source, $primaryKey) {
             // Find DELETE audit entry
