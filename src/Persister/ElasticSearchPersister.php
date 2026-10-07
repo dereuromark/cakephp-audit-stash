@@ -115,8 +115,13 @@ class ElasticSearchPersister implements PersisterInterface
             }
 
             $original = null;
-            if ($eventType !== 'delete' && method_exists($log, 'getOriginal')) {
+            if (method_exists($log, 'getOriginal')) {
                 $original = $log->getOriginal();
+                // A delete entry holds the removed record here. Without
+                // values it stays null, as before.
+                if ($eventType === 'delete' && !$original) {
+                    $original = null;
+                }
             }
 
             $changed = null;

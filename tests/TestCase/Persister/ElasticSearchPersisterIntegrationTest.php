@@ -171,6 +171,34 @@ class ElasticSearchPersisterIntegrationTest extends TestCase
     }
 
     /**
+     * Tests that a delete event keeps the values of the removed record.
+     *
+     * @return void
+     */
+    public function testLogDeleteEventWithOriginalValues()
+    {
+        /**
+         * @var \Cake\ElasticSearch\Datasource\Connection $client
+         */
+        $client = ConnectionManager::get('test_elastic');
+        $persister = new ElasticSearchPersister(['connection' => $client, 'index' => 'article', 'type' => 'article']);
+        $original = [
+            'title' => 'Removed article',
+            'body' => 'article body',
+            'author_id' => 1,
+        ];
+
+        $events = [new AuditDeleteEvent('1234', 50, 'articles', 'authors', $original)];
+        $persister->logEvents($events);
+        $client->getIndex('article')->refresh();
+
+        $articles = $this->getIndexRepository('Article')->find()->toArray();
+        $this->assertCount(1, $articles);
+        $this->assertEquals($original, $articles[0]->get('original'));
+        $this->assertNull($articles[0]->get('changed'));
+    }
+
+    /**
      * Tests that all events sent to the logger are actually persisted in the same index,
      * althought your source name.
      *
