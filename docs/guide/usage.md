@@ -293,6 +293,8 @@ class AppController extends Controller
 The above examples use `EventManager::instance()->on()` which attaches the listener **globally**. This is recommended if you plan to use
 multiple Table classes for saving or deleting inside the same controller.
 
+Custom events written with `Audit::log()` have no table. They get the metadata of globally attached listeners only. Keys you pass in `meta` win over what a listener adds.
+
 If you only need to track changes for the controller's default Table class, you can attach it to that specific table's event manager:
 
 ```php

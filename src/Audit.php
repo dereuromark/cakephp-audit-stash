@@ -7,6 +7,8 @@ namespace AuditStash;
 use AuditStash\Event\AuditCustomEvent;
 use AuditStash\Persister\TablePersister;
 use Cake\Core\Configure;
+use Cake\Event\Event;
+use Cake\Event\EventManager;
 use Cake\Utility\Text;
 
 /**
@@ -24,6 +26,12 @@ use Cake\Utility\Text;
  *     'user_display' => $user->name,
  * ]);
  * ```
+ *
+ * `AuditStash.beforeLog` is dispatched on the global event manager before
+ * the event is stored, so listeners attached there (`RequestMetadata`,
+ * `ApplicationMetadata`) add their metadata as they do for entity events.
+ * Keys passed in `$meta` win over what a listener adds. The event has no
+ * subject, and listeners attached to a single table's manager do not run.
  *
  * The default persister is `TablePersister`, configured from
  * `AuditStash.persisterConfig` (so custom events participate in the same hash
@@ -76,7 +84,18 @@ class Audit
             $event->setMetaInfo($meta);
         }
 
-        static::persister()->logEvents([$event]);
+        // Dispatched globally: there is no table here, and metadata listeners
+        // such as RequestMetadata are attached to the global manager.
+        $beforeLog = EventManager::instance()->dispatch(
+            new Event('AuditStash.beforeLog', null, ['logs' => [$event]]),
+        );
+        /** @var array<\AuditStash\EventInterface> $logs */
+        $logs = (array)$beforeLog->getData('logs');
+        if (!$logs) {
+            return;
+        }
+
+        static::persister()->logEvents($logs);
     }
 
     /**
