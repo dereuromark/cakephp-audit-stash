@@ -12,20 +12,37 @@ jobs:
       fail-fast: false
       matrix:
         php-version: ['8.2', '8.5']
+        db-type: [sqlite, mysql, pgsql]
         prefer-lowest: ['']
         include:
           - php-version: '8.2'
+            db-type: 'sqlite'
             prefer-lowest: 'prefer-lowest'
 
-    name: PHP ${{ matrix.php-version }} Test ${{ matrix.prefer-lowest }}
+    name: PHP ${{ matrix.php-version }} ${{ matrix.db-type }} Test ${{ matrix.prefer-lowest }}
+
+    services:
+      postgres:
+        image: postgres
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: postgres
+
     steps:
       - uses: actions/checkout@v5
+
+      - name: Setup MySQL
+        if: matrix.db-type == 'mysql'
+        run: |
+          sudo service mysql start
+          mysql -h 127.0.0.1 -u root -proot -e 'CREATE DATABASE cakephp;'
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: mbstring, intl
+          extensions: mbstring, intl, pdo_${{ matrix.db-type }}
           coverage: pcov
 
       - name: Get composer cache directory
@@ -52,7 +69,10 @@ jobs:
 
       - name: Run PHPUnit
         run: |
-          if [[ ${{ matrix.php-version }} == '8.2' ]]; then
+          if [[ ${{ matrix.db-type }} == 'sqlite' ]]; then export db_dsn='sqlite:///:memory:'; fi
+          if [[ ${{ matrix.db-type }} == 'mysql' ]]; then export db_dsn='mysql://root:root@127.0.0.1/cakephp'; fi
+          if [[ ${{ matrix.db-type }} == 'pgsql' ]]; then export db_dsn='postgres://postgres:postgres@127.0.0.1/postgres'; fi
+          if [[ ${{ matrix.php-version }} == '8.2' && ${{ matrix.db-type }} == 'sqlite' ]]; then
             vendor/bin/phpunit --coverage-clover=coverage.xml
           else
             vendor/bin/phpunit
@@ -63,7 +83,7 @@ jobs:
         run: vendor/bin/validate-prefer-lowest -m
 
       - name: Upload coverage reports to Codecov
-        if: success() && matrix.php-version == '8.2' && matrix.prefer-lowest != 'prefer-lowest'
+        if: success() && matrix.php-version == '8.2' && matrix.db-type == 'sqlite' && matrix.prefer-lowest != 'prefer-lowest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
