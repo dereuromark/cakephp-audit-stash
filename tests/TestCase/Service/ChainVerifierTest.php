@@ -121,10 +121,12 @@ class ChainVerifierTest extends TestCase
     public function testVerifierSkipsLegacyRowsUntilFirstHashedRow(): void
     {
         $table = $this->getTableLocator()->get('AuditLogs');
-        $table->getConnection()->execute(
-            'INSERT INTO audit_logs ("transaction_key", "type", "source", "primary_key") VALUES (?, ?, ?, ?), (?, ?, ?, ?)',
-            ['legacy-1', 'create', 'Articles', 10, 'legacy-2', 'create', 'Articles', 11],
-        );
+        // Through the query builder: identifier quoting differs per database.
+        $table->insertQuery()
+            ->insert(['transaction_key', 'type', 'source', 'primary_key'])
+            ->values(['transaction_key' => 'legacy-1', 'type' => 'create', 'source' => 'Articles', 'primary_key' => 10])
+            ->values(['transaction_key' => 'legacy-2', 'type' => 'create', 'source' => 'Articles', 'primary_key' => 11])
+            ->execute();
 
         $this->persister->logEvents([
             $this->buildEvent(12, ['title' => 'A']),
@@ -141,23 +143,10 @@ class ChainVerifierTest extends TestCase
     {
         $table = $this->getTableLocator()->get('AuditLogs');
         $anchor = hash('sha256', 'external-anchor');
-        $table->getConnection()->execute(
-            'INSERT INTO audit_logs ("transaction_key", "type", "source", "primary_key", "parent_source", "display_value", "original", "changed", "meta", "prev_hash", "hash", "created") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-                'anchored-1',
-                'create',
-                'Articles',
-                42,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-            ],
-        );
+        $table->insertQuery()
+            ->insert(['transaction_key', 'type', 'source', 'primary_key'])
+            ->values(['transaction_key' => 'anchored-1', 'type' => 'create', 'source' => 'Articles', 'primary_key' => 42])
+            ->execute();
         $row = $table->find()->orderByDesc('id')->firstOrFail();
         $payload = $row->toArray();
         unset($payload['id'], $payload['prev_hash'], $payload['hash']);
