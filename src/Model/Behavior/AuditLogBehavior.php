@@ -58,7 +58,7 @@ class AuditLogBehavior extends Behavior
      *
      * @var array<string, mixed>
      */
-    protected array $_defaultConfig = [
+    protected array $defaultConfig = [
         'index' => null,
         'type' => null,
         'blacklist' => ['created', 'modified', 'id'],
@@ -191,7 +191,7 @@ class AuditLogBehavior extends Behavior
     protected function captureUnloadedFields(EntityInterface $entity): void
     {
         $missing = array_diff(
-            $this->auditedColumns($this->_table, $this->getConfig()),
+            $this->auditedColumns($this->table, $this->getConfig()),
             array_keys($entity->getOriginalValues()),
         );
         if (!$missing) {
@@ -199,19 +199,19 @@ class AuditLogBehavior extends Behavior
         }
 
         $conditions = [];
-        foreach ((array)$this->_table->getPrimaryKey() as $field) {
+        foreach ((array)$this->table->getPrimaryKey() as $field) {
             $value = $entity->get($field);
             if ($value === null) {
                 return;
             }
-            $conditions[$this->_table->aliasField($field)] = $value;
+            $conditions[$this->table->aliasField($field)] = $value;
         }
 
         /** @var array<string, mixed>|null $row */
-        $row = $this->_table->find()
+        $row = $this->table->find()
             ->select($missing)
             ->where($conditions)
-            ->disableHydration()
+            ->enableHydration(false)
             ->first();
         if ($row !== null) {
             $this->unloadedFields[$entity] = $row;
@@ -232,14 +232,14 @@ class AuditLogBehavior extends Behavior
             $options['_cascadeDeleteRecords'] = [];
         }
 
-        $primaryKey = $this->_table->getPrimaryKey();
+        $primaryKey = $this->table->getPrimaryKey();
         $primaryValue = $entity->get(is_array($primaryKey) ? $primaryKey[0] : $primaryKey);
 
         if ($primaryValue === null) {
             return;
         }
 
-        foreach ($this->_table->associations() as $association) {
+        foreach ($this->table->associations() as $association) {
             // Only process HasMany and HasOne associations with dependent = true
             if (!($association instanceof HasMany) && !($association instanceof HasOne)) {
                 continue;
@@ -284,7 +284,7 @@ class AuditLogBehavior extends Behavior
      */
     private function redactArray(array &$fields, ?array $sensitive = null): void
     {
-        $sensitive ??= $this->_config['sensitive'] ?? [];
+        $sensitive ??= $this->config['sensitive'] ?? [];
         if ($sensitive === []) {
             return;
         }
@@ -350,16 +350,16 @@ class AuditLogBehavior extends Behavior
         array $changed,
         array $original,
     ): BaseEvent {
-        $primary = $entity->extract((array)$this->_table->getPrimaryKey());
+        $primary = $entity->extract((array)$this->table->getPrimaryKey());
         $auditEvent = $entity->isNew() ? AuditCreateEvent::class : AuditUpdateEvent::class;
 
         // Get display field value for human-friendly identification
-        $displayValue = $this->extractDisplayValue($entity, $this->_table->getDisplayField());
+        $displayValue = $this->extractDisplayValue($entity, $this->table->getDisplayField());
 
         return new $auditEvent(
             $transactionId,
             $primary,
-            $this->_table->getRegistryAlias(),
+            $this->table->getRegistryAlias(),
             $changed,
             $original,
             $entity,
@@ -386,9 +386,9 @@ class AuditLogBehavior extends Behavior
             return;
         }
 
-        $config = $this->_config;
+        $config = $this->config;
         if (empty($config['whitelist'])) {
-            $config['whitelist'] = $this->_table->getSchema()->columns();
+            $config['whitelist'] = $this->table->getSchema()->columns();
             $config['whitelist'] = array_merge(
                 $config['whitelist'],
                 $this->getAssociationProperties(array_keys($options['associated'])),
@@ -438,8 +438,8 @@ class AuditLogBehavior extends Behavior
         $transaction = $options['_auditTransaction'];
         $auditEvent = $this->createEvent($transaction, $entity, $changed, $original);
 
-        if (!empty($options['_sourceTable'])) {
-            $auditEvent->setParentSourceName($options['_sourceTable']->getRegistryAlias());
+        if (!empty($options['sourceTable'])) {
+            $auditEvent->setParentSourceName($options['sourceTable']->getRegistryAlias());
         }
 
         $options['_auditQueue']->offsetSet($entity, $auditEvent);
@@ -497,7 +497,7 @@ class AuditLogBehavior extends Behavior
             ->toList();
 
         if ($events) {
-            $data = $this->_table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
+            $data = $this->table->dispatchEvent('AuditStash.beforeLog', ['logs' => $events]);
             $this->persister()->logEvents($data->getData('logs'));
         }
 
@@ -532,15 +532,15 @@ class AuditLogBehavior extends Behavior
             return;
         }
         $transaction = $options['_auditTransaction'];
-        $parent = isset($options['_sourceTable']) ? $options['_sourceTable']->getRegistryAlias() : null;
-        $primary = $entity->extract((array)$this->_table->getPrimaryKey());
+        $parent = isset($options['sourceTable']) ? $options['sourceTable']->getRegistryAlias() : null;
+        $primary = $entity->extract((array)$this->table->getPrimaryKey());
 
         // Get display field value for human-friendly identification
-        $displayValue = $this->extractDisplayValue($entity, $this->_table->getDisplayField());
+        $displayValue = $this->extractDisplayValue($entity, $this->table->getDisplayField());
 
         $original = $this->deleteSnapshot(
             $entity->getOriginalValues() + ($this->unloadedFields[$entity] ?? []),
-            $this->_table,
+            $this->table,
             $this->getConfig(),
         );
         unset($this->unloadedFields[$entity]);
@@ -553,7 +553,7 @@ class AuditLogBehavior extends Behavior
         $auditEvent = new AuditDeleteEvent(
             $transaction,
             $primary,
-            $this->_table->getRegistryAlias(),
+            $this->table->getRegistryAlias(),
             $parent,
             $original,
             $displayValue,
@@ -575,7 +575,7 @@ class AuditLogBehavior extends Behavior
      */
     protected function logCascadeDeletes(string $transaction, ArrayObject $options): void
     {
-        $parentSource = $this->_table->getRegistryAlias();
+        $parentSource = $this->table->getRegistryAlias();
 
         foreach ($options['_cascadeDeleteRecords'] as $record) {
             /** @var \Cake\Datasource\EntityInterface $dependentEntity */
@@ -628,7 +628,7 @@ class AuditLogBehavior extends Behavior
     {
         if (!($persister instanceof PersisterInterface) && !($this->persister instanceof PersisterInterface)) {
             $class = Configure::read('AuditStash.persister') ?: TablePersister::class;
-            $index = $this->getConfig('index') ?: $this->_table->getTable();
+            $index = $this->getConfig('index') ?: $this->table->getTable();
             $type = $this->getConfig('type') ?: Inflector::singularize($index);
 
             /** @var \AuditStash\PersisterInterface $instance */
@@ -703,7 +703,7 @@ class AuditLogBehavior extends Behavior
      */
     protected function getAssociationProperties(array $associated): array
     {
-        $associations = $this->_table->associations();
+        $associations = $this->table->associations();
         $result = [];
 
         foreach ($associated as $name) {

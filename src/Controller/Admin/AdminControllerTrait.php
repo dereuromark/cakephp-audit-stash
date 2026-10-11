@@ -63,7 +63,7 @@ trait AdminControllerTrait
      * Authorization stack, pass an explicit `fn() => true` — that's an
      * intentional choice rather than an accidental forgotten guard.
      *
-     * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event
+     * @param \Cake\Event\EventInterface $event
      *
      * @throws \Cake\Http\Exception\ForbiddenException When the configured Closure rejects the request, is missing, or isn't a Closure.
      *

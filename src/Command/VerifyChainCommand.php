@@ -6,8 +6,6 @@ namespace AuditStash\Command;
 
 use AuditStash\Service\ChainVerifier;
 use Cake\Command\Command;
-use Cake\Console\Arguments;
-use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\ORM\Locator\LocatorAwareTrait;
 
@@ -54,8 +52,11 @@ class VerifyChainCommand extends Command
     /**
      * @inheritDoc
      */
-    public function execute(Arguments $args, ConsoleIo $io): int
+    public function execute(): int
     {
+        $args = $this->args;
+        $io = $this->io;
+
         $tableAlias = (string)$args->getOption('table');
         $chunk = max(1, (int)$args->getOption('chunk'));
 

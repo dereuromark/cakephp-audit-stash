@@ -120,7 +120,7 @@ class TablePersister implements PersisterInterface
      *
      * @var array
      */
-    protected array $_defaultConfig = [
+    protected array $defaultConfig = [
         'extractMetaFields' => false,
         'logErrors' => true,
         'primaryKeyExtractionStrategy' => self::STRATEGY_AUTOMATIC,
@@ -151,7 +151,7 @@ class TablePersister implements PersisterInterface
      *
      * @var \Cake\ORM\Table|null
      */
-    protected ?Table $_table = null;
+    protected ?Table $table = null;
 
     /**
      * Returns the table to use for persisting logs.
@@ -160,13 +160,13 @@ class TablePersister implements PersisterInterface
      */
     public function getTable(): Table
     {
-        if (!($this->_table instanceof Table)) {
+        if (!($this->table instanceof Table)) {
             $this->setTable($this->getConfig('table'));
         }
 
-        assert($this->_table instanceof Table);
+        assert($this->table instanceof Table);
 
-        return $this->_table;
+        return $this->table;
     }
 
     /**
@@ -190,7 +190,7 @@ class TablePersister implements PersisterInterface
             );
         }
 
-        $this->_table = $table;
+        $this->table = $table;
 
         return $this;
     }

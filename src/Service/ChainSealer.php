@@ -246,7 +246,7 @@ class ChainSealer
         $primaryKey = $table->getPrimaryKey();
         $row = $table->find()
             ->select(['max' => $table->find()->func()->max(new IdentifierExpression($table->aliasField($primaryKey)))])
-            ->disableHydration()
+            ->enableHydration(false)
             ->first();
 
         return (int)($row['max'] ?? 0);
