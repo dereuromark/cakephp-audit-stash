@@ -8,8 +8,10 @@ use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
+use Cake\Http\Response;
 use Cake\Log\Log;
 use Closure;
+use Psr\Http\Message\UriInterface;
 use Throwable;
 
 /**
@@ -51,6 +53,56 @@ trait AdminControllerTrait
         } else {
             $this->viewBuilder()->setLayout($adminLayout);
         }
+    }
+
+    /**
+     * @param \Cake\Event\EventInterface $event Event
+     *
+     * @return mixed
+     */
+    public function beforeRender(EventInterface $event)
+    {
+        if (Configure::read('AuditStash.standalone')) {
+            Controller::beforeRender($event);
+
+            return null;
+        }
+
+        return parent::beforeRender($event);
+    }
+
+    /**
+     * @param \Cake\Event\EventInterface $event Event
+     *
+     * @return mixed
+     */
+    public function afterFilter(EventInterface $event)
+    {
+        if (Configure::read('AuditStash.standalone')) {
+            Controller::afterFilter($event);
+
+            return null;
+        }
+
+        return parent::afterFilter($event);
+    }
+
+    /**
+     * @param \Cake\Event\EventInterface $event Event
+     * @param \Psr\Http\Message\UriInterface|array|string $url Redirect URL
+     * @param \Cake\Http\Response $response Response
+     *
+     * @return mixed
+     */
+    public function beforeRedirect(EventInterface $event, UriInterface|array|string $url, Response $response)
+    {
+        if (Configure::read('AuditStash.standalone')) {
+            Controller::beforeRedirect($event, $url, $response);
+
+            return null;
+        }
+
+        return parent::beforeRedirect($event, $url, $response);
     }
 
     /**
@@ -98,6 +150,11 @@ trait AdminControllerTrait
         // decision, so silence the policy check.
         if ($this->components()->has('Authorization') && method_exists($this->components()->get('Authorization'), 'skipAuthorization')) {
             $this->components()->get('Authorization')->skipAuthorization();
+        } else {
+            $authorization = $this->request->getAttribute('authorization');
+            if (is_object($authorization) && is_callable([$authorization, 'skipAuthorization'])) {
+                $authorization->skipAuthorization();
+            }
         }
 
         try {
