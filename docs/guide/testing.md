@@ -7,13 +7,23 @@ The plugin ships a small assertions trait so your own test suite can verify what
 Enable the behavior and its persister in the application under test.
 For controller tests, use CakePHP's `IntegrationTestTrait` as well as the audit assertions.
 
-Create the audit table in your test database using the plugin migrations, alongside
-your application's existing test schema setup. Keep its schema in sync with the
-installed plugin. For example, from your test bootstrap after plugins are loaded:
+Include AuditStash in your application's test migration setup. If you use
+`Migrations\TestSuite\Migrator`, add the plugin to the same `runMany()` call as
+your application migrations:
 
 ```php
-(new \Migrations\Migrations(['connection' => 'test', 'plugin' => 'AuditStash']))->migrate();
+$migrator = new \Migrations\TestSuite\Migrator();
+$migrator->runMany([
+    ['connection' => 'test'],
+    ['plugin' => 'AuditStash', 'connection' => 'test'],
+]);
 ```
+
+Keep any other migration sets your application already uses in that call. The
+Migrator can rebuild the test database when migrations change, so a separate
+migration call can leave the plugin table missing after a rebuild. For applications
+that do not use Migrator, create the audit table through the plugin migrations as
+part of their existing test schema setup.
 
 Create an empty application fixture at `tests/Fixture/AuditLogsFixture.php`:
 
