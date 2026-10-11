@@ -209,17 +209,15 @@ $array = $service->export($userId, 'array');
 $query = $service->findByUser($userId);
 ```
 
-## Best Practices
+## Before running maintenance
 
-1. **Prefer anonymization over deletion** - Anonymization preserves audit trail integrity while complying with GDPR.
+Use `--dry-run` to inspect the planned operation. Review configured redaction
+fields against your actual payloads and confirm whether records should be
+redacted, deleted, or retained. The plugin does not make that policy decision.
 
-2. **Always dry-run first** - Use `--dry-run` to preview changes before executing.
-
-3. **Document retention policies** - Configure appropriate retention periods to automatically clean old logs.
-
-4. **Audit GDPR operations** - Consider logging GDPR operations themselves for compliance documentation.
-
-5. **Combine with retention policies** - Use the cleanup command to automatically remove old anonymized logs after a retention period.
+When a hash chain is enabled, maintenance records a seal as described below.
+Retention cleanup still applies to redacted rows by their source and creation
+time; it does not select a separate policy based on anonymization status.
 
 ## Integration with Retention Policies
 
@@ -232,7 +230,7 @@ Combine GDPR operations with retention policies for a complete data lifecycle:
         'default' => 90,        // Keep logs for 90 days
         'tables' => [
             'Users' => 365,     // Keep user logs for 1 year
-            'Orders' => 2555,   // Keep order logs for 7 years (compliance)
+            'Orders' => 2555,   // Example retention period
         ],
     ],
     'gdpr' => [
@@ -244,7 +242,7 @@ Combine GDPR operations with retention policies for a complete data lifecycle:
 Workflow:
 1. User requests data deletion
 2. Run `audit_stash gdpr anonymize --user-id=X`
-3. Anonymized logs are retained for compliance period
+3. Redacted logs remain until the configured retention period expires
 4. Cleanup command removes old anonymized logs based on retention policy
 
 ## Hash chain

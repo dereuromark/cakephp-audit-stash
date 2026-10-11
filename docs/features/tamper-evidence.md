@@ -20,7 +20,7 @@ The feature is opt-in and off by default; existing installs need do nothing.
 bin/cake migrations migrate -p AuditStash
 ```
 
-This adds two nullable columns — `prev_hash` and `hash` — and an index on
+This adds two nullable columns: `prev_hash` and `hash`: and an index on
 `hash`. Rows written before the migration will have `NULL` in both columns.
 The verifier skips those legacy rows until it reaches the first row with a
 stored `hash` (see _Backfilling_ below).
@@ -66,7 +66,7 @@ Where:
   type conversion.
 
 Canonicalization makes the hash **deterministic across PHP versions,
-machines and insertion orders** — two semantically equivalent rows always
+machines and insertion orders**: two semantically equivalent rows always
 produce the same hash. This matters for cross-environment verifiability
 (developer laptop vs. production vs. a third-party auditor's re-run).
 
@@ -133,7 +133,7 @@ if (!$result->intact) {
 ```
 
 The verifier streams rows in chunks (default 500) so very long chains
-verify in bounded memory. Verification is read-only — it never writes to
+verify in bounded memory. Verification is read-only: it never writes to
 the table it inspects.
 
 ## Detecting specific tampering patterns
@@ -147,7 +147,7 @@ The verifier catches the three common tamper modes:
 | Row inserted with an invalid hash     | Recomputed hash mismatches stored `hash`       |
 | Rows reordered / swapped              | `prev_hash` pointers no longer form a valid line |
 
-It does *not* catch a **truncation at the tail** — if an attacker
+It does *not* catch a **truncation at the tail**: if an attacker
 deletes the last N rows and stops there, the remaining chain is still
 internally consistent. This is the fundamental limitation of every
 append-only hash chain. Mitigations:
@@ -248,7 +248,7 @@ with an auditable attestation for the transition.
 
 Per row, `hashChain` adds:
 
-- One extra `SELECT ... FOR UPDATE` per batch (not per row — the tail is
+- One extra `SELECT ... FOR UPDATE` per batch (not per row: the tail is
   read once, then carried forward in memory for the rest of the batch).
 - One SHA-256 hash computation per row (~microseconds).
 - One transaction wrap per `logEvents()` call (a single transaction
@@ -278,8 +278,8 @@ table.
 
 ## Further reading
 
-- `src/Service/HashChain.php` — the pure-function hasher and verifier core.
-- `src/Service/ChainVerifier.php` — the streaming table verifier.
-- `src/Command/VerifyChainCommand.php` — the CLI wrapper.
-- `tests/TestCase/Service/HashChainTest.php` — unit tests.
-- `tests/TestCase/Service/ChainVerifierTest.php` — integration tests.
+- `src/Service/HashChain.php`: the pure-function hasher and verifier core.
+- `src/Service/ChainVerifier.php`: the streaming table verifier.
+- `src/Command/VerifyChainCommand.php`: the CLI wrapper.
+- `tests/TestCase/Service/HashChainTest.php`: unit tests.
+- `tests/TestCase/Service/ChainVerifierTest.php`: integration tests.

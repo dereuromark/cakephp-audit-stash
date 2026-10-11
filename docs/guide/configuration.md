@@ -58,7 +58,7 @@ type is controlled by the global `Polymorphic.type` config key (default: `intege
 
 ::: warning Fresh installs only
 This config key is read at migration time to decide the column type for `audit_logs.primary_key`.
-Changing it has no effect on existing installs that have already run the migration — the column already exists with its original type.
+Changing it has no effect on existing installs that have already run the migration: the column already exists with its original type.
 To change the column type on an existing install, write an app-side migration that `ALTER`s the column accordingly.
 :::
 

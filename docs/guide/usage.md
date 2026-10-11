@@ -204,7 +204,7 @@ This is particularly useful when:
 
 ### Plugin Tables and the `source` Column
 
-`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator** — and CakePHP allows both forms:
+`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator**: and CakePHP allows both forms:
 
 - `$this->fetchTable('Comments.Comments')` → registry alias `Comments.Comments` → audit row `source = 'Comments.Comments'`
 - `$this->fetchTable('Comments')` → registry alias `Comments` → audit row `source = 'Comments'`
@@ -213,9 +213,9 @@ Associations from app code without an explicit `className` may resolve to the ba
 
 This is mostly a non-issue, but **two situations need attention** if your app loads plugin tables:
 
-1. **Mixed load paths produce a fragmented audit trail.** If different code paths in the same app load the same plugin table both with and without the prefix, you'll get rows under both `Comments.Comments` AND `Comments`. The coverage report surfaces the orphaned form as `Empirical` so you can spot it. Pick one form and stick with it — using the dotted form everywhere (`fetchTable('Comments.Comments')`, association `className`, etc.) keeps the audit attribution stable.
+1. **Mixed load paths produce a fragmented audit trail.** If different code paths in the same app load the same plugin table both with and without the prefix, you'll get rows under both `Comments.Comments` AND `Comments`. The coverage report surfaces the orphaned form as `Empirical` so you can spot it. Pick one form and stick with it: using the dotted form everywhere (`fetchTable('Comments.Comments')`, association `className`, etc.) keeps the audit attribution stable.
 
-2. **Source collisions across an app and plugin with the same name.** If your app has its own `App\Model\Table\CommentsTable` AND you load a plugin's `Comments\Model\Table\CommentsTable`, both writing audit rows under the bare alias `Comments` becomes a real ambiguity — the audit trail can no longer tell the two logical tables apart. The cleanest fix is to alias the plugin table when registering it with the locator, so the `source` column carries a disambiguated name:
+2. **Source collisions across an app and plugin with the same name.** If your app has its own `App\Model\Table\CommentsTable` AND you load a plugin's `Comments\Model\Table\CommentsTable`, both writing audit rows under the bare alias `Comments` becomes a real ambiguity: the audit trail can no longer tell the two logical tables apart. The cleanest fix is to alias the plugin table when registering it with the locator, so the `source` column carries a disambiguated name:
 
    ```php
    // In Application::bootstrap() or wherever you set up table associations:
@@ -226,7 +226,7 @@ This is mostly a non-issue, but **two situations need attention** if your app lo
    // says 'PluginComments' instead of competing with the app's 'Comments'.
    ```
 
-   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias — but that requires every association declaration in the app to set `className` explicitly.
+   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias: but that requires every association declaration in the app to set `className` explicitly.
 
 ## Storing The Logged In User
 
@@ -421,7 +421,7 @@ API requests are detected by:
 
 ### Capturing forensic request fields
 
-`EnvironmentMetadata` can also pull a small set of request-derived fields into `meta`. They are off by default — these fields can carry PII / fingerprintable data and may have GDPR implications, so consumers must opt in explicitly via `capture`:
+`EnvironmentMetadata` can also pull a small set of request-derived fields into `meta`. They are off by default: these fields can carry PII / fingerprintable data and may have GDPR implications, so consumers must opt in explicitly via `capture`:
 
 ```php
 EventManager::instance()->on(new EnvironmentMetadata(
@@ -432,9 +432,9 @@ EventManager::instance()->on(new EnvironmentMetadata(
 
 Supported `capture` values:
 
-- `user_agent` — `User-Agent` header
-- `referer` — `Referer` header
-- `session_id` — PHP session id; only included when a session has actually been started (CLI, queue workers, and anonymous API hits silently skip it)
+- `user_agent`: `User-Agent` header
+- `referer`: `Referer` header
+- `session_id`: PHP session id; only included when a session has actually been started (CLI, queue workers, and anonymous API hits silently skip it)
 
 Empty headers and unknown field names are filtered out so a typo can't smuggle arbitrary values into `meta`. `capture` is a no-op when no `request` is supplied (CLI / queue context).
 
@@ -654,7 +654,7 @@ $table->addColumn('reason', 'text', [
 
 Audited tables that store file content directly (binary blobs, base64 payloads, raw `UploadedFile` objects in a virtual field) cause two problems for the audit trail:
 
-- The audit row balloons to the size of the file — a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
+- The audit row balloons to the size of the file: a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
 - The audit table ends up holding sensitive content in plaintext, defeating the typical reason for separating uploads from primary tables.
 
 The fix is to make the entity field that the auditor sees be a **fingerprint** (hash + size + mime), not the raw content. Two ways to do that, depending on where the file lives in your model.
@@ -795,7 +795,7 @@ part of the process fails. There are two ways to accomplish this. The easiest is
 That's it if you use afterSave. You should read up on the difference between the two as there are drawbacks:
 https://book.cakephp.org/5/en/orm/table-objects.html#aftersave
 
-If you are using the default afterCommit, in order to create audit logs during a transaction, some additional setup is
+If you are using the default afterCommit, to create audit logs during a transaction, some additional setup is
 required. First create the file `src/Model/Audit/AuditTrail.php` with the following:
 
 ```php

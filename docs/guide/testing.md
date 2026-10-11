@@ -1,6 +1,6 @@
 # Testing Audit Logs
 
-The plugin ships a small assertions trait so your own test suite can verify what was actually persisted to `audit_logs` after an action — not just what an in-memory event queue produced.
+The plugin ships a small assertions trait so your own test suite can verify what was actually persisted to `audit_logs` after an action: not just what an in-memory event queue produced.
 
 ## Setup
 
@@ -38,13 +38,13 @@ class ArticlesControllerTest extends TestCase
 The trait queries the `audit_logs` table directly through `AuditStash.AuditLogs`, so it works the same for controller integration tests, table-level unit tests, and any `Audit::log()` custom-event call.
 
 > [!NOTE]
-> The trait is unrelated to the `AuditStash.AuditLog` *behavior* — it doesn't add or wire anything. It only reads. Tests that don't load the `AuditLogs` fixture will fail on the first assertion with a missing-table error.
+> The trait is unrelated to the `AuditStash.AuditLog` *behavior*: it doesn't add or wire anything. It only reads. Tests that don't load the `AuditLogs` fixture will fail on the first assertion with a missing-table error.
 
 ## Available assertions
 
 ### `assertAuditLogged(string $source, ?string $type = null, string $message = '')`
 
-Passes when at least one row exists for `$source` (and, if given, `$type` — `create` / `update` / `delete` / any custom string from `Audit::log()`).
+Passes when at least one row exists for `$source` (and, if given, `$type`: `create` / `update` / `delete` / any custom string from `Audit::log()`).
 
 ```php
 $this->assertAuditLogged('Articles');                  // any event on Articles
@@ -54,7 +54,7 @@ $this->assertAuditLogged('Users', 'user.login');       // a custom 'user.login' 
 
 ### `assertAuditNotLogged(string $source, ?string $type = null, string $message = '')`
 
-Inverse of `assertAuditLogged()`. Use to confirm an action did *not* trigger a row — useful when testing blacklist / whitelist behavior config:
+Inverse of `assertAuditLogged()`. Use to confirm an action did *not* trigger a row: useful when testing blacklist / whitelist behavior config:
 
 ```php
 // `created` / `modified` are blacklisted by default — touching them alone
@@ -109,8 +109,8 @@ $this->assertCount(2, $rowsForUser);
 
 The `Audit::log()` static facade uses a lazily-resolved persister so that
 custom-event calls work without bootstrap configuration. Tests that want to
-isolate `Audit::log()` from the database — or assert that `log()` was
-called at all — can swap the persister:
+isolate `Audit::log()` from the database: or assert that `log()` was
+called at all: can swap the persister:
 
 ```php
 use AuditStash\Audit;
@@ -145,12 +145,12 @@ public function testLoginCallsAuditLog(): void
 
 Pass `null` to `setPersister()` (as in `tearDown` above) to clear the
 override and let the next call resolve the default `TablePersister` again.
-This swap **only** affects `Audit::log()` calls — Table behavior events
+This swap **only** affects `Audit::log()` calls: Table behavior events
 still go through whichever persister is configured for the behavior.
 
 ## Tips
 
-- **`assertAuditLogged()` before `assertAuditFieldChanged()`** in the same test makes the failure mode obvious — if no row was logged at all, `assertAuditFieldChanged()` reports a less helpful "field not in changed payload of latest row" message.
-- **Truncate per test** if your suite shares the audit table across cases — CakePHP's standard fixture rollback handles this when you list the fixture explicitly.
-- **Combine with the `Audit::log()` facade** — custom events show up in the same table, so the same assertions verify them: `assertAuditLogged('Users', 'user.login')` works for events emitted via `Audit::log(type: 'user.login', ...)`.
-- **Use `assertAuditNotLogged()` to verify blacklists** — if your `AuditLog` behavior config blacklists `last_seen_at`, write a test that updates only that field and asserts no row was created.
+- **`assertAuditLogged()` before `assertAuditFieldChanged()`** in the same test makes the failure mode obvious: if no row was logged at all, `assertAuditFieldChanged()` reports a less helpful "field not in changed payload of latest row" message.
+- **Truncate per test** if your suite shares the audit table across cases: CakePHP's standard fixture rollback handles this when you list the fixture explicitly.
+- **Combine with the `Audit::log()` facade**: custom events show up in the same table, so the same assertions verify them: `assertAuditLogged('Users', 'user.login')` works for events emitted via `Audit::log(type: 'user.login', ...)`.
+- **Use `assertAuditNotLogged()` to verify blacklists**: if your `AuditLog` behavior config blacklists `last_seen_at`, write a test that updates only that field and asserts no row was created.

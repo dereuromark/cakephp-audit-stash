@@ -2,7 +2,7 @@
 
 The plugin ships an `AuditHelper` that the bundled admin viewer uses to
 render diffs, badges, and links. It's also useful in your own templates
-when you want to show audit data alongside a record — for example, on a
+when you want to show audit data alongside a record: for example, on a
 profile page or a "history" tab on an entity view.
 
 ## Loading
@@ -13,7 +13,7 @@ $this->loadHelper('AuditStash.Audit');
 ```
 
 The helper auto-loads `HtmlHelper` for link/button generation. Output is
-Bootstrap 5 markup (cards, badges, tables) — if your app uses a different
+Bootstrap 5 markup (cards, badges, tables): if your app uses a different
 framework you can either wrap the output or copy the methods you need into
 a project-local helper.
 
@@ -42,12 +42,12 @@ echo $this->Audit->diff($log->original, $log->changed);
 
 | Method | Returns |
 |---|---|
-| `formatValue($value)` | one cell of HTML — handles `null`, bools, arrays (pretty-printed), and long strings |
+| `formatValue($value)` | one cell of HTML: handles `null`, bools, arrays (pretty-printed), and long strings |
 | `formatUser($userId, $userDisplay = null)` | display name, optionally linked via `AuditStash.linkUser` |
 | `formatRecord($source, $primaryKey, $displayValue = null)` | record reference, optionally linked via `AuditStash.linkRecord` |
 
 `formatUser` and `formatRecord` honour the link configuration described in
-the [Admin viewer](../features/viewer) page — string templates with
+the [Admin viewer](../features/viewer) page: string templates with
 `{user}` / `{source}` / `{primary_key}` placeholders, array URLs, or
 callables all work.
 
@@ -55,7 +55,7 @@ callables all work.
 
 | Method | Returns |
 |---|---|
-| `eventTypeBadge($type)` | colored Bootstrap badge — green/blue/red/yellow for create/update/delete/revert, secondary for custom event types |
+| `eventTypeBadge($type)` | colored Bootstrap badge: green/blue/red/yellow for create/update/delete/revert, secondary for custom event types |
 | `transactionId($txn, $full = false)` | `<code>` short or full transaction id |
 | `changeSummary($changed)` | "3 field(s): title, body, status" |
 
@@ -68,7 +68,7 @@ fed through `Audit::log()`.
 | Method | Returns |
 |---|---|
 | `metadata($meta)` | two-column key/value table for the `meta` payload |
-| `fieldValuesTable($data, $title = null)` | full-width field/value table — handy for CREATE/DELETE rows where there's no diff to render |
+| `fieldValuesTable($data, $title = null)` | full-width field/value table: handy for CREATE/DELETE rows where there's no diff to render |
 
 ### Action buttons
 
@@ -133,5 +133,5 @@ The helper itself reads two config keys at construction time:
 ```
 
 Override via `$this->loadHelper('AuditStash.Audit', [...])` if you need
-different defaults — for example, `'ignoreWhitespace' => true` to suppress
+different defaults: for example, `'ignoreWhitespace' => true` to suppress
 trailing-whitespace-only changes in long text diffs.

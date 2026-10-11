@@ -163,7 +163,7 @@ With `linkUser` configured:
 // Renders: <a href="/admin/users/view/456">Jane Smith</a>  (display = userDisplay)
 ```
 
-`userDisplay` is optional — when omitted, the helper falls back to a `User #<id>` label for numeric / UUID ids or shows the raw `userId` for string identifiers (usernames, emails).
+`userDisplay` is optional: when omitted, the helper falls back to a `User #<id>` label for numeric / UUID ids or shows the raw `userId` for string identifiers (usernames, emails).
 
 ### Linking Records to Backend
 
@@ -232,7 +232,7 @@ Return `null` from the callable to display the value without a link.
 
 **Example: Plugin-aware linking via CakePHP convention**
 
-When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias — e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [the Usage guide](../guide/usage) for the full rationale.
+When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias: e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [the Usage guide](../guide/usage) for the full rationale.
 
 A small callable resolves both forms via the standard CakePHP `prefix` / `plugin` / `controller` / `action` convention, no per-table mapping required:
 
@@ -267,7 +267,7 @@ This produces:
 - `Articles` + `42` → `/admin/articles/view/42`
 - `Comments.Comments` + `7` → `/admin/comments/comments/view/7`
 
-It works for the convention case (`{Source}Controller::view($id)` under the Admin prefix). Tables that don't follow the convention — no controller, custom routes, resource-style URLs — need an explicit branch in the callable. Drop `'prefix' => 'Admin'` if your app doesn't use the admin prefix.
+It works for the convention case (`{Source}Controller::view($id)` under the Admin prefix). Tables that don't follow the convention: no controller, custom routes, resource-style URLs: need an explicit branch in the callable. Drop `'prefix' => 'Admin'` if your app doesn't use the admin prefix.
 
 **Using with `formatRecord()` in templates:**
 
@@ -304,8 +304,8 @@ The audit log viewer provides:
 The coverage page at `/admin/audit-stash/audit-logs/coverage` walks every
 Table class shipped by your app and loaded plugins, classifying each as
 Tracked / Missing / Empirical (no `AuditLog` behavior, but audit rows exist
-for it anyway). Operational/internal tables — sessions, migrations, the
-plugin's own `audit_logs` table — would dilute the report, so two deny-list
+for it anyway). Operational/internal tables: sessions, migrations, the
+plugin's own `audit_logs` table: would dilute the report, so two deny-list
 keys filter them out by default:
 
 ```php
@@ -328,7 +328,7 @@ audits.
 ## Dashboard auto-refresh
 
 The dashboard page (`/admin/audit-stash`) can refresh itself on an interval
-— useful for incident-response or war-room screens. Set
+,  useful for incident-response or war-room screens. Set
 `AuditStash.dashboardAutoRefresh` to a number of seconds:
 
 ```php
@@ -348,7 +348,7 @@ render inside:
 | Value | Behavior |
 |---|---|
 | `null` (default) | Use the plugin's self-contained Bootstrap 5 layout (`AuditStash.audit_stash`). No dependency on host-app styling. |
-| `false` | Disable the plugin layout entirely — render inside your app's default layout. |
+| `false` | Disable the plugin layout entirely: render inside your app's default layout. |
 | `string` | Use the named layout, e.g. `'Admin.default'` or `'MyTheme.admin'`, to integrate with an existing admin theme. |
 
 ```php
@@ -381,11 +381,11 @@ rather than the plugin's namespace.
 ],
 ```
 
-When unset (the default), the button is hidden — the header looks unchanged.
+When unset (the default), the button is hidden: the header looks unchanged.
 
 ## Required: `AuditStash.adminAccess`
 
-The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure` — same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.
+The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure`: same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.
 
 The Closure receives the current request and must return literal `true` to grant access. Anything else (returns `false`, returns a truthy non-bool, throws, isn't a Closure, isn't set at all) yields a `403`.
 
@@ -399,7 +399,7 @@ Configure::write('AuditStash.adminAccess', function (ServerRequest $request): bo
 });
 ```
 
-To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true` — that is the "I trust the upstream guard" knob:
+To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true`: that is the "I trust the upstream guard" knob:
 
 ```php
 Configure::write('AuditStash.adminAccess', fn () => true);
@@ -407,72 +407,13 @@ Configure::write('AuditStash.adminAccess', fn () => true);
 
 The gate is checked in `beforeFilter` and calls `Authorization::skipAuthorization()` when the cakephp/authorization component is loaded, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
 
-## Additional Security
+## Host application access checks
 
-The audit log viewer is in the Admin prefix by default, which provides a layer of security. The required `adminAccess` gate above is the canonical opt-in. Beyond that, you should ensure your Admin prefix is properly secured with authentication/authorization. Here are additional layered approaches:
+The plugin controllers extend your application's `AppController`. Put shared
+request checks there or in authentication middleware. An application controller
+under `App\Controller\Admin` does not automatically override a plugin controller.
+Use custom routes to an application controller if you need a different controller
+implementation, and keep access checks for every exposed action.
 
-### Use Authorization Plugin
-
-```php
-// In your Admin\Controller\AppController or src/Controller/AppController.php
-use Authorization\Controller\Component\AuthorizationComponent;
-
-public function initialize(): void
-{
-    parent::initialize();
-    $this->loadComponent('Authorization.Authorization');
-}
-
-public function beforeFilter(\Cake\Event\EventInterface $event)
-{
-    parent::beforeFilter($event);
-
-    // Require specific permission for audit logs
-    if ($this->request->getParam('plugin') === 'AuditStash') {
-        $this->Authorization->authorize('viewAuditLogs');
-    }
-}
-```
-
-### Role-Based Access Control
-
-```php
-// In your Admin\Controller\AppController
-public function beforeFilter(\Cake\Event\EventInterface $event)
-{
-    parent::beforeFilter($event);
-
-    // Restrict audit logs to super admins only
-    if ($this->request->getParam('plugin') === 'AuditStash') {
-        $user = $this->Authentication->getIdentity();
-        if (!$user || $user->role !== 'super_admin') {
-            throw new \Cake\Http\Exception\ForbiddenException('Access denied');
-        }
-    }
-}
-```
-
-### Option 3: Create Custom AppController for Plugin
-
-Create `src/Controller/Admin/AuditLogsController.php` in your app to override the plugin controller:
-
-```php
-<?php
-namespace App\Controller\Admin;
-
-use AuditStash\Controller\Admin\AuditLogsController as BaseAuditLogsController;
-
-class AuditLogsController extends BaseAuditLogsController
-{
-    public function beforeFilter(\Cake\Event\EventInterface $event)
-    {
-        parent::beforeFilter($event);
-
-        // Add your custom authorization logic here
-        if (!$this->Auth->user('can_view_audit_logs')) {
-            throw new \Cake\Http\Exception\ForbiddenException('Insufficient permissions');
-        }
-    }
-}
-```
-
+The required `adminAccess` Closure is the plugin's access decision. A routing
+prefix alone provides no authentication or authorization.
