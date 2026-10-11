@@ -26,14 +26,16 @@ Audit-trail plugin: records entity saves and deletes on tables with its behavior
 
 ## Documentation
 
-Full docs: **<https://dereuromark.github.io/cakephp-audit-stash/>**
+The [published documentation website](https://dereuromark.github.io/cakephp-audit-stash/) describes the CakePHP 5 branch.
 
-- [Installation](https://dereuromark.github.io/cakephp-audit-stash/guide/installation)
-- [Getting Started](https://dereuromark.github.io/cakephp-audit-stash/guide/): behavior setup, verifying a saved change, request metadata
-- [Configuration](https://dereuromark.github.io/cakephp-audit-stash/guide/configuration): persisters, table list, route prefix
-- [Usage](https://dereuromark.github.io/cakephp-audit-stash/guide/usage): behavior options, custom events, custom persisters
-- [Testing](https://dereuromark.github.io/cakephp-audit-stash/guide/testing): `AuditAssertionsTrait` for your own test suite
-- [Features overview](https://dereuromark.github.io/cakephp-audit-stash/features/): viewer, monitoring, retention, tamper-evidence, GDPR
+Read the [documentation in this branch](https://github.com/dereuromark/cakephp-audit-stash/tree/cake6/docs).
+
+- [Installation](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/installation.md)
+- [Getting Started](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/index.md): behavior setup, verifying a saved change, request metadata
+- [Configuration](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/configuration.md): persisters, table list, route prefix
+- [Usage](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/usage.md): behavior options, custom events, custom persisters
+- [Testing](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/testing.md): `AuditAssertionsTrait` for your own test suite
+- [Features overview](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/features/index.md): viewer, monitoring, retention, tamper-evidence, GDPR
 
 ## Demo
 
