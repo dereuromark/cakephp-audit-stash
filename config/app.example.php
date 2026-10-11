@@ -55,7 +55,7 @@ return [
         /**
          * Standalone Mode
          *
-         * Skip the host AppController's initialize() and beforeFilter().
+         * Skip the host AppController's initialization and lifecycle callbacks.
          * Application middleware still applies.
          * The required adminAccess check runs in both modes.
          */

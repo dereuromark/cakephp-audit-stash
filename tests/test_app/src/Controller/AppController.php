@@ -18,10 +18,18 @@ class AppController extends Controller
         Configure::write('Test.hostInitialize', true);
     }
 
-    public function beforeFilter(EventInterface $event): void
+    /**
+     * @param \Cake\Event\EventInterface $event Event
+     *
+     * @return mixed
+     */
+    public function beforeFilter(EventInterface $event)
     {
         parent::beforeFilter($event);
         Configure::write('Test.hostBeforeFilter', true);
+        if (Configure::read('Test.hostRedirect')) {
+            return $this->redirect('/login');
+        }
     }
 
     /**

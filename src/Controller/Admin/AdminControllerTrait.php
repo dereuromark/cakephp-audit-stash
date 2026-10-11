@@ -10,6 +10,7 @@ use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Log\Log;
 use Closure;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 /**
@@ -23,7 +24,7 @@ use Throwable;
  * admin actions unless `AuditStash.adminAccess` is explicitly configured —
  * same posture as `cakephp-queue` / `cakephp-databaselog`. Pass
  * `fn() => true` if you want to delegate the decision back to the host
- * AppController / Authorization stack.
+ * upstream access guard. In standalone mode, this must be enforced by middleware.
  */
 trait AdminControllerTrait
 {
@@ -78,7 +79,7 @@ trait AdminControllerTrait
      *
      * To delegate the decision entirely to the host AppController /
      * Authorization stack, pass an explicit `fn() => true` — that's an
-     * intentional choice rather than an accidental forgotten guard.
+     * valid only when an upstream guard already enforces access.
      *
      * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event
      *
@@ -91,7 +92,12 @@ trait AdminControllerTrait
         if (Configure::read('AuditStash.standalone')) {
             Controller::beforeFilter($event);
         } else {
-            parent::beforeFilter($event);
+            $result = parent::beforeFilter($event);
+            if ($result instanceof ResponseInterface) {
+                $event->setResult($result);
+
+                return;
+            }
         }
 
         $check = Configure::read('AuditStash.adminAccess');
@@ -99,7 +105,7 @@ trait AdminControllerTrait
             throw new ForbiddenException(
                 'AuditStash admin requires `AuditStash.adminAccess` to be configured. '
                 . 'Set it to a Closure that returns true for authorized requests, '
-                . 'or `fn() => true` to delegate fully to the host app.',
+                . 'or delegate only to an upstream guard that already enforces access.',
             );
         }
         if (!($check instanceof Closure)) {

@@ -60,6 +60,22 @@ class AuditLogsControllerTest extends TestCase
         parent::tearDown();
     }
 
+    public function testHostBeforeFilterRedirectStopsAction(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirect', true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host redirect.');
+        });
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+            $this->assertRedirect('/login');
+        } finally {
+            Configure::delete('Test.hostRedirect');
+        }
+    }
+
     public function testStandaloneMarksRequestAuthorizationChecked(): void
     {
         $service = new class {
@@ -105,6 +121,8 @@ class AuditLogsControllerTest extends TestCase
         $this->assertTrue(Configure::read('Test.hostBeforeFilter'));
         $this->assertTrue(Configure::read('Test.hostBeforeRender'));
         $this->assertTrue(Configure::read('Test.hostAfterFilter'));
+        $this->_controller->redirect('/');
+        $this->assertTrue(Configure::read('Test.hostBeforeRedirect'));
     }
 
     public function testStandaloneSkipsHostCallbacks(): void
@@ -124,6 +142,8 @@ class AuditLogsControllerTest extends TestCase
         $this->assertNull(Configure::read('Test.hostBeforeFilter'));
         $this->assertNull(Configure::read('Test.hostBeforeRender'));
         $this->assertNull(Configure::read('Test.hostAfterFilter'));
+        $this->_controller->redirect('/');
+        $this->assertNull(Configure::read('Test.hostBeforeRedirect'));
     }
 
     public function testStandaloneWithoutGateRejects(): void
