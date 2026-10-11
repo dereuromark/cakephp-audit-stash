@@ -13,26 +13,9 @@ Loading the plugin registers routes under the Admin prefix. The default paths ar
 - Export form: `/admin/audit-stash/audit-logs/export`
 - Download: `/admin/audit-stash/audit-logs/export.csv`, `.json`, or `.ndjson`
 
-The Admin prefix is a routing namespace. Access is controlled by a required
-`AuditStash.adminAccess` Closure, in addition to the host application's controller
-and authentication setup. Without that Closure, the plugin returns HTTP 403.
-For an application whose identity contains a boolean `is_admin` field:
-
-```php
-// config/app.php
-'AuditStash' => [
-    'adminAccess' => function (\Cake\Http\ServerRequest $request): bool {
-        $identity = $request->getAttribute('identity');
-
-        return $identity !== null && $identity->get('is_admin') === true;
-    },
-],
-```
-
-Adapt the check to your actual permission model. It must return literal `true` to
-grant access. The plugin skips its controller Authorization component's policy
-check when that component provides `skipAuthorization()`, so the Closure must
-perform the intended access decision.
+The Admin prefix is a routing namespace. The plugin also requires an explicit
+[`AuditStash.adminAccess` Closure](#required-auditstash-adminaccess); requests get
+HTTP 403 without it. Configure the gate for your application's permission model.
 
 To change the mount path while retaining the Admin controllers, set
 `AuditStash.routePath`, for example `/audit-logs`. Disable the generated routes
@@ -296,7 +279,7 @@ The audit log viewer provides:
   - **Inline diff** (default): Compact, git-style unified diff with + and - indicators
   - **Side-by-side diff**: Traditional two-column comparison showing before and after values
   - Toggle between views with a single click in the detail view
-- **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download. In CSV output, a cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a leading apostrophe, so a spreadsheet application shows it as text and does not run it as a formula.
+- **Export**: Streaming download in CSV / JSON / NDJSON format. Pre-flights with a row-count check against `AuditStash.export.hardCap` (default 100 000) and refuses oversized exports rather than silently truncating. Defaults the date floor to the last `AuditStash.export.defaultDays` days (default 30) when no `date_from` / `date_to` is supplied. The dedicated `/admin/audit-stash/audit-logs/export` page shows the row-count estimate, active-filter summary, and format picker before the user commits to the download. In CSV output, a cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return gets a leading apostrophe, so a spreadsheet application shows it as text and does not run it as a formula.
 - **Metadata Display**: View all metadata associated with audit events (user, IP, URL, etc.)
 
 ## Coverage report
@@ -385,7 +368,7 @@ When unset (the default), the button is hidden: the header looks unchanged.
 
 ## Required: `AuditStash.adminAccess`
 
-The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure`: same posture as `cakephp-queue` / `cakephp-databaselog`, because audit logs commonly contain sensitive who-did-what records (PII, IP addresses, before/after field values) and a forgotten host-side guard would expose more than a typical admin page.
+The plugin refuses to serve any admin action unless `AuditStash.adminAccess` is explicitly set to a `Closure`: audit rows can contain user identifiers, IP addresses, and before/after field values.
 
 The Closure receives the current request and must return literal `true` to grant access. Anything else (returns `false`, returns a truthy non-bool, throws, isn't a Closure, isn't set at all) yields a `403`.
 
@@ -399,7 +382,7 @@ Configure::write('AuditStash.adminAccess', function (ServerRequest $request): bo
 });
 ```
 
-To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true`: that is the "I trust the upstream guard" knob:
+To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true`: only when the host guard already makes the full access decision:
 
 ```php
 Configure::write('AuditStash.adminAccess', fn () => true);
