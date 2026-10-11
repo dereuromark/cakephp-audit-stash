@@ -8,10 +8,8 @@ use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
-use Cake\Http\Response;
 use Cake\Log\Log;
 use Closure;
-use Psr\Http\Message\UriInterface;
 use Throwable;
 
 /**
@@ -56,53 +54,15 @@ trait AdminControllerTrait
     }
 
     /**
-     * @param \Cake\Event\EventInterface $event Event
-     *
-     * @return mixed
+     * @return array<string, mixed>
      */
-    public function beforeRender(EventInterface $event)
+    public function implementedEvents(): array
     {
-        if (Configure::read('AuditStash.standalone')) {
-            Controller::beforeRender($event);
-
-            return null;
+        if (!Configure::read('AuditStash.standalone')) {
+            return parent::implementedEvents();
         }
 
-        return parent::beforeRender($event);
-    }
-
-    /**
-     * @param \Cake\Event\EventInterface $event Event
-     *
-     * @return mixed
-     */
-    public function afterFilter(EventInterface $event)
-    {
-        if (Configure::read('AuditStash.standalone')) {
-            Controller::afterFilter($event);
-
-            return null;
-        }
-
-        return parent::afterFilter($event);
-    }
-
-    /**
-     * @param \Cake\Event\EventInterface $event Event
-     * @param \Psr\Http\Message\UriInterface|array|string $url Redirect URL
-     * @param \Cake\Http\Response $response Response
-     *
-     * @return mixed
-     */
-    public function beforeRedirect(EventInterface $event, UriInterface|array|string $url, Response $response)
-    {
-        if (Configure::read('AuditStash.standalone')) {
-            Controller::beforeRedirect($event, $url, $response);
-
-            return null;
-        }
-
-        return parent::beforeRedirect($event, $url, $response);
+        return ['Controller.initialize' => 'beforeFilter'];
     }
 
     /**

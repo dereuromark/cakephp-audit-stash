@@ -27,25 +27,25 @@ class AppController extends Controller
     /**
      * @param \Cake\Event\EventInterface $event Event
      *
-     * @return mixed
+     * @return void
      */
-    public function beforeRender(EventInterface $event)
+    public function beforeRender(EventInterface $event): void
     {
         Configure::write('Test.hostBeforeRender', true);
 
-        return parent::beforeRender($event);
+        parent::beforeRender($event);
     }
 
     /**
      * @param \Cake\Event\EventInterface $event Event
      *
-     * @return mixed
+     * @return void
      */
-    public function afterFilter(EventInterface $event)
+    public function afterFilter(EventInterface $event): void
     {
         Configure::write('Test.hostAfterFilter', true);
 
-        return parent::afterFilter($event);
+        parent::afterFilter($event);
     }
 
     /**
@@ -53,12 +53,12 @@ class AppController extends Controller
      * @param \Psr\Http\Message\UriInterface|array|string $url URL
      * @param \Cake\Http\Response $response Response
      *
-     * @return mixed
+     * @return void
      */
-    public function beforeRedirect(EventInterface $event, UriInterface|array|string $url, Response $response)
+    public function beforeRedirect(EventInterface $event, UriInterface|array|string $url, Response $response): void
     {
         Configure::write('Test.hostBeforeRedirect', true);
 
-        return parent::beforeRedirect($event, $url, $response);
+        parent::beforeRedirect($event, $url, $response);
     }
 }
