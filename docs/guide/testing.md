@@ -7,7 +7,33 @@ The plugin ships a small assertions trait so your own test suite can verify what
 Enable the behavior and its persister in the application under test.
 For controller tests, use CakePHP's `IntegrationTestTrait` as well as the audit assertions.
 
-Mix `AuditStash\TestSuite\AuditAssertionsTrait` into any `TestCase` and load the `plugin.AuditStash.AuditLogs` fixture alongside whatever fixtures your test needs:
+Create the audit table in your test database using the plugin migrations, alongside
+your application's existing test schema setup. Keep its schema in sync with the
+installed plugin. For example, from your test bootstrap after plugins are loaded:
+
+```php
+(new \Migrations\Migrations(['connection' => 'test', 'plugin' => 'AuditStash']))->migrate();
+```
+
+Create an empty application fixture at `tests/Fixture/AuditLogsFixture.php`:
+
+```php
+namespace App\Test\Fixture;
+
+use Cake\TestSuite\Fixture\TestFixture;
+
+class AuditLogsFixture extends TestFixture
+{
+    public string $table = 'audit_logs';
+
+    public array $records = [];
+}
+```
+
+Mix `AuditStash\TestSuite\AuditAssertionsTrait` into your test and load
+`app.AuditLogs` alongside the application's other fixtures. The plugin's own
+`plugin.AuditStash.AuditLogs` fixture is in its development test namespace, which
+Composer does not autoload for installed dependencies.
 
 ```php
 use AuditStash\TestSuite\AuditAssertionsTrait;
@@ -20,7 +46,7 @@ class ArticlesControllerTest extends TestCase
     use IntegrationTestTrait;
 
     protected array $fixtures = [
-        'plugin.AuditStash.AuditLogs',
+        'app.AuditLogs',
         'app.Articles',
     ];
 

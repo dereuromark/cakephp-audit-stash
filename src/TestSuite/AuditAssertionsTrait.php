@@ -12,7 +12,7 @@ use Cake\ORM\Query\SelectQuery;
  *
  * Mix into any `TestCase` that exercises behavior wired through the
  * `AuditStash.AuditLog` behavior (or the `Audit::log()` facade) and that
- * loads the `plugin.AuditStash.AuditLogs` fixture. The assertions query the
+ * loads an application fixture for the audit table. The assertions query the
  * `audit_logs` table directly, so they verify what was actually persisted,
  * rather than what an in-memory event queue produced.
  *
@@ -26,7 +26,7 @@ use Cake\ORM\Query\SelectQuery;
  *     use AuditAssertionsTrait;
  *     use IntegrationTestTrait;
  *
- *     protected array $fixtures = ['plugin.AuditStash.AuditLogs', 'app.Articles'];
+ *     protected array $fixtures = ['app.AuditLogs', 'app.Articles'];
  *
  *     public function testArticleCreateIsAudited(): void
  *     {
