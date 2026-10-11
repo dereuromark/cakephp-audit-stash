@@ -97,6 +97,7 @@ trait AdminControllerTrait
                 $event->setResult($result);
             }
             if ($event->getResult() instanceof ResponseInterface) {
+                $this->skipAdminAuthorizationCheck();
                 $event->stopPropagation();
 
                 return;
@@ -117,14 +118,7 @@ trait AdminControllerTrait
 
         // Coexist with cakephp/authorization: the gate IS the authorization
         // decision, so silence the policy check.
-        if ($this->components()->has('Authorization') && method_exists($this->components()->get('Authorization'), 'skipAuthorization')) {
-            $this->components()->get('Authorization')->skipAuthorization();
-        } else {
-            $authorization = $this->request->getAttribute('authorization');
-            if (is_object($authorization) && is_callable([$authorization, 'skipAuthorization'])) {
-                $authorization->skipAuthorization();
-            }
-        }
+        $this->skipAdminAuthorizationCheck();
 
         try {
             $allowed = $check($this->request) === true;
@@ -138,6 +132,18 @@ trait AdminControllerTrait
 
         if (!$allowed) {
             throw new ForbiddenException('AuditStash admin access denied');
+        }
+    }
+
+    protected function skipAdminAuthorizationCheck(): void
+    {
+        if ($this->components()->has('Authorization') && method_exists($this->components()->get('Authorization'), 'skipAuthorization')) {
+            $this->components()->get('Authorization')->skipAuthorization();
+        } else {
+            $authorization = $this->request->getAttribute('authorization');
+            if (is_object($authorization) && is_callable([$authorization, 'skipAuthorization'])) {
+                $authorization->skipAuthorization();
+            }
         }
     }
 }

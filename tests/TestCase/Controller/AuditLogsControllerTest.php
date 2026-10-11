@@ -12,6 +12,7 @@ use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 
 /**
@@ -1418,5 +1419,48 @@ class AuditLogsControllerTest extends TestCase
         $articlesTable = $this->getTableLocator()->get('Articles');
         $article = $articlesTable->get(98);
         $this->assertEquals('Restored Article', $article->title);
+    }
+
+    #[DataProvider('hostRedirectAuthorizationModes')]
+    public function testHostRedirectMarksAuthorizationChecked(string $redirectKey): void
+    {
+        $service = new class {
+            public bool $skipped = false;
+
+            public function skipAuthorization(): void
+            {
+                $this->skipped = true;
+            }
+        };
+        Configure::write('AuditStash.standalone', false);
+        Configure::write($redirectKey, true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host response.');
+        });
+        $listener = function (EventInterface $event) use ($service): void {
+            $controller = $event->getSubject();
+            $controller->setRequest($controller->getRequest()->withAttribute('authorization', $service));
+        };
+        EventManager::instance()->on('Controller.initialize', $listener);
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+        } finally {
+            EventManager::instance()->off('Controller.initialize', $listener);
+            Configure::delete($redirectKey);
+        }
+
+        $this->assertRedirect('/login');
+        $this->assertTrue($service->skipped);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function hostRedirectAuthorizationModes(): array
+    {
+        return [
+            'returned response' => ['Test.hostRedirect'],
+            'event response' => ['Test.hostRedirectViaEvent'],
+        ];
     }
 }
