@@ -49,7 +49,58 @@ class AuditLogsControllerTest extends TestCase
     protected function tearDown(): void
     {
         Configure::delete('AuditStash.adminAccess');
+        Configure::delete('AuditStash.standalone');
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
         parent::tearDown();
+    }
+
+    public function testDefaultCallsHostCallbacks(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertTrue(Configure::read('Test.hostInitialize'));
+        $this->assertTrue(Configure::read('Test.hostBeforeFilter'));
+    }
+
+    public function testStandaloneSkipsHostCallbacks(): void
+    {
+        Configure::write('AuditStash.standalone', true);
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertNull(Configure::read('Test.hostInitialize'));
+        $this->assertNull(Configure::read('Test.hostBeforeFilter'));
+    }
+
+    public function testStandaloneWithoutGateRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.standalone', true);
+        Configure::delete('AuditStash.adminAccess');
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testStandaloneDeniedGateRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.standalone', true);
+        Configure::write('AuditStash.adminAccess', fn (): bool => false);
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
     }
 
     public function testAccessCheckUnsetForbids(): void

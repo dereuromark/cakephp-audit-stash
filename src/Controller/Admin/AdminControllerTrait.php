@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Controller\Admin;
 
+use Cake\Controller\Controller;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
 use Cake\Http\Exception\ForbiddenException;
@@ -33,7 +34,11 @@ trait AdminControllerTrait
      */
     public function initialize(): void
     {
-        parent::initialize();
+        if (Configure::read('AuditStash.standalone')) {
+            Controller::initialize();
+        } else {
+            parent::initialize();
+        }
 
         $this->loadComponent('Flash');
         $this->loadHelpers();
@@ -71,7 +76,11 @@ trait AdminControllerTrait
      */
     public function beforeFilter(EventInterface $event): void
     {
-        parent::beforeFilter($event);
+        if (Configure::read('AuditStash.standalone')) {
+            Controller::beforeFilter($event);
+        } else {
+            parent::beforeFilter($event);
+        }
 
         $check = Configure::read('AuditStash.adminAccess');
         if ($check === null) {

@@ -55,9 +55,9 @@ return [
         /**
          * Standalone Mode
          *
-         * When enabled, the admin interface operates independently without
-         * inheriting from AppController's authentication/authorization.
-         * Useful for quick setup or when using separate admin authentication.
+         * Skip the host AppController's initialize() and beforeFilter().
+         * Application middleware and other inherited callbacks still apply.
+         * The required adminAccess check runs in both modes.
          */
         'standalone' => false,
 

@@ -399,3 +399,18 @@ implementation, and keep access checks for every exposed action.
 
 The required `adminAccess` Closure is the plugin's access decision. A routing
 prefix alone provides no authentication or authorization.
+
+## Standalone controller setup
+
+Set `AuditStash.standalone` to `true` to skip the host
+`AppController::initialize()` and `beforeFilter()`. The plugin loads its Flash
+component, helpers, and configured layout. The required `AuditStash.adminAccess`
+Closure still runs, and an absent or denied check returns 403.
+
+```php
+Configure::write('AuditStash.standalone', true);
+```
+
+Application middleware and other inherited controller callbacks still run.
+Standalone mode does not remove middleware authentication or authorization
+requirements. Configure the access check described above for this setup.
