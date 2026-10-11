@@ -301,6 +301,8 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertResponseContains('Audit Logs');
+        $this->assertResponseContains('class="fas fa-eraser me-2"');
+        $this->assertResponseNotContains('&lt;i class=');
     }
 
     /**

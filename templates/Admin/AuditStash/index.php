@@ -123,7 +123,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                     h(__d('audit_stash', 'tables with AuditLog behavior')),
                 ),
                 ['controller' => 'AuditStash', 'action' => 'coverage'],
-                ['escapeTitle' => false, 'class' => 'text-decoration-none text-reset'],
+                ['escape' => false, 'escapeAttributes' => true, 'class' => 'text-decoration-none text-reset'],
             ) ?>
         </div>
     </div>
@@ -189,7 +189,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                                     <?= $this->Html->link(
                                         h($row['source']),
                                         ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['source' => $row['source']]],
-                                        ['escapeTitle' => false],
+                                        ['escape' => false, 'escapeAttributes' => true],
                                     ) ?>
                                     <span class="text-muted"><?= h(number_format($row['count'])) ?></span>
                                 </div>
@@ -218,7 +218,7 @@ $usersDelta = $delta($kpis['active_users_today'], $kpis['active_users_yesterday'
                                     <?= $this->Html->link(
                                         h($label),
                                         ['controller' => 'AuditLogs', 'action' => 'index', '?' => ['user_id' => $row['user_id']]],
-                                        ['escapeTitle' => false],
+                                        ['escape' => false, 'escapeAttributes' => true],
                                     ) ?>
                                     <span class="text-muted"><?= h(number_format($row['count'])) ?></span>
                                 </div>
