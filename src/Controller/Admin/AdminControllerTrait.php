@@ -97,6 +97,8 @@ trait AdminControllerTrait
                 $event->setResult($result);
             }
             if ($event->getResult() instanceof ResponseInterface) {
+                $event->stopPropagation();
+
                 return;
             }
         }

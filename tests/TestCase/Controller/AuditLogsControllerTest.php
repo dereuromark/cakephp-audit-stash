@@ -60,6 +60,26 @@ class AuditLogsControllerTest extends TestCase
         parent::tearDown();
     }
 
+    public function testHostRedirectStopsLaterListeners(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirectViaEvent', true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host redirect.');
+        });
+        $listener = function (EventInterface $event): void {
+            $this->fail('Later listeners must not replace the host redirect.');
+        };
+        EventManager::instance()->on('Controller.initialize', ['priority' => 100], $listener);
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+            $this->assertRedirect('/login');
+        } finally {
+            EventManager::instance()->off('Controller.initialize', $listener);
+        }
+    }
+
     public function testHostBeforeFilterRedirectStopsAction(): void
     {
         Configure::write('AuditStash.standalone', false);
