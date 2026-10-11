@@ -73,7 +73,7 @@ class AuditLogsControllerTest extends TestCase
         $listener = function (EventInterface $event): void {
             $this->fail('Later listeners must not replace the host redirect.');
         };
-        EventManager::instance()->on('Controller.initialize', ['priority' => 100], $listener);
+        EventManager::instance()->on('Controller.initialize', $listener, options: ['priority' => 100]);
 
         try {
             $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
@@ -160,7 +160,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertTrue(Configure::read('Test.hostBeforeFilter'));
         $this->assertTrue(Configure::read('Test.hostBeforeRender'));
         $this->assertTrue(Configure::read('Test.hostAfterFilter'));
-        $this->_controller->redirect('/');
+        $this->controller->redirect('/');
         $this->assertTrue(Configure::read('Test.hostBeforeRedirect'));
     }
 
@@ -181,7 +181,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertNull(Configure::read('Test.hostBeforeFilter'));
         $this->assertNull(Configure::read('Test.hostBeforeRender'));
         $this->assertNull(Configure::read('Test.hostAfterFilter'));
-        $this->_controller->redirect('/');
+        $this->controller->redirect('/');
         $this->assertNull(Configure::read('Test.hostBeforeRedirect'));
     }
 
@@ -669,7 +669,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertContentType('application/json');
         $this->assertHeaderContains('Content-Disposition', 'attachment');
 
-        $data = json_decode((string)$this->_response->getBody()->__toString(), true);
+        $data = json_decode((string)$this->response->getBody()->__toString(), true);
         $this->assertIsArray($data);
         $this->assertNotEmpty($data);
         $this->assertArrayHasKey('id', $data[0]);
@@ -718,7 +718,7 @@ class AuditLogsControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertContentType('application/json');
 
-        $data = json_decode((string)$this->_response->getBody()->__toString(), true);
+        $data = json_decode((string)$this->response->getBody()->__toString(), true);
         $this->assertCount(1, $data);
         $this->assertSame('articles', $data[0]['source']);
     }
@@ -804,7 +804,7 @@ class AuditLogsControllerTest extends TestCase
         ]);
 
         $this->assertResponseOk();
-        $body = trim((string)$this->_response->getBody());
+        $body = trim((string)$this->response->getBody());
         $lines = explode("\n", $body);
         $this->assertCount(3, $lines);
         foreach ($lines as $line) {
@@ -896,7 +896,7 @@ class AuditLogsControllerTest extends TestCase
         ]);
 
         $this->assertResponseOk();
-        $body = (string)$this->_response->getBody();
+        $body = (string)$this->response->getBody();
         $data = json_decode($body, true);
         $this->assertIsArray($data);
         $this->assertCount(1, $data, 'Default date range must filter out the 90-day-old row.');
@@ -942,7 +942,7 @@ class AuditLogsControllerTest extends TestCase
         ]);
 
         $this->assertResponseOk();
-        $data = json_decode((string)$this->_response->getBody(), true);
+        $data = json_decode((string)$this->response->getBody(), true);
         $this->assertCount(2, $data, 'Explicit date_from must include the 90-day-old row.');
 
         Configure::delete('AuditStash.export.defaultDays');
@@ -1467,7 +1467,7 @@ class AuditLogsControllerTest extends TestCase
     public static function hostRedirectAuthorizationModes(): array
     {
         return [
-            'returned response' => ['Test.hostRedirect'],
+            'host redirect' => ['Test.hostRedirect'],
             'event response' => ['Test.hostRedirectViaEvent'],
         ];
     }

@@ -32,7 +32,7 @@ class AuditLog extends Entity
      *
      * @var array<string, bool>
      */
-    protected array $_accessible = [
+    protected array $patchable = [
         'transaction_key' => true,
         'type' => true,
         'primary_key' => true,

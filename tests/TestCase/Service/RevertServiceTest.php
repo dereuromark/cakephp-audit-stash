@@ -507,7 +507,7 @@ class RevertServiceTest extends TestCase
             /**
              * @var array<string, bool>
              */
-            protected array $_accessible = ['title' => false, 'body' => false];
+            protected array $patchable = ['title' => false, 'body' => false];
         };
         $articles->setEntityClass($guarded::class);
 

@@ -901,7 +901,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
         $event->setMetaInfo([]);
 
-        $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
+        $AuditLogsTable = $this->createMock(AuditLogsTable::class);
         $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('columns')->willReturn([
             'id',
@@ -937,7 +937,7 @@ class TablePersisterTest extends TestCase
         $event = new AuditCreateEvent('62ba2e1e-1524-4d4e-bb34-9bf0e03b6a96', 1, 'source', ['title' => 'Test'], [], new Entity());
         $event->setMetaInfo([]);
 
-        $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
+        $AuditLogsTable = $this->createMock(AuditLogsTable::class);
         $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('columns')->willReturn([
             'id',
@@ -976,10 +976,8 @@ class TablePersisterTest extends TestCase
      * @param string $alias The model alias
      * @param array $methods The methods to mock
      * @param array $options Additional options
-     *
-     * @return \Cake\ORM\Table|\PHPUnit\Framework\MockObject\MockObject
      */
-    public function getMockForModel($alias, array $methods = [], array $options = []): Table|MockObject
+    public function getMockForModel(string $alias, array $methods = [], array $options = []): Table&MockObject
     {
         return parent::getMockForModel($alias, $methods, $options + [
             'className' => AuditLogsTable::class,

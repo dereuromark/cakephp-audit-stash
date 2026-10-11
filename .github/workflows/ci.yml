@@ -11,11 +11,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.5']
+        php-version: ['8.5']
         db-type: [sqlite, mysql, pgsql]
         prefer-lowest: ['']
         include:
-          - php-version: '8.2'
+          - php-version: '8.5'
             db-type: 'sqlite'
             prefer-lowest: 'prefer-lowest'
 
@@ -72,7 +72,7 @@ jobs:
           if [[ ${{ matrix.db-type }} == 'sqlite' ]]; then export db_dsn='sqlite:///:memory:'; fi
           if [[ ${{ matrix.db-type }} == 'mysql' ]]; then export db_dsn='mysql://root:root@127.0.0.1/cakephp'; fi
           if [[ ${{ matrix.db-type }} == 'pgsql' ]]; then export db_dsn='postgres://postgres:postgres@127.0.0.1/postgres'; fi
-          if [[ ${{ matrix.php-version }} == '8.2' && ${{ matrix.db-type }} == 'sqlite' ]]; then
+          if [[ ${{ matrix.php-version }} == '8.5' && ${{ matrix.db-type }} == 'sqlite' ]]; then
             vendor/bin/phpunit --coverage-clover=coverage.xml
           else
             vendor/bin/phpunit
@@ -83,7 +83,7 @@ jobs:
         run: vendor/bin/validate-prefer-lowest -m
 
       - name: Upload coverage reports to Codecov
-        if: success() && matrix.php-version == '8.2' && matrix.db-type == 'sqlite' && matrix.prefer-lowest != 'prefer-lowest'
+        if: success() && matrix.php-version == '8.5' && matrix.db-type == 'sqlite' && matrix.prefer-lowest != 'prefer-lowest'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -98,7 +98,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.5'
           extensions: mbstring, intl
           coverage: none
 
@@ -126,15 +126,16 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        version: ['~5.3.0']
+        version: ['^6.0@dev']
 
     services:
       elasticsearch:
-        image: elasticsearch:7.17.6
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
         ports:
           - 9200/tcp
         env:
           discovery.type: single-node
+          xpack.security.enabled: false
           ES_JAVA_OPTS: -Xms500m -Xmx500m
         options: >-
           --health-cmd "curl http://127.0.0.1:9200/_cluster/health"
@@ -149,7 +150,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.5'
           extensions: mbstring, intl
 
       - name: Get composer cache directory

@@ -4,12 +4,12 @@
 [![Coverage Status](https://img.shields.io/codecov/c/github/dereuromark/cakephp-audit-stash/master.svg?style=flat-square)](https://codecov.io/github/dereuromark/cakephp-audit-stash)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%208-brightgreen.svg?style=flat)](https://phpstan.org/)
 [![Latest Stable Version](https://poser.pugx.org/dereuromark/cakephp-audit-stash/v/stable.svg)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
-[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.2-8892BF.svg)](https://php.net/)
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%208.5-8892BF.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-audit-stash/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-audit-stash)
 [![Coding Standards](https://img.shields.io/badge/cs-PhpCollective-purple.svg?style=flat-square)](https://github.com/php-collective/code-sniffer)
 
-This branch is for **CakePHP 5**. See [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for details.
+This development branch targets **CakePHP 6** and PHP 8.5. See [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map) for details.
 
 Audit-trail plugin: records entity saves and deletes on tables with its behavior enabled. Optional metadata records the user and request.
 
@@ -26,14 +26,16 @@ Audit-trail plugin: records entity saves and deletes on tables with its behavior
 
 ## Documentation
 
-Full docs: **<https://dereuromark.github.io/cakephp-audit-stash/>**
+The [published documentation website](https://dereuromark.github.io/cakephp-audit-stash/) describes the CakePHP 5 branch.
 
-- [Installation](https://dereuromark.github.io/cakephp-audit-stash/guide/installation)
-- [Getting Started](https://dereuromark.github.io/cakephp-audit-stash/guide/): behavior setup, verifying a saved change, request metadata
-- [Configuration](https://dereuromark.github.io/cakephp-audit-stash/guide/configuration): persisters, table list, route prefix
-- [Usage](https://dereuromark.github.io/cakephp-audit-stash/guide/usage): behavior options, custom events, custom persisters
-- [Testing](https://dereuromark.github.io/cakephp-audit-stash/guide/testing): `AuditAssertionsTrait` for your own test suite
-- [Features overview](https://dereuromark.github.io/cakephp-audit-stash/features/): viewer, monitoring, retention, tamper-evidence, GDPR
+Read the [documentation in this branch](https://github.com/dereuromark/cakephp-audit-stash/tree/cake6/docs).
+
+- [Installation](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/installation.md)
+- [Getting Started](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/index.md): behavior setup, verifying a saved change, request metadata
+- [Configuration](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/configuration.md): persisters, table list, route prefix
+- [Usage](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/usage.md): behavior options, custom events, custom persisters
+- [Testing](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/guide/testing.md): `AuditAssertionsTrait` for your own test suite
+- [Features overview](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/docs/features/index.md): viewer, monitoring, retention, tamper-evidence, GDPR
 
 ## Demo
 

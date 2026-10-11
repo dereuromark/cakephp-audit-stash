@@ -98,13 +98,13 @@ class AuditStashPlugin extends BasePlugin
     {
         $path = Configure::read('AuditStash.routePath', '/audit-stash');
         $routes->prefix('Admin', function (RouteBuilder $routes) use ($path): void {
-            $routes->plugin('AuditStash', ['path' => $path], function (RouteBuilder $routes): void {
+            $routes->plugin('AuditStash', function (RouteBuilder $routes): void {
                 $routes->setRouteClass(DashedRoute::class);
                 $routes->setExtensions(['csv', 'json', 'ndjson']);
                 $routes->connect('/', ['controller' => 'AuditStash', 'action' => 'index']);
                 $routes->connect('/coverage', ['controller' => 'AuditStash', 'action' => 'coverage']);
                 $routes->fallbacks();
-            });
+            }, ['path' => $path]);
         });
     }
 

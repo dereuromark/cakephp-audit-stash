@@ -31,7 +31,7 @@ class RevertService
      *
      * @var array<string, mixed>
      */
-    protected const PATCH_OPTIONS = ['accessibleFields' => ['*' => true]];
+    protected const PATCH_OPTIONS = ['patchableFields' => ['*' => true]];
 
     protected StateReconstructorService $reconstructor;
 
@@ -185,11 +185,11 @@ class RevertService
             }
 
             $entity = $table->newEntity($state, [
-                'accessibleFields' => ['*' => true], // Allow setting all fields including timestamps
+                'patchableFields' => ['*' => true], // Allow setting all fields including timestamps
             ]);
 
             // Force the primary key
-            $entity->set($table->getPrimaryKey(), $primaryKey);
+            $entity->set($primaryKeyField, $primaryKey);
             $entity->setNew(true);
 
             // If created/modified fields are missing, add them now

@@ -7,7 +7,7 @@ namespace AuditStash\Command;
 use AuditStash\Service\GdprService;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
-use Cake\Console\ConsoleIo;
+use Cake\Console\ConsoleIoInterface;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 
@@ -83,8 +83,11 @@ class GdprCommand extends Command
     /**
      * @inheritDoc
      */
-    public function execute(Arguments $args, ConsoleIo $io): int
+    public function execute(): int
     {
+        $args = $this->args;
+        $io = $this->io;
+
         // Check persister type
         $persister = Configure::read('AuditStash.persister', 'AuditStash\Persister\TablePersister');
         if (!is_a($persister, 'AuditStash\Persister\TablePersister', true)) {
@@ -120,11 +123,11 @@ class GdprCommand extends Command
      * @param \AuditStash\Service\GdprService $service GDPR service
      * @param string $userId User ID
      * @param \Cake\Console\Arguments $args Arguments
-     * @param \Cake\Console\ConsoleIo $io Console IO
+     * @param \Cake\Console\ConsoleIoInterface $io Console IO
      *
      * @return int Exit code
      */
-    protected function executeAnonymize(GdprService $service, string $userId, Arguments $args, ConsoleIo $io): int
+    protected function executeAnonymize(GdprService $service, string $userId, Arguments $args, ConsoleIoInterface $io): int
     {
         $dryRun = (bool)$args->getOption('dry-run');
         $stats = $service->getStats($userId);
@@ -174,11 +177,11 @@ class GdprCommand extends Command
      * @param \AuditStash\Service\GdprService $service GDPR service
      * @param string $userId User ID
      * @param \Cake\Console\Arguments $args Arguments
-     * @param \Cake\Console\ConsoleIo $io Console IO
+     * @param \Cake\Console\ConsoleIoInterface $io Console IO
      *
      * @return int Exit code
      */
-    protected function executeDelete(GdprService $service, string $userId, Arguments $args, ConsoleIo $io): int
+    protected function executeDelete(GdprService $service, string $userId, Arguments $args, ConsoleIoInterface $io): int
     {
         $dryRun = (bool)$args->getOption('dry-run');
         $force = (bool)$args->getOption('force');
@@ -230,11 +233,11 @@ class GdprCommand extends Command
      * @param \AuditStash\Service\GdprService $service GDPR service
      * @param string $userId User ID
      * @param \Cake\Console\Arguments $args Arguments
-     * @param \Cake\Console\ConsoleIo $io Console IO
+     * @param \Cake\Console\ConsoleIoInterface $io Console IO
      *
      * @return int Exit code
      */
-    protected function executeExport(GdprService $service, string $userId, Arguments $args, ConsoleIo $io): int
+    protected function executeExport(GdprService $service, string $userId, Arguments $args, ConsoleIoInterface $io): int
     {
         $stats = $service->getStats($userId);
 
@@ -274,11 +277,11 @@ class GdprCommand extends Command
      *
      * @param \AuditStash\Service\GdprService $service GDPR service
      * @param string $userId User ID
-     * @param \Cake\Console\ConsoleIo $io Console IO
+     * @param \Cake\Console\ConsoleIoInterface $io Console IO
      *
      * @return int Exit code
      */
-    protected function executeStats(GdprService $service, string $userId, ConsoleIo $io): int
+    protected function executeStats(GdprService $service, string $userId, ConsoleIoInterface $io): int
     {
         $stats = $service->getStats($userId);
 

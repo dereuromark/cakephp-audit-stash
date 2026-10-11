@@ -87,7 +87,7 @@ class CoverageService
             $inspection = $this->inspectClass($alias);
 
             // Resolve the audit-log source for this class. AuditLogBehavior
-            // persists the source as `$_table->getRegistryAlias()`, which
+            // persists the source as `$table->getRegistryAlias()`, which
             // for plugin tables can be either `Plugin.Table` (when loaded
             // with the dotted alias) or just `Table` (when loaded without
             // the prefix from app code or via association). Pick whichever
@@ -262,7 +262,7 @@ class CoverageService
             ])
             ->where(['AuditLogs.created >=' => $since])
             ->groupBy(['AuditLogs.source'])
-            ->disableHydration()
+            ->enableHydration(false)
             ->toArray();
 
         $out = [];

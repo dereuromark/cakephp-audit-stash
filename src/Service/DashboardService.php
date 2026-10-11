@@ -6,6 +6,7 @@ namespace AuditStash\Service;
 
 use AuditStash\Model\Table\AuditLogsTable;
 use Cake\Database\Expression\FunctionExpression;
+use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 
@@ -131,7 +132,7 @@ class DashboardService
             ->where(['AuditLogs.created >=' => $since . ' 00:00:00'])
             ->groupBy([$dayExpr, 'AuditLogs.type'])
             ->orderByAsc($dayExpr)
-            ->disableHydration()
+            ->enableHydration(false)
             ->toArray();
 
         $byDay = [];
@@ -172,11 +173,11 @@ class DashboardService
             ->groupBy(['AuditLogs.source'])
             ->orderBy(['cnt' => 'DESC'])
             ->limit($limit)
-            ->disableHydration()
+            ->enableHydration(false)
             ->toArray();
 
         return array_map(
-            fn (array $r): array => ['source' => (string)$r['source'], 'count' => (int)$r['cnt']],
+            fn (array|EntityInterface $r): array => ['source' => (string)$r['source'], 'count' => (int)$r['cnt']],
             $rows,
         );
     }
@@ -201,11 +202,11 @@ class DashboardService
             ->groupBy(['AuditLogs.user_id', 'AuditLogs.user_display'])
             ->orderBy(['cnt' => 'DESC'])
             ->limit($limit)
-            ->disableHydration()
+            ->enableHydration(false)
             ->toArray();
 
         return array_map(
-            fn (array $r): array => [
+            fn (array|EntityInterface $r): array => [
                 'user_id' => $r['user_id'] !== null ? (string)$r['user_id'] : null,
                 'user_display' => $r['user_display'] !== null ? (string)$r['user_display'] : null,
                 'count' => (int)$r['cnt'],

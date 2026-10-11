@@ -7,7 +7,6 @@ namespace AuditStash\Command;
 use AuditStash\Service\ChainSealer;
 use Cake\Command\Command;
 use Cake\Console\Arguments;
-use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 use Cake\I18n\DateTime;
@@ -90,8 +89,11 @@ class CleanupCommand extends Command
     /**
      * @inheritDoc
      */
-    public function execute(Arguments $args, ConsoleIo $io): int
+    public function execute(): int
     {
+        $args = $this->args;
+        $io = $this->io;
+
         // Check persister type - only TablePersister (or subclasses) are supported
         $persister = Configure::read('AuditStash.persister', 'AuditStash\Persister\TablePersister');
         if (!is_a($persister, 'AuditStash\Persister\TablePersister', true)) {

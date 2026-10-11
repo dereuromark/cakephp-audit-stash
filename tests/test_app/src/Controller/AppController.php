@@ -21,19 +21,19 @@ class AppController extends Controller
     /**
      * @param \Cake\Event\EventInterface $event Event
      *
-     * @return mixed
+     * @return void
      */
-    public function beforeFilter(EventInterface $event)
+    public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);
         Configure::write('Test.hostBeforeFilter', true);
         if (Configure::read('Test.hostRedirectViaEvent')) {
             $event->setResult($this->redirect('/login'));
 
-            return null;
+            return;
         }
         if (Configure::read('Test.hostRedirect')) {
-            return $this->redirect('/login');
+            $event->setResult($this->redirect('/login'));
         }
     }
 

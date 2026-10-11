@@ -81,7 +81,7 @@ trait AdminControllerTrait
      * Authorization stack, pass an explicit `fn() => true` — that's an
      * valid only when an upstream guard already enforces access.
      *
-     * @param \Cake\Event\EventInterface<\Cake\Controller\Controller> $event
+     * @param \Cake\Event\EventInterface $event
      *
      * @throws \Cake\Http\Exception\ForbiddenException When the configured Closure rejects the request, is missing, or isn't a Closure.
      *
@@ -92,10 +92,7 @@ trait AdminControllerTrait
         if (Configure::read('AuditStash.standalone')) {
             Controller::beforeFilter($event);
         } else {
-            $result = parent::beforeFilter($event);
-            if ($result instanceof ResponseInterface) {
-                $event->setResult($result);
-            }
+            parent::beforeFilter($event);
             if ($event->getResult() instanceof ResponseInterface) {
                 $this->skipAdminAuthorizationCheck();
                 $event->stopPropagation();
