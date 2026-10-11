@@ -218,7 +218,7 @@ class ChainVerifierTest extends TestCase
 
     public function testVerifierRejectsNonNumericPrimaryKeys(): void
     {
-        $table = $this->createStub(Table::class);
+        $table = $this->createMock(Table::class);
         $schema = new TableSchema('audit_logs');
         $schema->addColumn('id', ['type' => 'uuid']);
 

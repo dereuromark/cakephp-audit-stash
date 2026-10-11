@@ -416,3 +416,19 @@ Configure::write('AuditStash.standalone', true);
 Application middleware still runs; the host controller lifecycle callbacks are skipped.
 Standalone mode does not remove middleware authentication or authorization
 requirements. Configure the access check described above for this setup.
+
+### CakePHP 6 host callbacks
+
+CakePHP 6 declares `beforeFilter()` with a `void` return type. A host guard that redirects should set the response on the event instead of returning it:
+
+```php
+public function beforeFilter(EventInterface $event): void
+{
+    parent::beforeFilter($event);
+    if (!$this->getRequest()->getAttribute('identity')) {
+        $event->setResult($this->redirect('/login'));
+    }
+}
+```
+
+When the event contains a response, the plugin stops propagation and preserves that response. Standalone mode still requires an explicit `AuditStash.adminAccess` gate.

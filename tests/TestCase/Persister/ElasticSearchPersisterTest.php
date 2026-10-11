@@ -29,7 +29,7 @@ class ElasticSearchPersisterTest extends TestCase
             ->method('addDocuments')
             ->willReturn(new ResponseSet(new Response('test', 200), []));
 
-        $connectionMock = $this->createStub(Connection::class);
+        $connectionMock = $this->createMock(Connection::class);
         $connectionMock
             ->expects($this->atLeastOnce())
             ->method('getDriver')

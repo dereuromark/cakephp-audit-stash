@@ -106,7 +106,7 @@ The plugin will store logs in a table named `audit_logs`, via the plugin table a
 ### Table Persister Configuration
 
 The table persister supports various configuration options, please refer to
-[its source: `src/Persister/TablePersister.php`](https://github.com/dereuromark/cakephp-audit-stash/blob/master/src/Persister/TablePersister.php) for further information. Generally configuration can be
+[its source: `src/Persister/TablePersister.php`](https://github.com/dereuromark/cakephp-audit-stash/blob/cake6/src/Persister/TablePersister.php) for further information. Generally configuration can be
 applied via its `setConfig()` method:
 
 ```php

@@ -1,9 +1,9 @@
 # Installation
 
-From your CakePHP application directory:
+This development branch targets CakePHP 6 and PHP 8.5. From your CakePHP 6 application directory:
 
 ```bash
-composer require dereuromark/cakephp-audit-stash
+composer require dereuromark/cakephp-audit-stash:dev-cake6
 bin/cake plugin load AuditStash
 bin/cake migrations migrate -p AuditStash
 ```
