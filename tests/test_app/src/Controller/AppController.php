@@ -27,6 +27,11 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
         Configure::write('Test.hostBeforeFilter', true);
+        if (Configure::read('Test.hostRedirectViaEvent')) {
+            $event->setResult($this->redirect('/login'));
+
+            return null;
+        }
         if (Configure::read('Test.hostRedirect')) {
             return $this->redirect('/login');
         }

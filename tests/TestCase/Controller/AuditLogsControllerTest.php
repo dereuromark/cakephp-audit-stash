@@ -76,6 +76,22 @@ class AuditLogsControllerTest extends TestCase
         }
     }
 
+    public function testHostBeforeFilterEventRedirectStopsAction(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirectViaEvent', true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host redirect.');
+        });
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+            $this->assertRedirect('/login');
+        } finally {
+            Configure::delete('Test.hostRedirectViaEvent');
+        }
+    }
+
     public function testStandaloneMarksRequestAuthorizationChecked(): void
     {
         $service = new class {
