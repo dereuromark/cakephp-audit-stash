@@ -534,7 +534,7 @@ final, persisted form.
 
 You can capture user-provided reasons or comments for changes using the metadata system. This is useful for compliance, audit trails, or understanding why changes were made.
 
-### Approach 1: Per-Request Reason (via Request Attribute)
+### Per-request reason
 
 Store the reason in the request and extract it in a listener:
 
@@ -657,7 +657,9 @@ Audited tables that store file content directly (binary blobs, base64 payloads, 
 - The audit row balloons to the size of the file: a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
 - The audit table ends up holding sensitive content in plaintext, defeating the typical reason for separating uploads from primary tables.
 
-The fix is to make the entity field that the auditor sees be a **fingerprint** (hash + size + mime), not the raw content. Two ways to do that, depending on where the file lives in your model.
+Store a fingerprint in an audited schema column and exclude the raw content.
+A hash records whether bytes changed; add size or MIME metadata if your application
+needs those values.
 
 ### Store a fingerprint in a schema column
 
@@ -689,6 +691,9 @@ and new fingerprint without retaining the file bytes.
 A `beforeLog` listener that only edits a local array does not change the saved
 payload. Use a custom persister to rebuild events with transformed values, or
 store a fingerprint in a separate schema column and blacklist the file content.
+A listener can also replace entries in the event's `logs` array with rebuilt event
+objects using `$event->setData('logs', $logs)`. Preserve metadata and subject details
+when rebuilding; editing a getter's returned array alone has no effect.
 
 For sensitive values whose contents should never be retained, use the behavior's
 `sensitive` option:

@@ -15,6 +15,15 @@ a custom table, configure it explicitly:
 ],
 ```
 
+To retain the default alias for the viewer and assertions, configure its class
+before the first table lookup, for example in `Application::bootstrap()`:
+
+```php
+\Cake\ORM\TableRegistry::getTableLocator()->setConfig('AuditStash.AuditLogs', [
+    'className' => \App\Model\Table\AuditLogsTable::class,
+]);
+```
+
 The custom table must provide the schema and type mappings expected by the
 persister and features you enable. The bundled viewer and assertions still query
 `AuditStash.AuditLogs`; changing the persister alone does not redirect them.
@@ -31,8 +40,9 @@ Do not infer database indexing or query performance from that type mapping.
 
 Events expose an ISO timestamp with microseconds through `getTimestamp()` and a
 DateTime object through `getTimestampObject()`. The default database `datetime`
-type formats values to seconds, so widening the SQL column alone does not retain
-microseconds. A custom table must also map `created` to `datetimefractional`:
+type formats values to seconds. Retaining microseconds requires both a fractional
+SQL column and an ORM fractional type. CakePHP reflects MySQL `DATETIME(n)` with
+nonzero precision as `datetimefractional`; a custom table can also set it explicitly:
 
 ```php
 // In your custom audit table's initialize() method:

@@ -36,14 +36,14 @@ perform the intended access decision.
 
 To change the mount path while retaining the Admin controllers, set
 `AuditStash.routePath`, for example `/audit-logs`. Disable the generated routes
-with `$this->addPlugin('AuditStash', ['routes' => false])` in `Application.php`
+by setting `'AuditStash' => ['routes' => false]` in `config/plugins.php`
 if you need custom routing. The bundled controllers live in the `Admin` namespace;
 custom routes must retain `prefix => 'Admin'` in their target defaults.
 
 ### Loading the Helper
 
 The plugin loads AuditHelper for its admin controllers. Load it explicitly in
-your own application views. If needed, you can explicitly load it:
+your own application views:
 
 ```php
 // In your AppView.php

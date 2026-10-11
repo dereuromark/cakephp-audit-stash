@@ -108,7 +108,7 @@ class TablePersister implements PersisterInterface
      *   Defines whether the (non-primary key) fields that expect array data are being
      *   serialized in JSON format.
      *
-     * - `table` (`string|\Cake\ORM\Table`, defaults to `AuditLogs`)
+     * - `table` (`string|\Cake\ORM\Table`, defaults to `AuditStash.AuditLogs`)
      *
      *   Defines the table to use for persisting records. Either a string denoting a table
      *   alias that is going to be resolved using the persisters table locator, or a table
