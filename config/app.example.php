@@ -75,8 +75,9 @@ return [
          * a 403.
          *
          * To delegate the decision entirely to your host AppController /
-         * Authorization stack, pass `fn() => true` — that is the explicit
-         * "I trust the upstream guard" knob.
+         * Authorization stack, pass `fn() => true` only when it already
+         * enforces access. Standalone mode skips host controller guards;
+         * delegation in that mode requires an independent middleware guard.
          *
          * Example — restrict to super_admin role on the cakephp/authentication
          * identity:
