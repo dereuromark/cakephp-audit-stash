@@ -55,9 +55,9 @@ return [
         /**
          * Standalone Mode
          *
-         * When enabled, the admin interface operates independently without
-         * inheriting from AppController's authentication/authorization.
-         * Useful for quick setup or when using separate admin authentication.
+         * Skip the host AppController's initialization and lifecycle callbacks.
+         * Application middleware still applies.
+         * The required adminAccess check runs in both modes.
          */
         'standalone' => false,
 
@@ -75,8 +75,9 @@ return [
          * a 403.
          *
          * To delegate the decision entirely to your host AppController /
-         * Authorization stack, pass `fn() => true` — that is the explicit
-         * "I trust the upstream guard" knob.
+         * Authorization stack, pass `fn() => true` only when it already
+         * enforces access. Standalone mode skips host controller guards;
+         * delegation in that mode requires an independent middleware guard.
          *
          * Example — restrict to super_admin role on the cakephp/authentication
          * identity:

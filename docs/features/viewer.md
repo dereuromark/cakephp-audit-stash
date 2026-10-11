@@ -381,13 +381,15 @@ Configure::write('AuditStash.adminAccess', function (ServerRequest $request): bo
 });
 ```
 
-To delegate the decision entirely to your host AppController / Authorization stack, pass an explicit `fn() => true`: only when the host guard already makes the full access decision:
+Use `fn() => true` only when an upstream guard already makes the full access
+decision. In standalone mode, host controller guards are skipped, so this
+requires middleware that independently enforces access:
 
 ```php
 Configure::write('AuditStash.adminAccess', fn () => true);
 ```
 
-The gate is checked in `beforeFilter` and calls `Authorization::skipAuthorization()` when the cakephp/authorization component is loaded, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
+The gate is checked in `beforeFilter` and records the decision with the Authorization component or the request's authorization service, so the policy layer doesn't double-reject. Closures that throw `ForbiddenException` are passed through; other throwables are logged and converted to a generic `403`.
 
 ## Host application access checks
 
@@ -399,3 +401,18 @@ implementation, and keep access checks for every exposed action.
 
 The required `adminAccess` Closure is the plugin's access decision. A routing
 prefix alone provides no authentication or authorization.
+
+## Standalone controller setup
+
+Set `AuditStash.standalone` to `true` to skip the host
+`AppController::initialize()` and controller lifecycle callbacks. The plugin loads its Flash
+component, helpers, and configured layout. The required `AuditStash.adminAccess`
+Closure still runs, and an absent or denied check returns 403.
+
+```php
+Configure::write('AuditStash.standalone', true);
+```
+
+Application middleware still runs; the host controller lifecycle callbacks are skipped.
+Standalone mode does not remove middleware authentication or authorization
+requirements. Configure the access check described above for this setup.

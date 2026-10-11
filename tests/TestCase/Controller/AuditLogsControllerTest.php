@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace AuditStash\Test\TestCase\Controller;
 
 use Cake\Core\Configure;
+use Cake\Event\EventInterface;
+use Cake\Event\EventManager;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\DateTime;
@@ -49,7 +51,135 @@ class AuditLogsControllerTest extends TestCase
     protected function tearDown(): void
     {
         Configure::delete('AuditStash.adminAccess');
+        Configure::delete('AuditStash.standalone');
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
+        Configure::delete('Test.hostBeforeRender');
+        Configure::delete('Test.hostAfterFilter');
+        Configure::delete('Test.hostBeforeRedirect');
         parent::tearDown();
+    }
+
+    public function testHostBeforeFilterRedirectStopsAction(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirect', true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host redirect.');
+        });
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+            $this->assertRedirect('/login');
+        } finally {
+            Configure::delete('Test.hostRedirect');
+        }
+    }
+
+    public function testHostBeforeFilterEventRedirectStopsAction(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirectViaEvent', true);
+        Configure::write('AuditStash.adminAccess', function (): bool {
+            $this->fail('The plugin gate must not run after a host redirect.');
+        });
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+            $this->assertRedirect('/login');
+        } finally {
+            Configure::delete('Test.hostRedirectViaEvent');
+        }
+    }
+
+    public function testStandaloneMarksRequestAuthorizationChecked(): void
+    {
+        $service = new class {
+            public bool $skipped = false;
+
+            public function skipAuthorization(): void
+            {
+                $this->skipped = true;
+            }
+        };
+        Configure::write('AuditStash.standalone', true);
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+        $listener = function (EventInterface $event) use ($service): void {
+            $controller = $event->getSubject();
+            $controller->setRequest($controller->getRequest()->withAttribute('authorization', $service));
+        };
+        EventManager::instance()->on('Controller.initialize', $listener);
+
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+        } finally {
+            EventManager::instance()->off('Controller.initialize', $listener);
+        }
+
+        $this->assertResponseOk();
+        $this->assertTrue($service->skipped);
+    }
+
+    public function testDefaultCallsHostCallbacks(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
+        Configure::delete('Test.hostBeforeRender');
+        Configure::delete('Test.hostAfterFilter');
+        Configure::delete('Test.hostBeforeRedirect');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertTrue(Configure::read('Test.hostInitialize'));
+        $this->assertTrue(Configure::read('Test.hostBeforeFilter'));
+        $this->assertTrue(Configure::read('Test.hostBeforeRender'));
+        $this->assertTrue(Configure::read('Test.hostAfterFilter'));
+        $this->_controller->redirect('/');
+        $this->assertTrue(Configure::read('Test.hostBeforeRedirect'));
+    }
+
+    public function testStandaloneSkipsHostCallbacks(): void
+    {
+        Configure::write('AuditStash.standalone', true);
+        Configure::write('AuditStash.adminAccess', fn (): bool => true);
+        Configure::delete('Test.hostInitialize');
+        Configure::delete('Test.hostBeforeFilter');
+        Configure::delete('Test.hostBeforeRender');
+        Configure::delete('Test.hostAfterFilter');
+        Configure::delete('Test.hostBeforeRedirect');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertNull(Configure::read('Test.hostInitialize'));
+        $this->assertNull(Configure::read('Test.hostBeforeFilter'));
+        $this->assertNull(Configure::read('Test.hostBeforeRender'));
+        $this->assertNull(Configure::read('Test.hostAfterFilter'));
+        $this->_controller->redirect('/');
+        $this->assertNull(Configure::read('Test.hostBeforeRedirect'));
+    }
+
+    public function testStandaloneWithoutGateRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.standalone', true);
+        Configure::delete('AuditStash.adminAccess');
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+    }
+
+    public function testStandaloneDeniedGateRejects(): void
+    {
+        $this->disableErrorHandlerMiddleware();
+        Configure::write('AuditStash.standalone', true);
+        Configure::write('AuditStash.adminAccess', fn (): bool => false);
+
+        $this->expectException(ForbiddenException::class);
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
     }
 
     public function testAccessCheckUnsetForbids(): void
