@@ -4,15 +4,20 @@ The plugin ships a small assertions trait so your own test suite can verify what
 
 ## Setup
 
+Enable the behavior and its persister in the application under test.
+For controller tests, use CakePHP's `IntegrationTestTrait` as well as the audit assertions.
+
 Mix `AuditStash\TestSuite\AuditAssertionsTrait` into any `TestCase` and load the `plugin.AuditStash.AuditLogs` fixture alongside whatever fixtures your test needs:
 
 ```php
 use AuditStash\TestSuite\AuditAssertionsTrait;
+use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 
 class ArticlesControllerTest extends TestCase
 {
     use AuditAssertionsTrait;
+    use IntegrationTestTrait;
 
     protected array $fixtures = [
         'plugin.AuditStash.AuditLogs',

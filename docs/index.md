@@ -4,13 +4,16 @@ layout: home
 hero:
   name: cakephp-audit-stash
   text: Audit Trail for CakePHP
-  tagline: Tamper-evident entity logging, admin viewer, monitoring, retention, and GDPR tooling — batteries included.
+  tagline: Tamper-evident entity logging, admin viewer, monitoring, retention, and GDPR tooling.
   image:
     src: /logo.svg
     alt: cakephp-audit-stash
   actions:
     - theme: brand
-      text: Get Started
+      text: Installation
+      link: /guide/installation
+    - theme: alt
+      text: Getting started
       link: /guide/
     - theme: alt
       text: Features
@@ -28,10 +31,10 @@ features:
     details: Track create, update, and delete on any Table via a single behavior. Captures changed fields, before/after values, user, and request context.
   - icon: 🔐
     title: Tamper-Evidence
-    details: Optional SHA-256 hash chain over rows for GoBD / SOX / HIPAA-grade integrity. Verify end-to-end with a single CLI command.
+    details: Optional SHA-256 hash chain over audit rows. Verify stored links with the CLI and read the documented limits.
   - icon: 🖥️
     title: Admin Viewer
-    details: Built-in dashboard, coverage report, search, before/after diffs, timeline view, and CSV/JSON export — no chart libraries required.
+    details: Built-in dashboard, coverage report, search, before/after diffs, timeline view, and CSV/JSON export.
   - icon: 🚨
     title: Monitoring & Alerting
     details: Detect mass deletions, off-hours activity, and custom rule violations. Notify via email, webhook, or log channels.

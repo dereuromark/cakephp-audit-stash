@@ -2,6 +2,10 @@
 
 The plugin includes a real-time monitoring system that can detect suspicious activities and send notifications through various channels (email, webhooks, logs, etc.).
 
+Table filters must match the stored `source` alias exactly, including case and
+any plugin prefix. Monitoring runs for persisted rows from `TablePersister`; it
+does not observe bulk SQL changes that bypass logging.
+
 ## How It Works
 
 The monitoring system:
@@ -26,7 +30,7 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'class' => \AuditStash\Monitor\Rule\MassDeleteRule::class,
                 'threshold' => 10,              // Trigger if 10+ deletes
                 'timeframe' => 300,             // Within 5 minutes (seconds)
-                'tables' => ['users', 'orders'], // Only for these tables (optional)
+                'tables' => ['Users', 'Orders'], // Only for these tables (optional)
                 'severity' => 'critical',
                 'channels' => ['email', 'log'],  // Send to these channels
             ],
@@ -36,7 +40,7 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'class' => \AuditStash\Monitor\Rule\UnusualTimeActivityRule::class,
                 'business_hours' => ['start' => '08:00', 'end' => '18:00'],
                 'business_days' => [1, 2, 3, 4, 5], // Monday-Friday (1=Monday, 7=Sunday)
-                'tables' => ['financial_records', 'payroll'],
+                'tables' => ['FinancialRecords', 'Payroll'],
                 'severity' => 'medium',
                 'channels' => ['log', 'email'],
             ],

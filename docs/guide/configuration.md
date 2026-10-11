@@ -2,71 +2,47 @@
 
 ## Database Table Storage (Default)
 
-The plugin uses a regular database table to store audit logs by default. Run the migrations to create the `audit_logs` table:
-
-```bash
-bin/cake migrations migrate -p AuditStash
-```
-
-Optionally, bake the corresponding table class if you need to customize it:
-
-```bash
-bin/cake bake model AuditLogs
-```
-
-**Performance Note:** The migration uses `binaryuuid` for the transaction_key field, which stores UUIDs as BINARY(16) instead of CHAR(36).
-This provides ~56% space savings and better index performance.
-
-### Native JSON Columns
-
-The plugin includes a migration (`20260123120000_UseJsonColumnTypes`) that converts the `original`, `changed`, and `meta`
-columns from TEXT to native JSON type. This provides:
-
-- **Automatic JSON validation** on insert/update (database will reject malformed JSON)
-- **Better query performance** with JSON functions (e.g., `JSON_EXTRACT()` in MySQL)
-- **Ability to create indexes** on JSON paths (MySQL 8.0+)
-
-To enable native JSON columns:
-
-```bash
-bin/cake migrations migrate -p AuditStash
-```
-
-The `TablePersister` automatically detects JSON columns and skips manual JSON encoding to avoid double-encoding.
-This means you don't need to change any configuration - it just works.
-
-**Note:** This requires MySQL 5.7.8+, MariaDB 10.2.7+, or PostgreSQL 9.2+. SQLite does not support native JSON columns.
-
-### Sub-Second Timestamp Precision
-
-Audit events are captured with microsecond precision (ISO 8601 with timezone offset, e.g.
-`2026-04-27T12:34:56.123456+00:00`), but the bundled migration creates the `created` column as a plain
-`DATETIME`, which MySQL stores at second precision. To actually persist the extra precision, copy the
-migration to your app and widen the column:
-
-```bash
-cp vendor/dereuromark/cakephp-audit-stash/config/Migrations/20171018185609_CreateAuditLogs.php config/Migrations/
-```
-
-Then change the `created` column to use a fractional seconds precision (`3` for milliseconds, `6` for
-microseconds):
+The default persister stores rows through `AuditStash.AuditLogs` in the
+`audit_logs` table. Run the migrations described in [Installation](installation.md).
+Baking an application `AuditLogsTable` does not replace the plugin alias. To use
+a custom table, configure it explicitly:
 
 ```php
-->addColumn('created', 'datetime', [
-    'default' => null,
-    'null' => false,
-    'precision' => 6,
-])
+'AuditStash' => [
+    'persisterConfig' => [
+        'table' => 'AuditLogs',
+    ],
+],
 ```
 
-Notes:
+The custom table must provide the schema and type mappings expected by the
+persister and features you enable. The bundled viewer and assertions still query
+`AuditStash.AuditLogs`; changing the persister alone does not redirect them.
 
-- PostgreSQL's `TIMESTAMP` already stores microseconds, so no migration change is needed.
-- SQLite stores datetimes as text and preserves whatever precision is written.
-- Elasticsearch's `date` mapping accepts the extended ISO string but truncates to milliseconds; use
-  `date_nanos` if you need full microsecond precision in the index.
-- If you want to access the timestamp as a `DateTime` object (e.g. in a custom persister) without
-  re-parsing the string, use `BaseEvent::getTimestampObject()`.
+### JSON columns
+
+The bundled migrations change `original`, `changed`, and `meta` to the migration
+adapter's JSON type. Physical storage and JSON validation depend on the database
+and adapter. The plugin table maps these fields to CakePHP's `json` type, and the
+persister skips manual encoding when the ORM schema reports JSON columns.
+Do not infer database indexing or query performance from that type mapping.
+
+### Sub-second timestamps
+
+Events expose an ISO timestamp with microseconds through `getTimestamp()` and a
+DateTime object through `getTimestampObject()`. The default database `datetime`
+type formats values to seconds, so widening the SQL column alone does not retain
+microseconds. A custom table must also map `created` to `datetimefractional`:
+
+```php
+// In your custom audit table's initialize() method:
+$this->getSchema()->setColumnType('created', 'datetimefractional');
+```
+
+Use a new application migration to alter an existing column to the database's
+fractional timestamp type. Do not copy and rerun the plugin's table-creation
+migration over an existing table. Verify a timestamp round trip on your actual
+database, and configure the persister to use that custom table.
 
 ### Polymorphic Primary Key Type
 
@@ -114,13 +90,12 @@ The table persister is configured by default, but you can explicitly set it in y
 ],
 ```
 
-The plugin will store logs in a table named `audit_logs`, via a table class with the alias `AuditLogs`, which you can
-create/overwrite in your application if needed.
+The plugin will store logs in a table named `audit_logs`, via the plugin table alias `AuditStash.AuditLogs`.
 
 ### Table Persister Configuration
 
 The table persister supports various configuration options, please refer to
-[its source — `src/Persister/TablePersister.php`](https://github.com/dereuromark/cakephp-audit-stash/blob/master/src/Persister/TablePersister.php) for further information. Generally configuration can be
+[its source: `src/Persister/TablePersister.php`](https://github.com/dereuromark/cakephp-audit-stash/blob/master/src/Persister/TablePersister.php) for further information. Generally configuration can be
 applied via its `setConfig()` method:
 
 ```php
@@ -153,7 +128,7 @@ Then add the datasource configuration to your `config/app.php` file:
         'host' => '127.0.0.1', // server where elasticsearch is running
         'port' => 9200
     ],
-    ...
+    // Keep other application connections here.
 ]
 ```
 

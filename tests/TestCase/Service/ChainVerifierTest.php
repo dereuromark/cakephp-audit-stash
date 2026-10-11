@@ -225,7 +225,7 @@ class ChainVerifierTest extends TestCase
         $schema = new TableSchema('audit_logs');
         $schema->addColumn('id', ['type' => 'uuid']);
 
-        $table->method('getPrimaryKey')->willReturn('id');
+        $table->expects($this->once())->method('getPrimaryKey')->willReturn('id');
         $table->method('getSchema')->willReturn($schema);
 
         $this->expectException(InvalidArgumentException::class);

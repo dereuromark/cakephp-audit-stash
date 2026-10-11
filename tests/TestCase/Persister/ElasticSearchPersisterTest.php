@@ -30,6 +30,7 @@ class ElasticSearchPersisterTest extends TestCase
 
         $connectionMock = $this->createPartialMock(Connection::class, ['getDriver']);
         $connectionMock
+            ->expects($this->atLeastOnce())
             ->method('getDriver')
             ->willReturn($clientMock);
 
@@ -61,6 +62,7 @@ class ElasticSearchPersisterTest extends TestCase
         $documents = [];
         $clientMock = $this->createPartialMock(Client::class, ['addDocuments']);
         $clientMock
+            ->expects($this->once())
             ->method('addDocuments')
             ->willReturnCallback(function (array $docs) use (&$documents): ResponseSet {
                 $documents = $docs;
@@ -68,7 +70,7 @@ class ElasticSearchPersisterTest extends TestCase
                 return new ResponseSet(new Response('test', 200), []);
             });
         $connectionMock = $this->createPartialMock(Connection::class, ['getDriver']);
-        $connectionMock->method('getDriver')->willReturn($clientMock);
+        $connectionMock->expects($this->atLeastOnce())->method('getDriver')->willReturn($clientMock);
         $persister = new ElasticSearchPersister([
             'connection' => $connectionMock,
             'index' => 'article',

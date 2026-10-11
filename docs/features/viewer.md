@@ -4,52 +4,53 @@ The plugin provides a built-in web interface to browse and search audit logs whe
 
 ## Routes (Admin Prefix by Default)
 
-The audit log viewer routes are **automatically enabled in the Admin prefix** when you load the plugin. No additional configuration needed!
+Loading the plugin registers routes under the Admin prefix. The default paths are:
 
-Default routes are available at:
-- **Browse logs**: `/admin/audit-logs`
-- **View single log**: `/admin/audit-logs/view/{id}`
-- **Record timeline**: `/admin/audit-logs/timeline/{table}/{recordId}`
-- **Export form**: `/admin/audit-logs/export` — dedicated page with format picker (CSV / JSON / NDJSON), row-count estimate, and active-filter summary
-- **Export streaming download**: `/admin/audit-logs/export.csv`, `.json`, or `.ndjson` — bypasses the form (used by the inline "Export CSV" quick button on the index page)
+- Dashboard: `/admin/audit-stash`
+- Browse logs: `/admin/audit-stash/audit-logs`
+- Single log: `/admin/audit-stash/audit-logs/view/{id}`
+- Timeline: `/admin/audit-stash/audit-logs/timeline/{source}/{primaryKey}`
+- Export form: `/admin/audit-stash/audit-logs/export`
+- Download: `/admin/audit-stash/audit-logs/export.csv`, `.json`, or `.ndjson`
 
-The routes are secured by being in the Admin prefix, which typically requires authentication in your application.
-
-### Using Without Admin Prefix
-
-If you don't use an Admin prefix or want the routes at a different path, disable the default routes and add your own:
-
-```php
-// In config/bootstrap.php or Application.php
-$this->addPlugin('AuditStash', ['routes' => false]);
-```
-
-Then add your custom routes in `config/routes.php`:
+The Admin prefix is a routing namespace. Access is controlled by a required
+`AuditStash.adminAccess` Closure, in addition to the host application's controller
+and authentication setup. Without that Closure, the plugin returns HTTP 403.
+For an application whose identity contains a boolean `is_admin` field:
 
 ```php
-use Cake\Routing\RouteBuilder;
+// config/app.php
+'AuditStash' => [
+    'adminAccess' => function (\Cake\Http\ServerRequest $request): bool {
+        $identity = $request->getAttribute('identity');
 
-// Public routes (make sure to add authentication!)
-$routes->plugin('AuditStash', ['path' => '/audit-logs'], function (RouteBuilder $routes) {
-    $routes->connect('/', ['controller' => 'AuditLogs', 'action' => 'index']);
-    $routes->connect('/view/{id}', ['controller' => 'AuditLogs', 'action' => 'view'])
-        ->setPass(['id']);
-    $routes->connect('/timeline/{source}/{primaryKey}', ['controller' => 'AuditLogs', 'action' => 'timeline'])
-        ->setPass(['source', 'primaryKey']);
-    $routes->connect('/export', ['controller' => 'AuditLogs', 'action' => 'export']);
-});
+        return $identity !== null && $identity->get('is_admin') === true;
+    },
+],
 ```
+
+Adapt the check to your actual permission model. It must return literal `true` to
+grant access. The plugin skips its controller Authorization component's policy
+check when that component provides `skipAuthorization()`, so the Closure must
+perform the intended access decision.
+
+To change the mount path while retaining the Admin controllers, set
+`AuditStash.routePath`, for example `/audit-logs`. Disable the generated routes
+with `$this->addPlugin('AuditStash', ['routes' => false])` in `Application.php`
+if you need custom routing. The bundled controllers live in the `Admin` namespace;
+custom routes must retain `prefix => 'Admin'` in their target defaults.
 
 ### Loading the Helper
 
-The AuditHelper is automatically available in your views. If needed, you can explicitly load it:
+The plugin loads AuditHelper for its admin controllers. Load it explicitly in
+your own application views. If needed, you can explicitly load it:
 
 ```php
 // In your AppView.php
 $this->loadHelper('AuditStash.Audit');
 
 // Or in a controller
-public function beforeRender(\Cake\Event\EventInterface $event)
+public function beforeRender(\Cake\Event\EventInterface $event): void
 {
     $this->viewBuilder()->addHelper('AuditStash.Audit');
 }
@@ -60,7 +61,7 @@ public function beforeRender(\Cake\Event\EventInterface $event)
 The AuditHelper supports configuration options for customizing diff rendering:
 
 ```php
-// In your AppView.php or controller
+// In AppView::initialize()
 $this->loadHelper('AuditStash.Audit', [
     'differOptions' => [
         'context' => 3,              // Number of context lines around changes

@@ -38,7 +38,7 @@ Per-table retention policies plus a CLI cleanup command with dry-run support
 
 ## Tamper-Evidence
 
-Optional SHA-256 hash chain over rows for GoBD / SOX / HIPAA-grade integrity.
+Optional SHA-256 hash chain over audit rows, with documented limits.
 Each row links to its predecessor; one CLI command verifies the entire chain.
 Off by default, opt-in per persister.
 

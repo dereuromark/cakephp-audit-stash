@@ -8,7 +8,7 @@ profile page or a "history" tab on an entity view.
 ## Loading
 
 ```php
-// In a controller, view, or AppView::initialize()
+// In AppView::initialize()
 $this->loadHelper('AuditStash.Audit');
 ```
 
@@ -31,7 +31,7 @@ a project-local helper.
 If `jfcherng/php-diff` is in your `composer.json`, both diff methods use it
 for word-level granularity. Otherwise the helper falls back to a built-in
 `DiffLib` (sebastian/diff-based) which is slightly less granular but
-dependency-free.
+requires no additional diff package.
 
 ```php
 echo $this->Audit->diffStyles();      // once, in the layout
@@ -47,7 +47,7 @@ echo $this->Audit->diff($log->original, $log->changed);
 | `formatRecord($source, $primaryKey, $displayValue = null)` | record reference, optionally linked via `AuditStash.linkRecord` |
 
 `formatUser` and `formatRecord` honour the link configuration described in
-the [Configuration](./configuration) page — string templates with
+the [Admin viewer](../features/viewer) page — string templates with
 `{user}` / `{source}` / `{primary_key}` placeholders, array URLs, or
 callables all work.
 

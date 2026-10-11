@@ -1,10 +1,13 @@
-# GDPR Compliance
+# Personal data tools
 
-AuditStash provides built-in tools for GDPR compliance, supporting:
+AuditStash provides commands to redact selected personal fields, delete audit
+rows attributed to a user, and export those rows as JSON. These operations apply
+to audit data, not every record in your application.
 
-- **Right to Erasure (Article 17)**: Delete or anonymize user audit logs
-- **Right to be Forgotten**: Anonymize PII while preserving audit trail integrity
-- **Data Portability (Article 20)**: Export user audit data in JSON format
+The default redaction list cannot identify all personal information in arbitrary
+payloads. Configure additional fields and review the result for your schema.
+Hashing a user identifier does not guarantee that the person cannot be identified.
+These tools alone do not establish GDPR compliance.
 
 ## Command Line Interface
 
@@ -14,7 +17,7 @@ The `audit_stash gdpr` command provides all GDPR operations:
 # View statistics for a user's audit logs
 bin/cake audit_stash gdpr stats --user-id=123
 
-# Anonymize user's audit logs (recommended)
+# Redact configured fields in a user's audit logs
 bin/cake audit_stash gdpr anonymize --user-id=123
 
 # Preview anonymization without making changes
@@ -56,9 +59,10 @@ By event type:
   - delete: 5
 ```
 
-### Anonymize (Recommended)
+### Anonymize
 
-Anonymization is the recommended approach for GDPR compliance. It redacts personally identifiable information (PII) while preserving the audit trail for compliance and debugging purposes.
+This operation replaces configured identifying fields while retaining the audit
+rows. It does not automatically detect personal data in every field.
 
 ```bash
 bin/cake audit_stash gdpr anonymize --user-id=123
