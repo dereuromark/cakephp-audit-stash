@@ -101,7 +101,7 @@ Detects activity outside normal business hours.
 **Configuration options:**
 - `business_hours` (array): Start and end times (default: 08:00-18:00)
   ```php
-  ['start' => '08:00', 'end' => '18:00']
+  ['start' => '08:00', 'end' => '18:00'];
   ```
 - `business_days` (array): Days of week to consider business days (default: [1,2,3,4,5])
   - 1 = Monday, 7 = Sunday

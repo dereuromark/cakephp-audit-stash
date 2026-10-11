@@ -38,7 +38,7 @@ If you prefer, you can use a `whitelist` instead. This means that only the field
 ```php
 public function initialize(array $config = []): void
 {
-    ...
+    parent::initialize($config);
     $this->addBehavior('AuditStash.AuditLog', [
         'whitelist' => ['title', 'description', 'author_id'],
     ]);
@@ -52,7 +52,7 @@ If you have fields that contain sensitive information but still want to track th
 ```php
 public function initialize(array $config = []): void
 {
-    ...
+    parent::initialize($config);
     $this->addBehavior('AuditStash.AuditLog', [
         'sensitive' => ['body'],
     ]);
