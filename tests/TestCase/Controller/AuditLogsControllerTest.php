@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AuditStash\Test\TestCase\Controller;
 
+use Cake\Controller\Component;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
@@ -12,6 +13,7 @@ use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
+use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 
@@ -1440,6 +1442,12 @@ class AuditLogsControllerTest extends TestCase
         $listener = function (EventInterface $event) use ($service): void {
             $controller = $event->getSubject();
             $controller->setRequest($controller->getRequest()->withAttribute('authorization', $service));
+            $controller->components()->set('Authorization', new class ($controller->components()) extends Component {
+                public function skipAuthorization(): void
+                {
+                    $this->getController()->getRequest()->getAttribute('authorization')->skipAuthorization();
+                }
+            });
         };
         EventManager::instance()->on('Controller.initialize', $listener);
         try {
@@ -1462,5 +1470,29 @@ class AuditLogsControllerTest extends TestCase
             'returned response' => ['Test.hostRedirect'],
             'event response' => ['Test.hostRedirectViaEvent'],
         ];
+    }
+
+    public function testHostRedirectWithoutAuthorizationMiddleware(): void
+    {
+        Configure::write('AuditStash.standalone', false);
+        Configure::write('Test.hostRedirect', true);
+        $listener = function (EventInterface $event): void {
+            $controller = $event->getSubject();
+            $controller->components()->set('Authorization', new class ($controller->components()) extends Component {
+                public function skipAuthorization(): void
+                {
+                    throw new LogicException('No Authorization middleware service');
+                }
+            });
+        };
+        EventManager::instance()->on('Controller.initialize', $listener);
+        try {
+            $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+        } finally {
+            EventManager::instance()->off('Controller.initialize', $listener);
+            Configure::delete('Test.hostRedirect');
+        }
+
+        $this->assertRedirect('/login');
     }
 }
