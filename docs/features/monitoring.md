@@ -2,10 +2,14 @@
 
 The plugin includes a real-time monitoring system that can detect suspicious activities and send notifications through various channels (email, webhooks, logs, etc.).
 
+Table filters must match the stored `source` alias exactly, including case and
+any plugin prefix. Monitoring runs for persisted rows from `TablePersister`; it
+does not observe bulk SQL changes that bypass logging.
+
 ## How It Works
 
 The monitoring system:
-1. Listens to audit log events in real-time
+1. Listens to audit log events in real time
 2. Checks each log against configured rules
 3. Triggers alerts when rules match
 4. Sends notifications through configured channels
@@ -26,7 +30,7 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'class' => \AuditStash\Monitor\Rule\MassDeleteRule::class,
                 'threshold' => 10,              // Trigger if 10+ deletes
                 'timeframe' => 300,             // Within 5 minutes (seconds)
-                'tables' => ['users', 'orders'], // Only for these tables (optional)
+                'tables' => ['Users', 'Orders'], // Only for these tables (optional)
                 'severity' => 'critical',
                 'channels' => ['email', 'log'],  // Send to these channels
             ],
@@ -36,7 +40,7 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'class' => \AuditStash\Monitor\Rule\UnusualTimeActivityRule::class,
                 'business_hours' => ['start' => '08:00', 'end' => '18:00'],
                 'business_days' => [1, 2, 3, 4, 5], // Monday-Friday (1=Monday, 7=Sunday)
-                'tables' => ['financial_records', 'payroll'],
+                'tables' => ['FinancialRecords', 'Payroll'],
                 'severity' => 'medium',
                 'channels' => ['log', 'email'],
             ],
@@ -66,7 +70,7 @@ Enable monitoring and configure rules in your `config/app.php` or `config/app_lo
                 'headers' => [
                     'Authorization' => 'Bearer your-token-here',
                 ],
-                'retry' => 3, // Number of retry attempts
+                'retry' => 3, // Total HTTP attempts
             ],
 
             'log' => [
@@ -97,7 +101,7 @@ Detects activity outside normal business hours.
 **Configuration options:**
 - `business_hours` (array): Start and end times (default: 08:00-18:00)
   ```php
-  ['start' => '08:00', 'end' => '18:00']
+  ['start' => '08:00', 'end' => '18:00'];
   ```
 - `business_days` (array): Days of week to consider business days (default: [1,2,3,4,5])
   - 1 = Monday, 7 = Sunday
@@ -109,7 +113,7 @@ Detects activity outside normal business hours.
 Detects modifications to fields that you've flagged as sensitive (passwords, tokens, role assignments, etc.). Looks at the `changed` payload for create / update events and at `original` for deletes, so password rotations and API-key revocations both fire.
 
 **Configuration options:**
-- `fields` (array, required): Field names to flag. Empty means "no sensitive fields configured" — the rule never matches.
+- `fields` (array, required): Field names to flag. Empty means "no sensitive fields configured": the rule never matches.
 - `tables` (array): Restrict to these source tables. Empty (default) matches any source.
 - `severity` (string): Alert severity level (default: 'high')
 
@@ -152,7 +156,7 @@ Posts alert data to an external URL as JSON.
 **Configuration:**
 - `url` (string, required): Webhook URL
 - `headers` (array): Additional HTTP headers
-- `retry` (int): Number of retry attempts on failure (default: 1)
+- `retry` (int): Total HTTP attempts, including the first (default: 1)
 
 **Payload format:**
 ```json
@@ -192,7 +196,7 @@ Alerts are written to your configured log with appropriate severity levels:
 
 ### SlackChannel
 
-Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields — instead of the raw JSON dump you'd get from `WebhookChannel`.
+Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields, instead of the raw JSON dump you'd get from `WebhookChannel`.
 
 **Configuration:**
 - `url` (string, required): Slack incoming webhook URL (`https://hooks.slack.com/services/T.../B.../...`)
@@ -211,7 +215,7 @@ Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/bl
 ],
 ```
 
-Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads — the channel verifies the body, not just the status code.
+Slack returns body `ok` on success and 200 with non-`ok` body for malformed payloads: the channel verifies the body, not just the status code.
 
 Each alert ends with a `View entry in admin →` link to the audit log row that triggered it. The URL is built via `Router::url()` and respects `AuditStash.routePath` and `App.fullBaseUrl`, so make sure `App.fullBaseUrl` is set to the externally-reachable host you want recipients to land on. To omit or customize the link, subclass `SlackChannel` and override `formatPayload()`.
 
@@ -234,7 +238,7 @@ Posts alerts to a Discord webhook as an [embed](https://discord.com/developers/d
 ],
 ```
 
-Discord webhooks normally return `204 No Content` on success — the channel accepts both that and any other 2xx status.
+Discord webhooks normally return `204 No Content` on success: the channel accepts both that and any other 2xx status.
 
 The embed title is rendered as a clickable link to the audit log row that triggered the alert, built from `Router::url()` and therefore respecting `AuditStash.routePath` and `App.fullBaseUrl`. To omit or customize the link, subclass `DiscordChannel` and override `formatPayload()`.
 
@@ -321,54 +325,63 @@ Then configure it:
 
 ## Creating Custom Channels
 
-Implement `ChannelInterface` to create custom notification channels:
+Implement `ChannelInterface::send(Alert $alert): bool` for an application-specific
+transport. Return true only after the transport reports success. For a JSON
+webhook, extend `AbstractWebhookChannel` and implement the payload formatter;
+the base class handles HTTP requests, timeouts, retries, and response checking:
 
 ```php
 namespace App\Monitor\Channel;
 
 use AuditStash\Monitor\Alert;
-use AuditStash\Monitor\Channel\ChannelInterface;
+use AuditStash\Monitor\Channel\AbstractWebhookChannel;
 
-class SlackChannel implements ChannelInterface
+class ApplicationWebhookChannel extends AbstractWebhookChannel
 {
-    public function __construct(protected array $config = [])
+    protected function formatPayload(Alert $alert): array
     {
-    }
-
-    public function send(Alert $alert): bool
-    {
-        $webhookUrl = $this->config['webhook_url'];
-        $payload = [
-            'text' => sprintf('[%s] %s', strtoupper($alert->getSeverity()), $alert->getMessage()),
-            'attachments' => [
-                [
-                    'fields' => [
-                        ['title' => 'Table', 'value' => $alert->getAuditLog()->source],
-                        ['title' => 'Type', 'value' => $alert->getAuditLog()->type],
-                    ],
-                ],
-            ],
+        return [
+            'message' => $alert->getMessage(),
+            'severity' => $alert->getSeverity(),
         ];
-
-        // Post to Slack webhook...
-        return true;
     }
 }
 ```
 
+Configure this class in `AuditStash.monitor.channels` with a `url`, and select that
+channel in a rule's `channels` list. Use the bundled Slack or Discord channel for
+those services' payload formats.
+
+For example, add this channel alongside the others in your configuration:
+
+```php
+'AuditStash' => [
+    'monitor' => [
+        'channels' => [
+            'application' => [
+                'class' => \App\Monitor\Channel\ApplicationWebhookChannel::class,
+                'url' => 'https://hooks.example.com/audit-alerts',
+            ],
+        ],
+    ],
+],
+```
+
+Select `'application'` in the rule's `channels` list.
+
 ## Hooking Into the Monitor Lifecycle
 
-Channels are the happy-path delivery mechanism. For everything else — per-context suppression, alert mutation, custom incident store, paging integration — the monitor dispatches two CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
+Channels are the happy-path delivery mechanism. For suppression, alert replacement, or application-specific delivery, the monitor dispatches two CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
 
 | Event | When | What you can do |
 |---|---|---|
-| `AuditStash.Monitor.beforeAlert` | After a rule matches and the `Alert` has been built, before any channel runs. Carries `rule`, `auditLog`, `alert`. | Call `$event->stopPropagation()` to suppress the alert (channels are skipped, `afterAlert` is not dispatched). Or replace the alert via `$event->setData('alert', $newAlert)` — the channels and `afterAlert` will see the replaced instance. The `Alert` value object itself is immutable; mutation always goes through `setData`. |
-| `AuditStash.Monitor.afterAlert` | After every channel for the rule has been called. Carries `rule`, `auditLog`, `alert`, and `results` (a `[channelName => bool]` map of per-channel success). | React on success / failure — write to your own incident store, page on partial failures, emit telemetry. |
+| `AuditStash.Monitor.beforeAlert` | After a rule matches and the `Alert` has been built, before any channel runs. Carries `rule`, `auditLog`, `alert`. | Call `$event->stopPropagation()` to suppress the alert (channels are skipped, `afterAlert` is not dispatched). Or replace the alert via `$event->setData('alert', $newAlert)`: the channels and `afterAlert` will see the replaced instance. The `Alert` value object itself is immutable; mutation always goes through `setData`. |
+| `AuditStash.Monitor.afterAlert` | After every channel for the rule has been called. Carries `rule`, `auditLog`, `alert`, and `results` (a `[channelName => bool]` map of per-channel success). | React on success / failure: write to your own incident store, page on partial failures, emit telemetry. |
 
 > [!NOTE]
-> Listener exceptions are not caught by the monitor — they propagate to the caller. Silent listener failures hide app bugs, so a buggy listener crashes the request loudly rather than masquerading as a rule failure. Wrap your own listener body in `try/catch` if you want different behavior.
+> Listener exceptions are not caught by the monitor: they propagate to the caller. Silent listener failures hide app bugs, so a buggy listener crashes the request loudly rather than masquerading as a rule failure. Wrap your own listener body in `try/catch` if you want different behavior.
 
-For rule failures (anything thrown out of a rule's `matches()` or `createAlert()`, including `Error` subclasses like `TypeError`), the monitor catches the `Throwable`, logs it with the full exception in context (so Sentry / Monolog handlers attached via `Cake\Log\Log` capture the stack), and continues with the next rule. No separate event is emitted — the existing log pipeline handles the routing.
+For rule failures (anything thrown out of a rule's `matches()` or `createAlert()`, including `Error` subclasses like `TypeError`), the monitor catches the `Throwable`, logs it with the full exception in context (so Sentry / Monolog handlers attached via `Cake\Log\Log` capture the stack), and continues with the next rule. No separate event is emitted: the existing log pipeline handles the routing.
 
 ### Suppress an alert under specific conditions
 
@@ -453,9 +466,9 @@ Or don't configure the `monitor` section at all.
 
 ## Performance Considerations
 
-- Rules are checked in real-time as audit logs are created
+- Rules are checked in real time as audit logs are created
 - Use specific `tables` filters in rules to avoid checking every audit event
-- Webhook channels retry on failure, which may slow down requests
+- Webhook channels configured with `retry` greater than 1 repeat failed requests, which may slow down requests
 - Consider using `LogChannel` for high-volume environments and processing logs asynchronously
 - The monitoring system only activates when `TablePersister` is used (not with ElasticSearch)
 

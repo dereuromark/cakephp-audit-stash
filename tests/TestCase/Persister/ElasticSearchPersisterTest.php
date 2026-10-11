@@ -31,6 +31,7 @@ class ElasticSearchPersisterTest extends TestCase
 
         $connectionMock = $this->createStub(Connection::class);
         $connectionMock
+            ->expects($this->atLeastOnce())
             ->method('getDriver')
             ->willReturn($clientMock);
 

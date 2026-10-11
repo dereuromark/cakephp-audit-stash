@@ -26,7 +26,8 @@
         "php-collective/code-sniffer": "dev-master",
         "cakephp/migrations": "dev-fix/6.x-cakephp-compatibility",
         "cakephp/elastic-search": "dev-cake-6",
-        "dereuromark/cakephp-templating": "dev-master"
+        "dereuromark/cakephp-templating": "dev-cake6",
+        "dereuromark/cakephp-i18n-lint": "dev-cake6"
     },
     "suggest": {
         "cakephp/elastic-search": "Optional Elasticsearch persister for high-volume audit log storage",
@@ -54,7 +55,10 @@
         "stan": "vendor/bin/phpstan analyze",
         "stan-setup": "cp composer.json composer.backup && composer require --dev phpstan/phpstan:^2.0.0 && mv composer.backup composer.json",
         "test": "phpunit",
-        "coverage-test": "phpunit --stderr --coverage-clover=clover.xml"
+        "coverage-test": "phpunit --stderr --coverage-clover=clover.xml",
+        "i18n-check": "i18n-lint check",
+        "i18n-extract": "i18n-lint extract",
+        "i18n-lint": "i18n-lint lint"
     },
     "config": {
         "allow-plugins": {

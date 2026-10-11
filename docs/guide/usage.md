@@ -7,13 +7,14 @@ class ArticlesTable extends Table
 {
     public function initialize(array $config = []): void
     {
-        ...
+        parent::initialize($config);
         $this->addBehavior('AuditStash.AuditLog');
     }
 }
 ```
 
-Remember to execute the command line each time you change the schema of your table!
+Apply application schema changes through migrations. AuditStash does not require
+a separate command whenever an audited table changes.
 
 ## Configuring The Behavior
 
@@ -24,7 +25,7 @@ class ArticlesTable extends Table
 {
     public function initialize(array $config = []): void
     {
-        ...
+        parent::initialize($config);
         $this->addBehavior('AuditStash.AuditLog', [
             'blacklist' => ['created', 'modified', 'another_field_name'],
         ]);
@@ -37,7 +38,7 @@ If you prefer, you can use a `whitelist` instead. This means that only the field
 ```php
 public function initialize(array $config = []): void
 {
-    ...
+    parent::initialize($config);
     $this->addBehavior('AuditStash.AuditLog', [
         'whitelist' => ['title', 'description', 'author_id'],
     ]);
@@ -51,7 +52,7 @@ If you have fields that contain sensitive information but still want to track th
 ```php
 public function initialize(array $config = []): void
 {
-    ...
+    parent::initialize($config);
     $this->addBehavior('AuditStash.AuditLog', [
         'sensitive' => ['body'],
     ]);
@@ -117,6 +118,9 @@ public function initialize(array $config = []): void
     $this->addBehavior('AuditStash.AuditLog');
 }
 
+```
+
+```php
 // In TagsTable
 public function initialize(array $config = []): void
 {
@@ -128,6 +132,9 @@ public function initialize(array $config = []): void
     $this->addBehavior('AuditStash.AuditLog');
 }
 
+```
+
+```php
 // In ArticlesTagsTable (junction table)
 public function initialize(array $config = []): void
 {
@@ -197,7 +204,7 @@ This is particularly useful when:
 
 ### Plugin Tables and the `source` Column
 
-`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator** — and CakePHP allows both forms:
+`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator**. CakePHP allows both forms:
 
 - `$this->fetchTable('Comments.Comments')` → registry alias `Comments.Comments` → audit row `source = 'Comments.Comments'`
 - `$this->fetchTable('Comments')` → registry alias `Comments` → audit row `source = 'Comments'`
@@ -206,9 +213,9 @@ Associations from app code without an explicit `className` may resolve to the ba
 
 This is mostly a non-issue, but **two situations need attention** if your app loads plugin tables:
 
-1. **Mixed load paths produce a fragmented audit trail.** If different code paths in the same app load the same plugin table both with and without the prefix, you'll get rows under both `Comments.Comments` AND `Comments`. The coverage report surfaces the orphaned form as `Empirical` so you can spot it. Pick one form and stick with it — using the dotted form everywhere (`fetchTable('Comments.Comments')`, association `className`, etc.) keeps the audit attribution stable.
+1. **Mixed load paths produce a fragmented audit trail.** If different code paths in the same app load the same plugin table both with and without the prefix, you'll get rows under both `Comments.Comments` AND `Comments`. The coverage report surfaces the orphaned form as `Empirical` so you can spot it. Pick one form and stick with it: using the dotted form everywhere (`fetchTable('Comments.Comments')`, association `className`, etc.) keeps the audit attribution stable.
 
-2. **Source collisions across an app and plugin with the same name.** If your app has its own `App\Model\Table\CommentsTable` AND you load a plugin's `Comments\Model\Table\CommentsTable`, both writing audit rows under the bare alias `Comments` becomes a real ambiguity — the audit trail can no longer tell the two logical tables apart. The cleanest fix is to alias the plugin table when registering it with the locator, so the `source` column carries a disambiguated name:
+2. **Source collisions across an app and plugin with the same name.** If your app has its own `App\Model\Table\CommentsTable` AND you load a plugin's `Comments\Model\Table\CommentsTable`, both writing audit rows under the bare alias `Comments` becomes a real ambiguity: the audit trail can no longer tell the two logical tables apart. The cleanest fix is to alias the plugin table when registering it with the locator, so the `source` column carries a disambiguated name:
 
    ```php
    // In Application::bootstrap() or wherever you set up table associations:
@@ -219,7 +226,7 @@ This is mostly a non-issue, but **two situations need attention** if your app lo
    // says 'PluginComments' instead of competing with the app's 'Comments'.
    ```
 
-   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias — but that requires every association declaration in the app to set `className` explicitly.
+   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias, but that requires every association declaration in the app to set `className` explicitly.
 
 ## Storing The Logged In User
 
@@ -234,15 +241,17 @@ You need to add this listener to your application in the `AppController::beforeF
 
 ### Using CakePHP Authentication
 
-If you're using the official [CakePHP Authentication plugin](https://book.cakephp.org/authentication/2/en/index.html):
+If you're using the official [CakePHP Authentication plugin](https://book.cakephp.org/authentication/3/en/index.html):
 
 ```php
 use AuditStash\Meta\RequestMetadata;
+use Cake\Controller\Controller;
+use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
 class AppController extends Controller
 {
-    public function beforeFilter(EventInterface $event)
+    public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);
 
@@ -271,11 +280,13 @@ If you're using the [TinyAuth plugin](https://github.com/dereuromark/cakephp-tin
 
 ```php
 use AuditStash\Meta\RequestMetadata;
+use Cake\Controller\Controller;
+use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
 class AppController extends Controller
 {
-    public function beforeFilter(EventInterface $event)
+    public function beforeFilter(EventInterface $event): void
     {
         parent::beforeFilter($event);
 
@@ -300,7 +311,7 @@ Custom events written with `Audit::log()` have no table. They get the metadata o
 If you only need to track changes for the controller's default Table class, you can attach it to that specific table's event manager:
 
 ```php
-public function beforeFilter(EventInterface $event)
+public function beforeFilter(EventInterface $event): void
 {
     parent::beforeFilter($event);
 
@@ -324,7 +335,7 @@ If you need to store more user information beyond `userId` and `userDisplay` (e.
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
-public function beforeFilter(EventInterface $event)
+public function beforeFilter(EventInterface $event): void
 {
     parent::beforeFilter($event);
 
@@ -410,7 +421,7 @@ API requests are detected by:
 
 ### Capturing forensic request fields
 
-`EnvironmentMetadata` can also pull a small set of request-derived fields into `meta`. They are off by default — these fields can carry PII / fingerprintable data and may have GDPR implications, so consumers must opt in explicitly via `capture`:
+`EnvironmentMetadata` can also pull a small set of request-derived fields into `meta`. They are off by default: these fields can carry PII / fingerprintable data and may have GDPR implications, so consumers must opt in explicitly via `capture`:
 
 ```php
 EventManager::instance()->on(new EnvironmentMetadata(
@@ -421,9 +432,9 @@ EventManager::instance()->on(new EnvironmentMetadata(
 
 Supported `capture` values:
 
-- `user_agent` — `User-Agent` header
-- `referer` — `Referer` header
-- `session_id` — PHP session id; only included when a session has actually been started (CLI, queue workers, and anonymous API hits silently skip it)
+- `user_agent`: `User-Agent` header
+- `referer`: `Referer` header
+- `session_id`: PHP session id; only included when a session has actually been started (CLI, queue workers, and anonymous API hits silently skip it)
 
 Empty headers and unknown field names are filtered out so a typo can't smuggle arbitrary values into `meta`. `capture` is a no-op when no `request` is supplied (CLI / queue context).
 
@@ -434,9 +445,11 @@ You can use both listeners together:
 ```php
 use AuditStash\Meta\EnvironmentMetadata;
 use AuditStash\Meta\RequestMetadata;
+use Cake\Controller\Controller;
+use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
-public function beforeFilter(EventInterface $event)
+public function beforeFilter(EventInterface $event): void
 {
     parent::beforeFilter($event);
 
@@ -492,7 +505,7 @@ The plugin dispatches two events around persistence:
 
 | Event | Fires | Use it for |
 |---|---|---|
-| `AuditStash.beforeLog` | just before the persister writes the rows | mutating each log (add metadata, redact fields, attach extra context) |
+| `AuditStash.beforeLog` | just before the persister writes the rows | adding metadata or replacing event objects with transformed payloads |
 | `AuditStash.afterLog` | just after the persister returns | side effects that need the rows already-stored (notifications, cache busts, derived projections) |
 
 The payloads differ. `beforeLog` is dispatched on the audited table once per
@@ -521,7 +534,7 @@ final, persisted form.
 
 You can capture user-provided reasons or comments for changes using the metadata system. This is useful for compliance, audit trails, or understanding why changes were made.
 
-### Approach 1: Per-Request Reason (via Request Attribute)
+### Per-request reason
 
 Store the reason in the request and extract it in a listener:
 
@@ -553,7 +566,7 @@ Then in your `AppController::beforeFilter()`:
 use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
-public function beforeFilter(EventInterface $event)
+public function beforeFilter(EventInterface $event): void
 {
     parent::beforeFilter($event);
 
@@ -582,109 +595,43 @@ Add the reason field to your forms:
 ]) ?>
 ```
 
-### Approach 2: Per-Save Reason (via Save Options)
+### Per-save and background-job reasons
 
-Pass the reason directly through save options and extract it in a listener:
-
-```php
-// In your Controller
-public function edit($id)
-{
-    $article = $this->Articles->get($id);
-
-    if ($this->request->is(['patch', 'post', 'put'])) {
-        $article = $this->Articles->patchEntity($article, $this->request->getData());
-
-        $reason = $this->request->getData('audit_reason') ?? 'No reason provided';
-
-        if ($this->Articles->save($article, ['_auditReason' => $reason])) {
-            $this->Flash->success('Article saved.');
-            return $this->redirect(['action' => 'index']);
-        }
-    }
-
-    $this->set(compact('article'));
-}
-```
-
-Then in your Table's `initialize()` method or `AppController::beforeFilter()`:
+The `AuditStash.beforeLog` event receives `logs`, not the original save options.
+There is no `EventManager::getEventData()` API for reading a custom save option.
+For a web request, use the request listener above. For a specific batch, attach a
+listener before the entity operations and remove it afterwards:
 
 ```php
 use Cake\Event\EventInterface;
 
-// In ArticlesTable::initialize() or globally in AppController
-$this->getEventManager()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs): void {
-    // Access the reason from the table's event data if available
-    $reason = $event->getSubject()->getEventManager()->getEventData('_auditReason') ?? null;
-
+$articles = $this->fetchTable('Articles');
+$manager = $articles->getEventManager();
+$listener = function (EventInterface $event, array $logs): void {
     foreach ($logs as $log) {
-        $meta = $log->getMetaInfo();
-
-        // Check if reason was passed in the meta already
-        if (!isset($meta['reason']) && $reason !== null) {
-            $log->setMetaInfo($meta + ['reason' => $reason]);
-        }
+        $log->setMetaInfo($log->getMetaInfo() + ['reason' => 'Scheduled archive']);
     }
-});
-```
-
-A simpler approach using entity virtual properties:
-
-```php
-// In your Entity class (e.g., src/Model/Entity/Article.php)
-protected array $_virtual = ['audit_reason'];
-
-// In your Controller
-$article->audit_reason = $this->request->getData('audit_reason');
-$this->Articles->save($article);
-
-// In your listener (AppController or Table)
-EventManager::instance()->on('AuditStash.beforeLog', function (EventInterface $event, array $logs): void {
-    foreach ($logs as $log) {
-        $entity = $log->getChanged(); // or use reflection to get entity if needed
-        // Extract reason from entity if it was set
-        if (isset($entity['audit_reason'])) {
-            $log->setMetaInfo($log->getMetaInfo() + [
-                'reason' => $entity['audit_reason'],
-            ]);
-        }
+};
+$manager->on('AuditStash.beforeLog', $listener);
+try {
+    foreach ($articles->find()->where(['needs_archive' => true]) as $article) {
+        $article->set('archived', true);
+        $articles->saveOrFail($article);
     }
-});
-```
-
-### Approach 3: CLI/Background Job Reasons
-
-For CLI commands or background jobs where there's no request context:
-
-```php
-// In your Shell/Command
-use Cake\Event\EventManager;
-
-public function execute()
-{
-    // Set a reason for this batch operation
-    $reason = 'Automated cleanup job - removing old records';
-
-    EventManager::instance()->on('AuditStash.beforeLog', function ($event, array $logs) use ($reason): void {
-        foreach ($logs as $log) {
-            $log->setMetaInfo($log->getMetaInfo() + [
-                'reason' => $reason,
-                'source' => 'cli',
-            ]);
-        }
-    });
-
-    // Perform your operations
-    $this->Articles->deleteAll(['created <' => new DateTime('-1 year')]);
+} finally {
+    $manager->off('AuditStash.beforeLog', $listener);
 }
 ```
+
+These are per-entity saves. Using `updateAll()` or `deleteAll()` here would skip
+the behavior and the listener.
 
 ### Storing Reason in Database (Table Persister)
 
 If using the `TablePersister`, you can extract the reason to a dedicated database column. `user_id` and `user_display` are auto-extracted to their dedicated columns out of the box, so only register here for additional custom fields:
 
 ```php
-// In your configuration (e.g., config/app_local.php or bootstrap.php)
+// In your Table::initialize() method
 $this->addBehavior('AuditStash.AuditLog');
 $this->behaviors()->get('AuditLog')->persister()->setConfig([
     'extractMetaFields' => [
@@ -707,96 +654,84 @@ $table->addColumn('reason', 'text', [
 
 Audited tables that store file content directly (binary blobs, base64 payloads, raw `UploadedFile` objects in a virtual field) cause two problems for the audit trail:
 
-- The audit row balloons to the size of the file — a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
+- The audit row balloons to the size of the file: a 10 MB upload becomes a 10 MB `changed` payload, replicated for every save.
 - The audit table ends up holding sensitive content in plaintext, defeating the typical reason for separating uploads from primary tables.
 
-The fix is to make the entity field that the auditor sees be a **fingerprint** (hash + size + mime), not the raw content. Two ways to do that, depending on where the file lives in your model.
+Store a fingerprint in an audited schema column and exclude the raw content.
+A hash records whether bytes changed; add size or MIME metadata if your application
+needs those values.
 
-### Approach 1: Computed virtual field on the entity
+### Store a fingerprint in a schema column
 
-If the file is uploaded to disk on save and the table only stores a path, expose a small "fingerprint" field that the auditor will pick up via the standard whitelist:
+Add a `file_fingerprint` string column to your application's document table.
+Compute it in your upload code after validating and storing the file, before
+saving the document entity:
 
 ```php
-// src/Model/Entity/Document.php
-namespace App\Model\Entity;
-
-use Cake\ORM\Entity;
-
-class Document extends Entity
-{
-    protected array $_virtual = ['file_fingerprint'];
-
-    protected function _getFileFingerprint(): ?string
-    {
-        if ($this->file_path === null || !is_file($this->file_path)) {
-            return null;
-        }
-
-        return sprintf(
-            'sha256:%s size:%d mime:%s',
-            hash_file('sha256', $this->file_path),
-            filesize($this->file_path),
-            mime_content_type($this->file_path) ?: 'application/octet-stream',
-        );
-    }
-}
+$document->set('file_fingerprint', hash_file('sha256', $storedPath));
+$this->Documents->saveOrFail($document);
 ```
 
-Then whitelist the virtual field in your behavior config so the audit picks it up alongside the real columns:
+`$storedPath` is the path produced by your upload implementation. Handle file-read
+errors before saving. Include the real column in your behavior configuration:
 
 ```php
-// src/Model/Table/DocumentsTable.php
 $this->addBehavior('AuditStash.AuditLog', [
     'whitelist' => ['title', 'file_path', 'file_fingerprint'],
 ]);
 ```
 
-A re-upload of the *same bytes* produces the same fingerprint → no audit row (assuming `ignoreEmpty` defaults). A re-upload of *different* bytes produces a different fingerprint → audit row showing `sha256:abc... → sha256:def...` with no file content stored.
+A computed virtual getter alone does not supply a dirty persisted property or
+reliable original fingerprint. A stored column lets the behavior compare the old
+and new fingerprint without retaining the file bytes.
 
-### Approach 2: Transform via the `AuditStash.beforeLog` event
+### Transforming existing file columns
 
-When the file content is already in a column you can't easily change (legacy schema, content stored as binary in the row), strip it at the audit boundary instead of at the model boundary. The `AuditStash.beforeLog` event fires once per save with all events for that transaction, and the listener can rewrite each event's payload before persistence:
+`BaseEvent` has getters for `changed` and `original`, but no public setters.
+A `beforeLog` listener that only edits a local array does not change the saved
+payload. Use a custom persister to rebuild events with transformed values, or
+store a fingerprint in a separate schema column and blacklist the file content.
+A listener can also replace entries in the event's `logs` array with rebuilt event
+objects using `$event->setData('logs', $logs)`. Preserve metadata and subject details
+when rebuilding; editing a getter's returned array alone has no effect.
 
-```php
-// in Application::bootstrap() or a dedicated listener
-EventManager::instance()->on(
-    'AuditStash.beforeLog',
-    function (EventInterface $event, array $logs): void {
-        foreach ($logs as $log) {
-            foreach (['changed', 'original'] as $side) {
-                $payload = $log->{'get' . ucfirst($side)}() ?? [];
-                if (isset($payload['file_blob']) && is_string($payload['file_blob'])) {
-                    $payload['file_blob'] = sprintf(
-                        'sha256:%s size:%d',
-                        hash('sha256', $payload['file_blob']),
-                        strlen($payload['file_blob']),
-                    );
-                }
-                if ($side === 'changed') {
-                    // BaseEvent has no public setter for changed/original, so this
-                    // approach requires either (a) an event subclass that exposes
-                    // setters, or (b) a custom persister wrapping the default one.
-                }
-            }
-        }
-    },
-);
-```
-
-> [!WARNING]
-> `BaseEvent` exposes `getChanged()` / `getOriginal()` but no public setters (the audit row is a value object). For Approach 2 to work end-to-end without a fork, wrap your persister: write a thin `PersisterInterface` decorator that walks each event, rebuilds it with the redacted payload, and forwards to the real persister. For most apps Approach 1 is simpler and avoids that detour.
-
-### Bonus: redact PII fields in the same hook
-
-The same `beforeLog` listener (or the `sensitive` behavior config) is the right place to redact non-file PII inputs (passport numbers, ID photos as data URIs, etc.) — keep the audit row showing *that* the field changed, but never *what* it was:
+For sensitive values whose contents should never be retained, use the behavior's
+`sensitive` option:
 
 ```php
-// In your Table:
 $this->addBehavior('AuditStash.AuditLog', [
     'sensitive' => ['passport_scan_b64', 'id_photo_b64'],
 ]);
-// → values appear as '****' in changed/original.
 ```
+
+Changed sensitive values are masked in the audit payload. This setting does not
+redact arbitrary metadata added by your listeners.
+
+## Custom action events
+
+Use `Audit::log()` for actions that do not map to an entity save or delete:
+
+```php
+use AuditStash\Audit;
+
+Audit::log(
+    type: 'user.login',
+    source: 'Users',
+    primaryKey: $userId,
+    data: ['method' => 'password'],
+    meta: ['user_id' => $userId],
+);
+```
+
+The `data` argument is stored in `changed`. `primaryKey` may be null when the
+action has no single record. Custom types must fit the `type` column, which the
+bundled migrations widen to 64 characters.
+
+The facade uses a lazily created `TablePersister` with `AuditStash.persisterConfig`.
+It does not resolve a different class from `AuditStash.persister`; set a custom
+instance with `Audit::setPersister()` when using another storage backend.
+Its `beforeLog` event is global and has no table subject. Reset overrides with
+`Audit::setPersister(null)` in tests or between application contexts.
 
 ## Implementing Your Own Persister Strategies
 
@@ -865,7 +800,7 @@ part of the process fails. There are two ways to accomplish this. The easiest is
 That's it if you use afterSave. You should read up on the difference between the two as there are drawbacks:
 https://book.cakephp.org/5/en/orm/table-objects.html#aftersave
 
-If you are using the default afterCommit, in order to create audit logs during a transaction, some additional setup is
+If you are using the default afterCommit, to create audit logs during a transaction, some additional setup is
 required. First create the file `src/Model/Audit/AuditTrail.php` with the following:
 
 ```php
@@ -904,32 +839,32 @@ use ArrayObject;
 use Cake\Event\Event;
 ```
 
-Your transaction should then look similar to this example of a BookmarksController:
+Use the shared options when saving each entity. Flush the audit queue only after
+a successful transaction:
 
 ```php
+$bookmarks = $this->fetchTable('Bookmarks');
 $trail = new AuditTrail();
-$success = $this->Bookmarks->connection()->transactional(function () use ($trail) {
-    $bookmark = $this->Bookmarks->newEntity();
-    $bookmark1->save($data1, $trail->toSaveOptions());
-    $bookmark2 = $this->Bookmarks->newEntity();
-    $bookmark2->save($data2, $trail->toSaveOptions());
-    ...
-    $bookmarkN = $this->Bookmarks->newEntity();
-    $bookmarkN->save($dataN, $trail->toSaveOptions());
+$options = $trail->toSaveOptions();
+$first = $bookmarks->newEntity($data1);
+$second = $bookmarks->newEntity($data2);
+$bookmarks->getConnection()->transactional(function () use ($bookmarks, $first, $second, $options): void {
+    $bookmarks->saveOrFail($first, $options);
+    $bookmarks->saveOrFail($second, $options);
 });
 
-if ($success) {
-    $event = new Event('Model.afterCommit', $this->Bookmarks);
-    $this->Bookmarks->behaviors()->get('AuditLog')->afterCommit(
-        $event,
-        $result,
-        new ArrayObject($trail->toSaveOptions()),
-    );
-}
+$bookmarks->behaviors()->get('AuditLog')->afterCommit(
+    new Event('Model.afterSaveCommit', $bookmarks),
+    $first,
+    new ArrayObject($options),
+);
 ```
 
-This will save all audit info for your objects, as well as audits for any associated data. Please note, `$result` must
-be an instance of an Object. Do not change the text "Model.afterCommit".
+`saveOrFail()` throws if either entity cannot be saved, and the transaction rolls
+back. The manual flush is skipped on that path. When using an outer transaction,
+flush only after that outer transaction commits. The default `afterCommit` mode
+writes the audit logs after the data commit; an audit write failure cannot roll
+back that already committed data.
 
 ## Operations That Bypass The Audit Listener
 
@@ -942,50 +877,39 @@ The behavior hooks `Model.beforeSave` / `Model.afterSave` / `Model.afterSaveComm
 | `Table::delete($entity)` | ✅ Yes | Including cascade deletes. |
 | `Table::updateAll($fields, $conditions)` | ❌ No | Single SQL UPDATE; no model events. |
 | `Table::deleteAll($conditions)` | ❌ No | Single SQL DELETE; no model events. |
-| `Table::query()->update()->set(...)->execute()` | ❌ No | Direct query builder; no model events. |
-| `Table::query()->delete()->where(...)->execute()` | ❌ No | Direct query builder; no model events. |
+| `Table::updateQuery()->set(...)->execute()` | ❌ No | Direct query builder; no model events. |
+| `Table::deleteQuery()->where(...)->execute()` | ❌ No | Direct query builder; no model events. |
 | `Connection::execute('UPDATE ...')` | ❌ No | Raw SQL bypasses the ORM entirely. |
 | `Connection::insert()` / `update()` / `delete()` | ❌ No | Low-level driver methods. |
 
-If you must use a bulk-write path on a table that is otherwise audited, write a compensating audit row explicitly so the chain stays continuous:
+For bulk operations, record a custom summary explicitly or use per-entity saves
+when each record's before/after history is needed. For example, from a controller:
 
 ```php
-use AuditStash\Event\AuditUpdateEvent;
-use Cake\Datasource\ConnectionManager;
+use AuditStash\Audit;
 
-$conn = ConnectionManager::get('default');
-$conn->transactional(function () use ($conn) {
-    // Capture which rows you're about to mutate so the audit row can
-    // record them. Skip this if you're updating millions of rows and
-    // accept "all matching" as the audit subject.
-    $affectedIds = $this->Articles->find()
+$articles = $this->fetchTable('Articles');
+$articles->getConnection()->transactional(function () use ($articles): void {
+    $affectedIds = $articles->find()
         ->select(['id'])
         ->where(['needs_archive' => true])
         ->all()
         ->extract('id')
         ->toList();
+    if (!$affectedIds) {
+        return;
+    }
 
-    $this->Articles->updateAll(
-        ['archived' => true],
-        ['needs_archive' => true],
+    $articles->updateAll(['archived' => true], ['id IN' => $affectedIds]);
+    Audit::log(
+        type: 'articles.bulk_archive',
+        source: 'Articles',
+        data: ['affected_ids' => $affectedIds, 'archived' => true],
     );
-
-    $persister = $this->Articles->behaviors()->get('AuditLog')->persister();
-    $persister->logEvents([
-        new AuditUpdateEvent(
-            transactionKey: \Cake\Utility\Text::uuid(),
-            primaryKey: $affectedIds,                // array — bulk subject
-            source: 'Articles',
-            changed: ['archived' => true],
-            original: ['archived' => false],
-            entity: new \Cake\ORM\Entity(),
-        ),
-    ]);
 });
 ```
 
-The same caveat applies in reverse: if you have an `AuditLog`-behaved table and call `updateAll()` from a CLI maintenance task to fix a bad batch of data, that fix will not appear in the audit log — by design, but easy to forget. Plan a follow-up "synthetic audit" row, or temporarily switch the fix to a per-entity loop if traceability matters more than throughput.
-
-> [!NOTE]
-> A future opt-in `AuditLog.queryDecorator` config that wraps `Table::updateQuery()` / `deleteQuery()` and emits a synthetic `bulk_update` event with the matched primary keys is on the roadmap. For now the workaround above is the supported path.
-
+The summary has a null primary key and stores IDs in its JSON payload, so it works
+with the default integer subject column. It does not provide per-record revert
+history. This example uses the default persister on the same database connection;
+separate connections or external persisters do not share this transaction.
