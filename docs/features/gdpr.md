@@ -1,10 +1,13 @@
-# GDPR Compliance
+# Personal data tools
 
-AuditStash provides built-in tools for GDPR compliance, supporting:
+AuditStash provides commands to redact selected personal fields, delete audit
+rows attributed to a user, and export those rows as JSON. These operations apply
+to audit data, not every record in your application.
 
-- **Right to Erasure (Article 17)**: Delete or anonymize user audit logs
-- **Right to be Forgotten**: Anonymize PII while preserving audit trail integrity
-- **Data Portability (Article 20)**: Export user audit data in JSON format
+The default redaction list cannot identify all personal information in arbitrary
+payloads. Configure additional fields and review the result for your schema.
+Hashing a user identifier does not guarantee that the person cannot be identified.
+These tools alone do not establish GDPR compliance.
 
 ## Command Line Interface
 
@@ -14,7 +17,7 @@ The `audit_stash gdpr` command provides all GDPR operations:
 # View statistics for a user's audit logs
 bin/cake audit_stash gdpr stats --user-id=123
 
-# Anonymize user's audit logs (recommended)
+# Redact configured fields in a user's audit logs
 bin/cake audit_stash gdpr anonymize --user-id=123
 
 # Preview anonymization without making changes
@@ -56,9 +59,10 @@ By event type:
   - delete: 5
 ```
 
-### Anonymize (Recommended)
+### Anonymize
 
-Anonymization is the recommended approach for GDPR compliance. It redacts personally identifiable information (PII) while preserving the audit trail for compliance and debugging purposes.
+This operation replaces configured identifying fields while retaining the audit
+rows. It does not automatically detect personal data in every field.
 
 ```bash
 bin/cake audit_stash gdpr anonymize --user-id=123
@@ -205,17 +209,15 @@ $array = $service->export($userId, 'array');
 $query = $service->findByUser($userId);
 ```
 
-## Best Practices
+## Before Running Maintenance
 
-1. **Prefer anonymization over deletion** - Anonymization preserves audit trail integrity while complying with GDPR.
+Use `--dry-run` to inspect the planned operation. Review configured redaction
+fields against your actual payloads and confirm whether records should be
+redacted, deleted, or retained. The plugin does not make that policy decision.
 
-2. **Always dry-run first** - Use `--dry-run` to preview changes before executing.
-
-3. **Document retention policies** - Configure appropriate retention periods to automatically clean old logs.
-
-4. **Audit GDPR operations** - Consider logging GDPR operations themselves for compliance documentation.
-
-5. **Combine with retention policies** - Use the cleanup command to automatically remove old anonymized logs after a retention period.
+When a hash chain is enabled, maintenance records a seal as described below.
+Retention cleanup still applies to redacted rows by their source and creation
+time; it does not select a separate policy based on anonymization status.
 
 ## Integration with Retention Policies
 
@@ -228,7 +230,7 @@ Combine GDPR operations with retention policies for a complete data lifecycle:
         'default' => 90,        // Keep logs for 90 days
         'tables' => [
             'Users' => 365,     // Keep user logs for 1 year
-            'Orders' => 2555,   // Keep order logs for 7 years (compliance)
+            'Orders' => 2555,   // Example retention period
         ],
     ],
     'gdpr' => [
@@ -240,7 +242,7 @@ Combine GDPR operations with retention policies for a complete data lifecycle:
 Workflow:
 1. User requests data deletion
 2. Run `audit_stash gdpr anonymize --user-id=X`
-3. Anonymized logs are retained for compliance period
+3. Redacted logs remain until the configured retention period expires
 4. Cleanup command removes old anonymized logs based on retention policy
 
 ## Hash chain

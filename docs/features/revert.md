@@ -1,6 +1,6 @@
 # Revert & Restore
 
-The plugin can use an audit row to put a record back the way it was — either
+The plugin can use an audit row to put a record back the way it was: either
 restoring every field from a past state, restoring only selected fields, or
 recreating a row that has been deleted. All three operations are themselves
 recorded as a new audit entry of type `revert`, so the history of an undo is
@@ -31,7 +31,7 @@ Writes that bypass the behavior (see
 audit row, so the reconstruction cannot account for them.
 
 Reverts are
-transactional — the entity update and the new "revert" audit entry are
+transactional: the entity update and the new "revert" audit entry are
 written in the same DB transaction, so a save failure leaves nothing behind.
 
 ## Admin UI
@@ -122,7 +122,7 @@ create/update/delete activity.
   one written by an older version for an entity that was deleted while only
   partly loaded. The database error is written to the error log
 
-Treat the restored row as a starting point — you may need to re-establish
+Treat the restored row as a starting point: you may need to re-establish
 associations (HABTM joins, has-many children) by hand or via a follow-up
 restore pass.
 
@@ -152,7 +152,7 @@ The revert preview does not list sensitive fields either.
 | Key | Default | Effect |
 |---|---|---|
 | `revert.enabled` | `true` | When `false`, the three public `RevertService` methods throw `RuntimeException` ("AuditStash revert/restore is disabled…"). The admin UI still loads but any POST to revert/restore raises a 500. Use this when reverts must be forbidden plugin-wide regardless of who reaches the route. |
-| `revert.auditReverts` | `true` | When `false`, revert/restore operations still mutate the record, but no `revert` audit row is written. Useful for high-volume systems where the revert audit trail itself doubles the row count and isn't needed — accept the loss of "who undid what" history in exchange. |
+| `revert.auditReverts` | `true` | When `false`, revert/restore operations still mutate the record, but no `revert` audit row is written. Useful for high-volume systems where the revert audit trail itself doubles the row count and isn't needed. Accept the loss of "who undid what" history in exchange. |
 
 To gate by *role* rather than ban entirely, leave `revert.enabled = true`
 and use the [`adminAccess` callback](./viewer#required-auditstash-adminaccess)

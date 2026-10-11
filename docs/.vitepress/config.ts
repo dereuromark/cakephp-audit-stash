@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   title: 'cakephp-audit-stash',
-  description: 'Audit trail plugin for CakePHP — entity logging, admin viewer, monitoring, retention, and tamper-evident hash chain.',
+  description: 'Audit trail plugin for CakePHP: entity logging, admin viewer, monitoring, retention, and tamper-evident hash chain.',
   base: '/cakephp-audit-stash/',
   cleanUrls: true,
   head: [
@@ -28,7 +28,8 @@ export default defineConfig({
         {
           text: 'Guide',
           items: [
-            { text: 'Getting Started', link: '/guide/' },
+            { text: 'Installation', link: '/guide/installation' },
+            { text: 'Getting started', link: '/guide/' },
             { text: 'Configuration', link: '/guide/configuration' },
             { text: 'Usage', link: '/guide/usage' },
             { text: 'View Helper', link: '/guide/view-helper' },

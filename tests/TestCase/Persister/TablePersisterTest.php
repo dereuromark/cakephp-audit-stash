@@ -820,7 +820,7 @@ class TablePersisterTest extends TestCase
 
         // Create a mock table with JSON column types
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['save', 'getSchema']);
-        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('getColumnType')
             ->willReturnCallback(function ($column) {
                 // Return 'json' for the serializable columns
@@ -830,7 +830,7 @@ class TablePersisterTest extends TestCase
 
                 return 'string';
             });
-        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->expects($this->atLeastOnce())->method('getSchema')->willReturn($schema);
 
         // When JSON columns are detected, the data should NOT be serialized (no json_encode)
         // It should be passed as arrays, which CakePHP's JSON type will encode
@@ -867,13 +867,13 @@ class TablePersisterTest extends TestCase
 
         // Create a mock table with TEXT column types (not JSON)
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['save', 'getSchema']);
-        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('getColumnType')
             ->willReturnCallback(function ($column) {
                 // Return 'text' for all columns (no JSON)
                 return 'text';
             });
-        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->expects($this->atLeastOnce())->method('getSchema')->willReturn($schema);
 
         // When TEXT columns are used, the data should be serialized (json_encode)
         $AuditLogsTable
@@ -902,7 +902,7 @@ class TablePersisterTest extends TestCase
         $event->setMetaInfo([]);
 
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
-        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('columns')->willReturn([
             'id',
             'transaction',
@@ -920,7 +920,7 @@ class TablePersisterTest extends TestCase
                 return $column === 'id' ? 'integer' : 'string';
             });
 
-        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->expects($this->atLeastOnce())->method('getSchema')->willReturn($schema);
         $AuditLogsTable->method('getPrimaryKey')->willReturn('id');
 
         $this->TablePersister->setTable($AuditLogsTable);
@@ -938,7 +938,7 @@ class TablePersisterTest extends TestCase
         $event->setMetaInfo([]);
 
         $AuditLogsTable = $this->getMockForModel('AuditLogs', ['getSchema', 'getPrimaryKey']);
-        $schema = $this->createMock(TableSchemaInterface::class);
+        $schema = $this->createStub(TableSchemaInterface::class);
         $schema->method('columns')->willReturn([
             'id',
             'transaction',
@@ -958,7 +958,7 @@ class TablePersisterTest extends TestCase
                 return $column === 'id' ? 'uuid' : 'string';
             });
 
-        $AuditLogsTable->method('getSchema')->willReturn($schema);
+        $AuditLogsTable->expects($this->atLeastOnce())->method('getSchema')->willReturn($schema);
         $AuditLogsTable->method('getPrimaryKey')->willReturn('id');
 
         $this->TablePersister->setTable($AuditLogsTable);

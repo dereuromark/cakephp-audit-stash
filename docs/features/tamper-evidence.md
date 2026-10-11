@@ -1,23 +1,14 @@
 # Tamper-Evidence / Hash Chain
 
-AuditStash can link every persisted audit row into a **SHA-256 hash chain**,
-giving you tamper-evident logs: any later edit of a historic row invalidates
-that row's hash and, transitively, every row that follows.
+AuditStash can link persisted audit rows into a SHA-256 hash chain. Verification
+checks that stored payloads and links agree with their hashes.
 
-This is useful whenever *"prove nothing was silently edited"* is a requirement:
+A payload edit without updating its hash is detectable. Someone with write access
+to the entire database can recompute hashes and forge a consistent chain. Tail
+truncation also leaves the remaining chain internally consistent. Anchor hashes
+outside the database if you need evidence independent of database write access.
 
-- **GoBD** (Germany) — § 146, § 147 AO require _Unveränderbarkeit_ of commercial records.
-- **SOX** (US) — financial audit trails must be tamper-evident.
-- **HIPAA** (US) — access logs to protected health information must detect modification.
-- **EASA Part-M / ISO 27001** — change logs with integrity guarantees.
-- **Legal e-discovery** — custody chains for litigation-hold records.
-
-> [!NOTE]
-> A hash chain proves **tamper-evidence**, not **tamper-prevention**. An
-> attacker with direct DB access can still rewrite history — the chain
-> just makes the rewrite detectable. Combine the chain with regular
-> verification runs and offsite hash anchors (see _Anchoring_ below) for
-> full-strength non-repudiation.
+The feature does not establish regulatory compliance or prevent modification.
 
 ## Enabling the chain
 
@@ -29,7 +20,7 @@ The feature is opt-in and off by default; existing installs need do nothing.
 bin/cake migrations migrate -p AuditStash
 ```
 
-This adds two nullable columns — `prev_hash` and `hash` — and an index on
+This adds two nullable columns (`prev_hash` and `hash`) and an index on
 `hash`. Rows written before the migration will have `NULL` in both columns.
 The verifier skips those legacy rows until it reaches the first row with a
 stored `hash` (see _Backfilling_ below).
@@ -75,7 +66,7 @@ Where:
   type conversion.
 
 Canonicalization makes the hash **deterministic across PHP versions,
-machines and insertion orders** — two semantically equivalent rows always
+machines and insertion orders**: two semantically equivalent rows always
 produce the same hash. This matters for cross-environment verifiability
 (developer laptop vs. production vs. a third-party auditor's re-run).
 
@@ -142,7 +133,7 @@ if (!$result->intact) {
 ```
 
 The verifier streams rows in chunks (default 500) so very long chains
-verify in bounded memory. Verification is read-only — it never writes to
+verify in bounded memory. Verification is read-only: it never writes to
 the table it inspects.
 
 ## Detecting specific tampering patterns
@@ -153,10 +144,10 @@ The verifier catches the three common tamper modes:
 |---------------------------------------|------------------------------------------------|
 | Row payload silently edited           | Recomputed hash mismatches stored `hash`       |
 | Row deleted from the middle           | Next row's `prev_hash` no longer matches       |
-| Row inserted with forged hash         | Recomputed hash mismatches forged `hash`       |
+| Row inserted with an invalid hash     | Recomputed hash mismatches stored `hash`       |
 | Rows reordered / swapped              | `prev_hash` pointers no longer form a valid line |
 
-It does *not* catch a **truncation at the tail** — if an attacker
+It does *not* catch a **truncation at the tail**: if an attacker
 deletes the last N rows and stops there, the remaining chain is still
 internally consistent. This is the fundamental limitation of every
 append-only hash chain. Mitigations:
@@ -257,16 +248,14 @@ with an auditable attestation for the transition.
 
 Per row, `hashChain` adds:
 
-- One extra `SELECT ... FOR UPDATE` per batch (not per row — the tail is
+- One extra `SELECT ... FOR UPDATE` per batch (not per row: the tail is
   read once, then carried forward in memory for the rest of the batch).
 - One SHA-256 hash computation per row (~microseconds).
 - One transaction wrap per `logEvents()` call (a single transaction
   covering the whole batch).
 
-In practice the overhead is dominated by the row-level lock rather than
-the hashing itself, and it's negligible for typical write rates. If your
-audit write rate is high enough for lock contention to matter, you
-already have a scaling problem that needs a dedicated audit-write queue.
+Measure verification and write latency with your own data and concurrency.
+Chain writers serialize under a lock, so write contention can increase latency.
 
 ## Example verification output
 
@@ -289,8 +278,8 @@ table.
 
 ## Further reading
 
-- `src/Service/HashChain.php` — the pure-function hasher and verifier core.
-- `src/Service/ChainVerifier.php` — the streaming table verifier.
-- `src/Command/VerifyChainCommand.php` — the CLI wrapper.
-- `tests/TestCase/Service/HashChainTest.php` — unit tests.
-- `tests/TestCase/Service/ChainVerifierTest.php` — integration tests.
+- `src/Service/HashChain.php`: the pure-function hasher and verifier core.
+- `src/Service/ChainVerifier.php`: the streaming table verifier.
+- `src/Command/VerifyChainCommand.php`: the CLI wrapper.
+- `tests/TestCase/Service/HashChainTest.php`: unit tests.
+- `tests/TestCase/Service/ChainVerifierTest.php`: integration tests.

@@ -1,71 +1,76 @@
-# Getting Started
+# Getting started
 
-`cakephp-audit-stash` records every create, update, and delete that happens
-through your CakePHP Table classes — together with who made the change, from
-which request, and (optionally) a verifiable hash chain to prove the log
-hasn't been tampered with.
+Follow [Installation](installation.md) first. This example uses an existing
+`Articles` table and the default database persister.
 
-## Requirements
+## Enable logging for one table
 
-- PHP 8.2+
-- CakePHP 5.3+
-
-See the [version map](https://github.com/dereuromark/cakephp-audit-stash/wiki#cakephp-version-map)
-for older Cake/PHP combinations.
-
-## Installation
-
-```bash
-composer require dereuromark/cakephp-audit-stash
-bin/cake plugin load AuditStash
-bin/cake migrations migrate -p AuditStash
-```
-
-The migration creates the `audit_logs` table used by the default database
-persister.
-
-## Enable Logging
-
-Add the behavior to any Table you want tracked:
+In `src/Model/Table/ArticlesTable.php`, add the behavior to your existing
+`initialize()` method:
 
 ```php
-class ArticlesTable extends Table
+public function initialize(array $config): void
 {
-    public function initialize(array $config): void
-    {
-        parent::initialize($config);
-        $this->addBehavior('AuditStash.AuditLog');
-    }
+    parent::initialize($config);
+    $this->addBehavior('AuditStash.AuditLog');
 }
 ```
 
-That alone gets you full create / update / delete logging. The next step is
-usually wiring up the current user and request in your `AppController` so
-each row remembers *who* and *from where*:
+Keep the table's existing associations and other initialization. Saves and deletes
+through this table now produce audit rows. Bulk SQL operations such as
+`updateAll()` and `deleteAll()` bypass entity callbacks and are not logged.
+See [operations that bypass the listener](usage.md#operations-that-bypass-the-audit-listener).
+
+## Check a saved change
+
+Save or edit an article through your application's normal form. In local
+development, inspect the latest row from application code, for example in an
+existing controller action:
+
+```php
+$logs = $this->fetchTable('AuditStash.AuditLogs');
+$latest = $logs->find()->where(['source' => 'Articles'])->orderByDesc('id')->first();
+debug($latest?->toArray());
+```
+
+Remove the debug statement after checking the result.
+
+The row contains the event `type`, record `primary_key`, `source`, and changed or
+original values. If it is missing, check that you saved through the table with
+AuditLog attached, that the transaction committed, and that the changed fields
+were not excluded by the behavior's filters.
+
+## Include the current user and request
+
+Logging works without request metadata. To attach it in a web request, register
+`RequestMetadata` in your existing `AppController::beforeFilter()`:
 
 ```php
 use AuditStash\Meta\RequestMetadata;
+use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 
-public function beforeFilter(EventInterface $event)
+public function beforeFilter(EventInterface $event): void
 {
     parent::beforeFilter($event);
 
     $identity = $this->getRequest()->getAttribute('identity');
-    EventManager::instance()->on(
-        new RequestMetadata(
-            request: $this->getRequest(),
-            userId: $identity?->getIdentifier(),
-            userDisplay: $identity?->get('username'),
-        ),
-    );
+    EventManager::instance()->on(new RequestMetadata(
+        request: $this->getRequest(),
+        userId: $identity?->getIdentifier(),
+    ));
 }
 ```
 
-## Where Next
+This assumes your authentication middleware provides an identity with
+`getIdentifier()`. Without an identity, `user_id` is null. You can also pass a
+`userDisplay` string from your application's user data. Register this listener
+once per request; long-running processes must remove or replace request-specific
+listeners between requests.
 
-- [Configuration](./configuration) — persisters, table list, route prefix
-- [Usage](./usage) — behavior options, custom events, metadata, custom persisters
-- [View Helper](./view-helper) — render diffs, badges, and revert buttons in your own templates
-- [Testing](./testing) — `AuditAssertionsTrait` for asserting in your own suite
-- [Features](/features/) — viewer, revert, monitoring, retention, tamper-evidence, GDPR
+## Next steps
+
+- [Configuration](configuration.md): storage, primary key types, and timestamps.
+- [Usage](usage.md): filters, metadata, custom events, and transactions.
+- [Testing](testing.md): assert on persisted audit rows.
+- [Features](../features/index.md): viewer, monitoring, retention, and hash chains.
