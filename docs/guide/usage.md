@@ -204,7 +204,7 @@ This is particularly useful when:
 
 ### Plugin Tables and the `source` Column
 
-`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator**: and CakePHP allows both forms:
+`AuditLogBehavior` writes the value of `$table->getRegistryAlias()` into the `audit_logs.source` column. For app tables that's just the alias (`Comments`). For plugin tables, the recorded source depends on **how the table was loaded into the locator**. CakePHP allows both forms:
 
 - `$this->fetchTable('Comments.Comments')` → registry alias `Comments.Comments` → audit row `source = 'Comments.Comments'`
 - `$this->fetchTable('Comments')` → registry alias `Comments` → audit row `source = 'Comments'`
@@ -226,7 +226,7 @@ This is mostly a non-issue, but **two situations need attention** if your app lo
    // says 'PluginComments' instead of competing with the app's 'Comments'.
    ```
 
-   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias: but that requires every association declaration in the app to set `className` explicitly.
+   Alternatively, always load the plugin table via the dotted form (`fetchTable('Comments.Comments')`) and the app table via the bare alias, but that requires every association declaration in the app to set `className` explicitly.
 
 ## Storing The Logged In User
 

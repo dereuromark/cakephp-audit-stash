@@ -215,7 +215,7 @@ Return `null` from the callable to display the value without a link.
 
 **Example: Plugin-aware linking via CakePHP convention**
 
-When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias: e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [the Usage guide](../guide/usage) for the full rationale.
+When some of your audited tables come from plugins, the `source` column can hold either `Plugin.Table` (when the table was loaded with the plugin prefix) or `Table` (when loaded via the bare alias, e.g. through associations from app code without an explicit `className`). See _Plugin Tables and the `source` Column_ in [the Usage guide](../guide/usage) for the full rationale.
 
 A small callable resolves both forms via the standard CakePHP `prefix` / `plugin` / `controller` / `action` convention, no per-table mapping required:
 
@@ -250,7 +250,7 @@ This produces:
 - `Articles` + `42` → `/admin/articles/view/42`
 - `Comments.Comments` + `7` → `/admin/comments/comments/view/7`
 
-It works for the convention case (`{Source}Controller::view($id)` under the Admin prefix). Tables that don't follow the convention: no controller, custom routes, resource-style URLs: need an explicit branch in the callable. Drop `'prefix' => 'Admin'` if your app doesn't use the admin prefix.
+It works for the convention case (`{Source}Controller::view($id)` under the Admin prefix). Tables with no controller or custom routes need an explicit branch in the callable. Drop `'prefix' => 'Admin'` if your app doesn't use the admin prefix.
 
 **Using with `formatRecord()` in templates:**
 
@@ -287,8 +287,8 @@ The audit log viewer provides:
 The coverage page at `/admin/audit-stash/audit-logs/coverage` walks every
 Table class shipped by your app and loaded plugins, classifying each as
 Tracked / Missing / Empirical (no `AuditLog` behavior, but audit rows exist
-for it anyway). Operational/internal tables: sessions, migrations, the
-plugin's own `audit_logs` table: would dilute the report, so two deny-list
+for it anyway). Operational/internal tables (sessions, migrations, the
+plugin's own `audit_logs` table) would dilute the report, so two deny-list
 keys filter them out by default:
 
 ```php
@@ -310,8 +310,7 @@ audits.
 
 ## Dashboard auto-refresh
 
-The dashboard page (`/admin/audit-stash`) can refresh itself on an interval
-,  useful for incident-response or war-room screens. Set
+The dashboard page (`/admin/audit-stash`) can refresh itself on an interval for incident-response screens. Set
 `AuditStash.dashboardAutoRefresh` to a number of seconds:
 
 ```php

@@ -152,7 +152,7 @@ The revert preview does not list sensitive fields either.
 | Key | Default | Effect |
 |---|---|---|
 | `revert.enabled` | `true` | When `false`, the three public `RevertService` methods throw `RuntimeException` ("AuditStash revert/restore is disabled…"). The admin UI still loads but any POST to revert/restore raises a 500. Use this when reverts must be forbidden plugin-wide regardless of who reaches the route. |
-| `revert.auditReverts` | `true` | When `false`, revert/restore operations still mutate the record, but no `revert` audit row is written. Useful for high-volume systems where the revert audit trail itself doubles the row count and isn't needed: accept the loss of "who undid what" history in exchange. |
+| `revert.auditReverts` | `true` | When `false`, revert/restore operations still mutate the record, but no `revert` audit row is written. Useful for high-volume systems where the revert audit trail itself doubles the row count and isn't needed. Accept the loss of "who undid what" history in exchange. |
 
 To gate by *role* rather than ban entirely, leave `revert.enabled = true`
 and use the [`adminAccess` callback](./viewer#required-auditstash-adminaccess)

@@ -31,8 +31,7 @@ Cake log channel.
 
 ## Retention & Cleanup
 
-Per-table retention policies plus a CLI cleanup command with dry-run support
-,  suitable for cron.
+Per-table retention policies plus a CLI cleanup command with dry-run support, suitable for cron.
 
 → [Retention & Cleanup](./retention)
 

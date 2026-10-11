@@ -15,6 +15,11 @@ a custom table, configure it explicitly:
 ],
 ```
 
+The custom table must provide the schema and type mappings expected by the
+persister and features you enable. The bundled viewer and assertions still query
+`AuditStash.AuditLogs`; changing the persister alone does not redirect them.
+
+
 To retain the default alias for the viewer and assertions, configure its class
 before the first table lookup, for example in `Application::bootstrap()`:
 
@@ -23,10 +28,6 @@ before the first table lookup, for example in `Application::bootstrap()`:
     'className' => \App\Model\Table\AuditLogsTable::class,
 ]);
 ```
-
-The custom table must provide the schema and type mappings expected by the
-persister and features you enable. The bundled viewer and assertions still query
-`AuditStash.AuditLogs`; changing the persister alone does not redirect them.
 
 ### JSON columns
 

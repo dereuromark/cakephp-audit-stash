@@ -20,7 +20,7 @@ The feature is opt-in and off by default; existing installs need do nothing.
 bin/cake migrations migrate -p AuditStash
 ```
 
-This adds two nullable columns: `prev_hash` and `hash`: and an index on
+This adds two nullable columns (`prev_hash` and `hash`) and an index on
 `hash`. Rows written before the migration will have `NULL` in both columns.
 The verifier skips those legacy rows until it reaches the first row with a
 stored `hash` (see _Backfilling_ below).

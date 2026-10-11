@@ -1,6 +1,6 @@
 # Testing Audit Logs
 
-The plugin ships a small assertions trait so your own test suite can verify what was actually persisted to `audit_logs` after an action: not just what an in-memory event queue produced.
+The plugin ships a small assertions trait so your own test suite can verify what was actually persisted to `audit_logs` after an action, rather than what an in-memory event queue produced.
 
 ## Setup
 
@@ -109,8 +109,8 @@ $this->assertCount(2, $rowsForUser);
 
 The `Audit::log()` static facade uses a lazily-resolved persister so that
 custom-event calls work without bootstrap configuration. Tests that want to
-isolate `Audit::log()` from the database: or assert that `log()` was
-called at all: can swap the persister:
+isolate `Audit::log()` from the database, or assert that `log()` was
+called, can swap the persister:
 
 ```php
 use AuditStash\Audit;
@@ -152,5 +152,5 @@ still go through whichever persister is configured for the behavior.
 
 - **`assertAuditLogged()` before `assertAuditFieldChanged()`** in the same test makes the failure mode obvious: if no row was logged at all, `assertAuditFieldChanged()` reports a less helpful "field not in changed payload of latest row" message.
 - **Truncate per test** if your suite shares the audit table across cases: CakePHP's standard fixture rollback handles this when you list the fixture explicitly.
-- **Combine with the `Audit::log()` facade**: custom events show up in the same table, so the same assertions verify them: `assertAuditLogged('Users', 'user.login')` works for events emitted via `Audit::log(type: 'user.login', ...)`.
+- **Combine with the `Audit::log()` facade**: custom events show up in the same table, so the same assertions verify them, for example, `assertAuditLogged('Users', 'user.login')` works for events emitted via `Audit::log(type: 'user.login', ...)`.
 - **Use `assertAuditNotLogged()` to verify blacklists**: if your `AuditLog` behavior config blacklists `last_seen_at`, write a test that updates only that field and asserts no row was created.

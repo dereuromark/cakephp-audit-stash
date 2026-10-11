@@ -196,7 +196,7 @@ Alerts are written to your configured log with appropriate severity levels:
 
 ### SlackChannel
 
-Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields: instead of the raw JSON dump you'd get from `WebhookChannel`.
+Posts alerts to a Slack incoming webhook in [Block Kit](https://api.slack.com/block-kit) format so the message renders as a native card with header, severity-colored attachment, and structured context fields, instead of the raw JSON dump you'd get from `WebhookChannel`.
 
 **Configuration:**
 - `url` (string, required): Slack incoming webhook URL (`https://hooks.slack.com/services/T.../B.../...`)
@@ -323,7 +323,7 @@ Then configure it:
 ],
 ```
 
-## Creating custom channels
+## Creating Custom Channels
 
 Implement `ChannelInterface::send(Alert $alert): bool` for an application-specific
 transport. Return true only after the transport reports success. For a JSON
@@ -352,9 +352,26 @@ Configure this class in `AuditStash.monitor.channels` with a `url`, and select t
 channel in a rule's `channels` list. Use the bundled Slack or Discord channel for
 those services' payload formats.
 
+For example, add this channel alongside the others in your configuration:
+
+```php
+'AuditStash' => [
+    'monitor' => [
+        'channels' => [
+            'application' => [
+                'class' => \App\Monitor\Channel\ApplicationWebhookChannel::class,
+                'url' => 'https://hooks.example.com/audit-alerts',
+            ],
+        ],
+    ],
+],
+```
+
+Select `'application'` in the rule's `channels` list.
+
 ## Hooking Into the Monitor Lifecycle
 
-Channels are the happy-path delivery mechanism. For everything else: per-context suppression, alert mutation, custom incident store, paging integration: the monitor dispatches two CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
+Channels are the happy-path delivery mechanism. For suppression, alert replacement, or application-specific delivery, the monitor dispatches two CakePHP events around every alert. Listen with `EventManager::instance()->on(...)` exactly like any other CakePHP event.
 
 | Event | When | What you can do |
 |---|---|---|
@@ -451,7 +468,7 @@ Or don't configure the `monitor` section at all.
 
 - Rules are checked in real time as audit logs are created
 - Use specific `tables` filters in rules to avoid checking every audit event
-- Webhook channels retry on failure, which may slow down requests
+- Webhook channels configured with `retry` greater than 1 repeat failed requests, which may slow down requests
 - Consider using `LogChannel` for high-volume environments and processing logs asynchronously
 - The monitoring system only activates when `TablePersister` is used (not with ElasticSearch)
 

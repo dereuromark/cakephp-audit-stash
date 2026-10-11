@@ -209,7 +209,7 @@ $array = $service->export($userId, 'array');
 $query = $service->findByUser($userId);
 ```
 
-## Before running maintenance
+## Before Running Maintenance
 
 Use `--dry-run` to inspect the planned operation. Review configured redaction
 fields against your actual payloads and confirm whether records should be
