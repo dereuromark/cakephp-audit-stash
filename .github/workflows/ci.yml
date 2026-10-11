@@ -130,7 +130,7 @@ jobs:
 
     services:
       elasticsearch:
-        image: elasticsearch:9.0.0
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
         ports:
           - 9200/tcp
         env:

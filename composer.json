@@ -18,7 +18,7 @@
         "php": ">=8.5",
         "cakephp/orm": "^6.0@dev",
         "ext-json": "*",
-        "sebastian/diff": "^6.0 || ^7.0 || ^8.0 || ^9.0"
+        "sebastian/diff": "^8.0 || ^9.0"
     },
     "require-dev": {
         "cakephp/cakephp": "^6.0@dev",
