@@ -47,11 +47,11 @@ trait ExtractionTrait
 
         if ($event instanceof BaseEvent) {
             // For create events, original should be null
-            $fields['original'] = $fields['type'] === 'create' ? null :
-                ($serialize ? $this->serialize($event->getOriginal()) : $event->getOriginal());
+            $fields['original'] = $fields['type'] === 'create' ? null
+                : ($serialize ? $this->serialize($event->getOriginal()) : $event->getOriginal());
             // For delete events, changed should be null
-            $fields['changed'] = $fields['type'] === 'delete' ? null :
-                ($serialize ? $this->serialize($event->getChanged()) : $event->getChanged());
+            $fields['changed'] = $fields['type'] === 'delete' ? null
+                : ($serialize ? $this->serialize($event->getChanged()) : $event->getChanged());
         }
 
         return $fields;
@@ -139,8 +139,8 @@ trait ExtractionTrait
         }
 
         if (
-            !$fields ||
-            empty($extracted['meta'])
+            !$fields
+            || empty($extracted['meta'])
         ) {
             if ($serialize) {
                 $extracted['meta'] = $this->serialize($extracted['meta']);

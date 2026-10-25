@@ -232,9 +232,9 @@ class EnvironmentMetadata implements EventListenerInterface
         // Only consider XML an API request if browser HTML types are not present
         // (browsers like Firefox send "text/html,...,application/xml;q=0.9" for normal form submissions)
         if (
-            str_contains($accept, 'application/xml') &&
-            !str_contains($accept, 'text/html') &&
-            !str_contains($accept, 'application/xhtml+xml')
+            str_contains($accept, 'application/xml')
+            && !str_contains($accept, 'text/html')
+            && !str_contains($accept, 'application/xhtml+xml')
         ) {
             return true;
         }

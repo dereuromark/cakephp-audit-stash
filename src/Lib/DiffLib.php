@@ -598,14 +598,14 @@ class DiffLib
 
         while ($oldIndex < $oldCount || $newIndex < $newCount) {
             // Check if current old char is in LCS
-            $oldInLcs = $oldIndex < $oldCount &&
-                $lcsIndex < $lcsCount &&
-                $oldChars[$oldIndex] === $lcs[$lcsIndex];
+            $oldInLcs = $oldIndex < $oldCount
+                && $lcsIndex < $lcsCount
+                && $oldChars[$oldIndex] === $lcs[$lcsIndex];
 
             // Check if current new char is in LCS
-            $newInLcs = $newIndex < $newCount &&
-                $lcsIndex < $lcsCount &&
-                $newChars[$newIndex] === $lcs[$lcsIndex];
+            $newInLcs = $newIndex < $newCount
+                && $lcsIndex < $lcsCount
+                && $newChars[$newIndex] === $lcs[$lcsIndex];
 
             if ($oldInLcs && $newInLcs) {
                 // Both match LCS - output as unchanged
