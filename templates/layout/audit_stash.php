@@ -20,7 +20,10 @@ $prefix = $this->getRequest()->getParam('prefix');
 // `dashboardAutoRefresh` originally gated the auto-refresh meta tag on
 // the audit-logs index. Now applies on the dashboard entry page.
 $isIndex = $controller === 'AuditStash' && $action === 'index';
-$cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
+$cspNonce = (string)($this->getRequest()->getAttribute('cspScriptNonce') ?? $this->getRequest()->getAttribute('cspNonce', ''));
+$nonceAttr = $cspNonce !== '' ? ' nonce="' . h($cspNonce) . '"' : '';
+$cspStyleNonce = (string)$this->getRequest()->getAttribute('cspStyleNonce', '');
+$styleNonceAttr = $cspStyleNonce !== '' ? ' nonce="' . h($cspStyleNonce) . '"' : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,13 +36,13 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
     <title><?= $this->fetch('title') ? $this->fetch('title') . ' - ' : '' ?>AuditStash Admin</title>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link<?= $styleNonceAttr ?> href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link<?= $styleNonceAttr ?> rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Flatpickr Date Picker -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link<?= $styleNonceAttr ?> rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
-    <style>
+    <style<?= $styleNonceAttr ?>>
         :root {
             --audit-primary: #6f42c1;
             --audit-primary-light: #8e68d4;
@@ -433,11 +436,11 @@ $cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
     </main>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script<?= $nonceAttr ?> src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <!-- Flatpickr Date Picker -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script<?= $nonceAttr ?> src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-    <script<?= $cspNonce !== '' ? ' nonce="' . h($cspNonce) . '"' : '' ?>>
+    <script<?= $nonceAttr ?>>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

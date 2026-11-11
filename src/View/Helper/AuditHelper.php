@@ -759,7 +759,7 @@ pre { background-color: #f8f9fa; padding: 0.5rem; border-radius: 0.25rem; }
 .diff-whitespace-change del.empty-line { background-color: #fdb8c0; color: #721c24; text-decoration: line-through; padding: 1px 3px; border-radius: 2px; }
 CSS;
 
-        return '<style>' . $libraryStyles . "\n" . $customStyles . '</style>';
+        return '<style' . $this->nonceAttr('cspStyleNonce') . '>' . $libraryStyles . "\n" . $customStyles . '</style>';
     }
 
     /**
@@ -771,8 +771,8 @@ CSS;
      */
     public function diffScript(): string
     {
-        return <<<'JS'
-<script>
+        return '<script' . $this->nonceAttr('cspScriptNonce', 'cspNonce') . '>' . <<<'JS'
+
 document.addEventListener('DOMContentLoaded', function() {
     const btnInline = document.getElementById('btn-inline-diff');
     const btnSide = document.getElementById('btn-side-diff');
@@ -797,5 +797,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 JS;
+    }
+
+    /**
+     * Builds a ` nonce="..."` attribute from the first non-empty request attribute.
+     *
+     * @param string ...$attributes Request attribute names, in lookup order.
+     *
+     * @return string
+     */
+    protected function nonceAttr(string ...$attributes): string
+    {
+        $request = $this->getView()->getRequest();
+        foreach ($attributes as $attribute) {
+            $nonce = (string)$request->getAttribute($attribute, '');
+            if ($nonce !== '') {
+                return ' nonce="' . h($nonce) . '"';
+            }
+        }
+
+        return '';
     }
 }
