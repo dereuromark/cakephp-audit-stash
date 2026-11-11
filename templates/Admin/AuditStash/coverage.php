@@ -89,7 +89,7 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
             ?>
             <input class="form-check-input" type="checkbox" role="switch"
                    id="includeInternal" <?= $includeInternal ? 'checked' : '' ?>
-                   onclick="window.location='<?= h($toggleUrl) ?>'">
+                   data-toggle-url="<?= h($toggleUrl) ?>">
             <label class="form-check-label small" for="includeInternal"><?= __d('audit_stash', 'Include internal tables') ?></label>
         </div>
     </div>
@@ -171,3 +171,12 @@ $chip = function (string $key, string $label, int $count) use ($filter, $include
         </dl>
     </details>
 </div>
+
+<?php
+$cspNonce = (string)($this->getRequest()->getAttribute('cspScriptNonce') ?? $this->getRequest()->getAttribute('cspNonce', ''));
+?>
+<script<?= $cspNonce !== '' ? ' nonce="' . h($cspNonce) . '"' : '' ?>>
+document.getElementById('includeInternal').addEventListener('click', function () {
+    window.location = this.dataset.toggleUrl;
+});
+</script>

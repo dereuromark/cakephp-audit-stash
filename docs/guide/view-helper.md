@@ -28,6 +28,11 @@ a project-local helper.
 | `diffStyles()` | `<style>…</style>` block | call once in the layout to ship the diff CSS |
 | `diffScript()` | `<script>…</script>` block | call once if you want the inline/side toggle buttons (`#btn-inline-diff` / `#btn-side-diff`) |
 
+Under a nonce-based CSP, `diffStyles()` adds the `cspStyleNonce` request
+attribute and `diffScript()` adds `cspScriptNonce`, both set by CakePHP's
+`CspMiddleware` when its `scriptNonce` / `styleNonce` options are enabled. Scripts fall back to `cspNonce` for custom middleware. The
+admin templates do the same.
+
 If `jfcherng/php-diff` is in your `composer.json`, both diff methods use it
 for word-level granularity. Otherwise the helper falls back to a built-in
 `DiffLib` (sebastian/diff-based) which is slightly less granular but

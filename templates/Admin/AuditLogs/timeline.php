@@ -192,7 +192,8 @@ use AuditStash\AuditLogType;
     <?php } ?>
 </div>
 
-<style>
+<?php $cspStyleNonce = (string)$this->getRequest()->getAttribute('cspStyleNonce', ''); ?>
+<style<?= $cspStyleNonce !== '' ? ' nonce="' . h($cspStyleNonce) . '"' : '' ?>>
 .timeline-container {
     padding: 20px 0;
 }

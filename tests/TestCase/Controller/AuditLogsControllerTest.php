@@ -10,11 +10,15 @@ use Cake\Event\EventInterface;
 use Cake\Event\EventManager;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\Exception\ForbiddenException;
+use Cake\Http\MiddlewareQueue;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 
 /**
@@ -301,6 +305,58 @@ class AuditLogsControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertResponseContains('Audit Logs');
+    }
+
+    /**
+     * CakePHP's CspMiddleware stores the nonces as `cspScriptNonce` and `cspStyleNonce`.
+     *
+     * @return void
+     */
+    public function testIndexUsesCoreCspNonces(): void
+    {
+        $this->withRequestAttribute('cspScriptNonce', 'script-nonce');
+        $this->withRequestAttribute('cspStyleNonce', 'style-nonce');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('<script nonce="script-nonce" src="https://cdn.jsdelivr.net/npm/bootstrap');
+        $this->assertResponseContains('<script nonce="script-nonce" src="https://cdn.jsdelivr.net/npm/flatpickr"');
+        $this->assertResponseNotRegExp('/<script(?![^>]*nonce=)/');
+        $this->assertResponseNotRegExp('/<style(?![^>]*nonce=)/');
+        $this->assertResponseNotRegExp('/<link(?![^>]*nonce=)[^>]*stylesheet/');
+    }
+
+    /**
+     * A custom middleware may still provide the nonce as `cspNonce`.
+     *
+     * @return void
+     */
+    public function testIndexFallsBackToCspNonce(): void
+    {
+        $this->withRequestAttribute('cspNonce', 'custom-nonce');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditLogs', 'action' => 'index']);
+
+        $this->assertResponseOk();
+        $this->assertResponseNotRegExp('/<script(?![^>]*nonce="custom-nonce")/');
+    }
+
+    /**
+     * The coverage page toggle must not rely on an inline event handler.
+     *
+     * @return void
+     */
+    public function testCoverageUsesCspScriptNonce(): void
+    {
+        $this->withRequestAttribute('cspScriptNonce', 'script-nonce');
+
+        $this->get(['prefix' => 'Admin', 'plugin' => 'AuditStash', 'controller' => 'AuditStash', 'action' => 'coverage']);
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('data-toggle-url=');
+        $this->assertResponseNotContains('onclick=');
+        $this->assertResponseNotRegExp('/<script(?![^>]*nonce=)/');
     }
 
     /**
@@ -1494,5 +1550,22 @@ class AuditLogsControllerTest extends TestCase
         }
 
         $this->assertRedirect('/login');
+    }
+
+    /**
+     * Adds a middleware that sets a request attribute, like a CSP middleware would.
+     *
+     * @param string $name
+     * @param string $value
+     *
+     * @return void
+     */
+    protected function withRequestAttribute(string $name, string $value): void
+    {
+        EventManager::instance()->on('Server.buildMiddleware', function (EventInterface $event, MiddlewareQueue $queue) use ($name, $value): void {
+            $queue->prepend(function (ServerRequestInterface $request, RequestHandlerInterface $handler) use ($name, $value): ResponseInterface {
+                return $handler->handle($request->withAttribute($name, $value));
+            });
+        });
     }
 }

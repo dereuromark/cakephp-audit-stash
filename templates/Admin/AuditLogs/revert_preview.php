@@ -6,7 +6,7 @@
  * @var array $targetState
  * @var array $diff
  */
-$cspNonce = (string)$this->getRequest()->getAttribute('cspNonce', '');
+$cspNonce = (string)($this->getRequest()->getAttribute('cspScriptNonce') ?? $this->getRequest()->getAttribute('cspNonce', ''));
 ?>
 <div class="auditLogs revert content">
     <div class="d-flex justify-content-between align-items-center mb-4">

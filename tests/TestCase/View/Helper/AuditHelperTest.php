@@ -7,6 +7,7 @@ namespace AuditStash\Test\TestCase\View\Helper;
 use AuditStash\AuditLogType;
 use AuditStash\View\Helper\AuditHelper;
 use Cake\Core\Configure;
+use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
 use Cake\View\View;
 use ReflectionMethod;
@@ -444,6 +445,30 @@ class AuditHelperTest extends TestCase
         $this->assertStringContainsString('btn-side-diff', $result);
         $this->assertStringContainsString('addEventListener', $result);
         $this->assertStringContainsString('</script>', $result);
+    }
+
+    /**
+     * @return void
+     */
+    public function testDiffStylesAndScriptUseCspNonces(): void
+    {
+        $request = (new ServerRequest())
+            ->withAttribute('cspScriptNonce', 'script-nonce')
+            ->withAttribute('cspStyleNonce', 'style-nonce');
+        $audit = new AuditHelper(new View($request));
+
+        $this->assertStringStartsWith('<style nonce="style-nonce">', $audit->diffStyles());
+        $this->assertStringStartsWith('<script nonce="script-nonce">', $audit->diffScript());
+    }
+
+    /**
+     * @return void
+     */
+    public function testDiffScriptFallsBackToCspNonce(): void
+    {
+        $audit = new AuditHelper(new View((new ServerRequest())->withAttribute('cspNonce', 'custom-nonce')));
+
+        $this->assertStringStartsWith('<script nonce="custom-nonce">', $audit->diffScript());
     }
 
     /**

@@ -228,7 +228,8 @@
     <?= $this->element('AuditStash.pagination') ?>
 </div>
 
-<style>
+<?php $cspStyleNonce = (string)$this->getRequest()->getAttribute('cspStyleNonce', ''); ?>
+<style<?= $cspStyleNonce !== '' ? ' nonce="' . h($cspStyleNonce) . '"' : '' ?>>
 .audit-diff {
     font-size: 0.9rem;
 }
